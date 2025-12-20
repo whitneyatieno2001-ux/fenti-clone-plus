@@ -11,7 +11,7 @@ export function Header() {
   const getTitle = () => {
     switch (location.pathname) {
       case '/dashboard':
-        return 'FentiCoin';
+        return 'Crypto Wave';
       case '/markets':
         return 'Markets';
       case '/trade':
@@ -23,7 +23,7 @@ export function Header() {
       case '/profile':
         return 'Profile';
       default:
-        return 'FentiCoin';
+        return 'Crypto Wave';
     }
   };
 
