@@ -22,16 +22,16 @@ interface TradingBot {
 const defaultBots: TradingBot[] = [
   {
     id: '1',
-    name: 'Grid Trading Bot',
-    description: 'Automated buy low, sell high strategy',
+    name: 'Wave Rider Pro',
+    description: 'Automated grid trading with smart entry points',
     profit: 12.5,
-    status: 'active',
+    status: 'paused',
     risk: 'low',
     crypto: 'BTC',
   },
   {
     id: '2',
-    name: 'DCA Bot',
+    name: 'Tsunami Accumulator',
     description: 'Dollar cost averaging for long-term gains',
     profit: 8.2,
     status: 'paused',
@@ -40,10 +40,10 @@ const defaultBots: TradingBot[] = [
   },
   {
     id: '3',
-    name: 'Momentum Bot',
-    description: 'Follows market trends and momentum',
+    name: 'Storm Chaser',
+    description: 'High-frequency momentum trading strategy',
     profit: 25.8,
-    status: 'active',
+    status: 'paused',
     risk: 'high',
     crypto: 'SOL',
   },
@@ -225,15 +225,19 @@ export default function BotPage() {
                     <p className="text-xs text-muted-foreground">{bot.crypto}/USDT</p>
                   </div>
                 </div>
-                <Switch
-                  checked={bot.status === 'active'}
-                  onCheckedChange={() => toggleBot(bot.id)}
-                />
+                <div className={cn(
+                  "px-2 py-1 rounded-full text-xs font-medium",
+                  bot.status === 'active' 
+                    ? "bg-success/20 text-success" 
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {bot.status === 'active' ? 'Running' : 'Stopped'}
+                </div>
               </div>
 
               <p className="text-sm text-muted-foreground mb-3">{bot.description}</p>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     "px-2 py-0.5 rounded-full text-xs font-medium",
@@ -251,6 +255,29 @@ export default function BotPage() {
                   {bot.profit >= 0 ? '+' : ''}{bot.profit}%
                 </div>
               </div>
+
+              <Button
+                onClick={() => toggleBot(bot.id)}
+                className={cn(
+                  "w-full",
+                  bot.status === 'active'
+                    ? "bg-destructive/20 text-destructive hover:bg-destructive/30 border border-destructive/30"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                )}
+                variant={bot.status === 'active' ? "outline" : "default"}
+              >
+                {bot.status === 'active' ? (
+                  <>
+                    <Pause className="h-4 w-4 mr-2" />
+                    Stop Trading
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Start Trading
+                  </>
+                )}
+              </Button>
             </div>
           ))}
         </div>

@@ -81,9 +81,9 @@ export default function Auth() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-full bg-primary mx-auto flex items-center justify-center mb-4 shadow-glow">
-            <span className="text-primary-foreground font-bold text-2xl">F</span>
+            <span className="text-primary-foreground font-bold text-2xl">CW</span>
           </div>
-          <h1 className="text-2xl font-bold font-display text-foreground">Welcome to FentiCoin</h1>
+          <h1 className="text-2xl font-bold font-display text-foreground">Welcome to Crypto Wave</h1>
           <p className="text-muted-foreground mt-1">Your trusted platform for cryptocurrency trading</p>
         </div>
 
