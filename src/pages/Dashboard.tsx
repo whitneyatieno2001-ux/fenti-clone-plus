@@ -4,14 +4,20 @@ import { BottomNav } from '@/components/BottomNav';
 import { PortfolioCard } from '@/components/PortfolioCard';
 import { CryptoCard } from '@/components/CryptoCard';
 import { TransactionModal } from '@/components/TransactionModal';
-import { cryptoAssets, featuredCryptos } from '@/data/cryptoData';
+import { useCryptoPrices } from '@/hooks/useCryptoPrices';
+import { featuredCryptos } from '@/data/cryptoData';
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
   const [modalType, setModalType] = useState<'deposit' | 'withdraw' | null>(null);
+  const { getAllCryptosWithPrices } = useCryptoPrices();
 
+  const cryptoAssets = getAllCryptosWithPrices();
   const watchlistCryptos = cryptoAssets.filter(c => featuredCryptos.includes(c.id));
+  const topMovers = [...cryptoAssets]
+    .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
+    .slice(0, 3);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -87,9 +93,15 @@ export default function Dashboard() {
 
         {/* Market Overview */}
         <section className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          <h2 className="text-lg font-bold font-display text-foreground mb-4">Top Movers</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold font-display text-foreground">Top Movers</h2>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              Live
+            </div>
+          </div>
           <div className="space-y-3">
-            {cryptoAssets.slice(0, 3).map((crypto) => (
+            {topMovers.map((crypto) => (
               <CryptoCard key={crypto.id} crypto={crypto} variant="compact" />
             ))}
           </div>

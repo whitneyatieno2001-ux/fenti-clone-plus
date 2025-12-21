@@ -14,7 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bots: {
+        Row: {
+          account_type: string
+          created_at: string
+          id: string
+          is_running: boolean
+          name: string
+          profit: number
+          stake_amount: number
+          strategy: string
+          trades_count: number
+          updated_at: string
+          user_id: string
+          win_rate: number
+        }
+        Insert: {
+          account_type?: string
+          created_at?: string
+          id?: string
+          is_running?: boolean
+          name: string
+          profit?: number
+          stake_amount?: number
+          strategy: string
+          trades_count?: number
+          updated_at?: string
+          user_id: string
+          win_rate?: number
+        }
+        Update: {
+          account_type?: string
+          created_at?: string
+          id?: string
+          is_running?: boolean
+          name?: string
+          profit?: number
+          stake_amount?: number
+          strategy?: string
+          trades_count?: number
+          updated_at?: string
+          user_id?: string
+          win_rate?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          demo_balance: number
+          email: string | null
+          id: string
+          name: string | null
+          real_balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          demo_balance?: number
+          email?: string | null
+          id?: string
+          name?: string | null
+          real_balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          demo_balance?: number
+          email?: string | null
+          id?: string
+          name?: string | null
+          real_balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          account_type: string
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          account_type?: string
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { CryptoCard } from '@/components/CryptoCard';
-import { cryptoAssets } from '@/data/cryptoData';
+import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { Input } from '@/components/ui/input';
-import { Search, TrendingUp, TrendingDown } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type FilterType = 'all' | 'gainers' | 'losers';
@@ -12,6 +12,9 @@ type FilterType = 'all' | 'gainers' | 'losers';
 export default function Markets() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
+  const { getAllCryptosWithPrices, isLoading, refetch } = useCryptoPrices();
+
+  const cryptoAssets = getAllCryptosWithPrices();
 
   const filteredCryptos = cryptoAssets
     .filter(crypto => 
@@ -26,7 +29,7 @@ export default function Markets() {
     .sort((a, b) => {
       if (filter === 'gainers') return b.change24h - a.change24h;
       if (filter === 'losers') return a.change24h - b.change24h;
-      return b.marketCap.localeCompare(a.marketCap);
+      return b.price - a.price;
     });
 
   return (
@@ -47,7 +50,7 @@ export default function Markets() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {[
             { id: 'all' as FilterType, label: 'All', icon: null },
             { id: 'gainers' as FilterType, label: 'Gainers', icon: TrendingUp },
@@ -67,6 +70,15 @@ export default function Markets() {
               {f.label}
             </button>
           ))}
+          <button
+            onClick={refetch}
+            className={cn(
+              "ml-auto p-2 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-all",
+              isLoading && "animate-spin"
+            )}
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Stats */}
@@ -89,20 +101,33 @@ export default function Markets() {
           </div>
         </div>
 
-        {/* Crypto List */}
-        <div className="space-y-3">
-          {filteredCryptos.map((crypto, index) => (
-            <div
-              key={crypto.id}
-              className="animate-slide-up"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <CryptoCard crypto={crypto} variant="compact" />
-            </div>
-          ))}
+        {/* Live indicator */}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+          Live prices from CoinGecko
         </div>
 
-        {filteredCryptos.length === 0 && (
+        {/* Crypto List */}
+        <div className="space-y-3">
+          {isLoading && filteredCryptos.every(c => c.price === 0) ? (
+            <div className="text-center py-12">
+              <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading prices...</p>
+            </div>
+          ) : (
+            filteredCryptos.map((crypto, index) => (
+              <div
+                key={crypto.id}
+                className="animate-slide-up"
+                style={{ animationDelay: `${index * 0.03}s` }}
+              >
+                <CryptoCard crypto={crypto} variant="compact" />
+              </div>
+            ))
+          )}
+        </div>
+
+        {filteredCryptos.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No cryptocurrencies found</p>
           </div>

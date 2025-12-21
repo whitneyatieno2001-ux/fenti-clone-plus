@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,11 @@ import { useAccount } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { z } from 'zod';
+
+const emailSchema = z.string().email('Please enter a valid email address');
+const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
+const nameSchema = z.string().min(2, 'Name must be at least 2 characters');
 
 export default function Auth() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -14,42 +19,76 @@ export default function Auth() {
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
   const navigate = useNavigate();
-  const { login, signup } = useAccount();
+  const { login, signup, isLoggedIn } = useAccount();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate('/dashboard');
+    }
+  }, [isLoggedIn, navigate]);
+
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string; name?: string } = {};
+
+    try {
+      emailSchema.parse(email);
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        newErrors.email = e.errors[0].message;
+      }
+    }
+
+    try {
+      passwordSchema.parse(password);
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        newErrors.password = e.errors[0].message;
+      }
+    }
+
+    if (mode === 'signup') {
+      try {
+        nameSchema.parse(name);
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.name = e.errors[0].message;
+        }
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+
     setIsLoading(true);
 
     try {
-      let success = false;
+      let result;
       
       if (mode === 'login') {
-        success = await login(email, password);
+        result = await login(email, password);
       } else {
-        if (!name) {
-          toast({
-            title: "Name Required",
-            description: "Please enter your name",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-        success = await signup(email, password, name);
+        result = await signup(email, password, name);
       }
 
-      if (success) {
+      if (result.success) {
         toast({
           title: mode === 'login' ? "Welcome Back!" : "Account Created!",
-          description: mode === 'login' ? "You have successfully logged in" : "Your account has been created",
+          description: mode === 'login' ? "You have successfully logged in" : "Your account has been created with $10,000 demo balance",
         });
         navigate('/dashboard');
       } else {
         toast({
           title: "Error",
-          description: "Invalid credentials. Password must be at least 6 characters.",
+          description: result.error || "Something went wrong",
           variant: "destructive",
         });
       }
@@ -122,52 +161,61 @@ export default function Auth() {
             <p className="text-sm text-muted-foreground mb-4">
               {mode === 'login' 
                 ? 'Enter your email and password to access your account' 
-                : 'Fill in your details to get started'}
+                : 'Start with $10,000 demo balance to practice trading'}
             </p>
           </div>
 
           {mode === 'signup' && (
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="pl-10 h-12 bg-input border-border"
-              />
+            <div>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Full Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={cn("pl-10 h-12 bg-input border-border", errors.name && "border-destructive")}
+                />
+              </div>
+              {errors.name && <p className="text-sm text-destructive mt-1">{errors.name}</p>}
             </div>
           )}
 
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 h-12 bg-input border-border"
-              required
-            />
+          <div>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={cn("pl-10 h-12 bg-input border-border", errors.email && "border-destructive")}
+                required
+              />
+            </div>
+            {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
           </div>
 
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 pr-10 h-12 bg-input border-border"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-            </button>
+          <div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={cn("pl-10 pr-10 h-12 bg-input border-border", errors.password && "border-destructive")}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            {errors.password && <p className="text-sm text-destructive mt-1">{errors.password}</p>}
           </div>
 
           {mode === 'login' && (
