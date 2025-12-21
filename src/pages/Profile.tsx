@@ -1,17 +1,16 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { useAccount } from '@/contexts/AccountContext';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { 
   User, Settings, Shield, CreditCard, HelpCircle, LogOut, 
-  ChevronRight, Bell, Moon, Wallet, History, Lock
+  ChevronRight, Bell, Lock, History, RefreshCw
 } from 'lucide-react';
 
 const menuItems = [
-  { icon: Wallet, label: 'Wallet', path: '/wallet' },
   { icon: History, label: 'Transaction History', path: '/history' },
   { icon: CreditCard, label: 'Payment Methods', path: '/payments' },
   { icon: Shield, label: 'Security', path: '/security' },
@@ -23,6 +22,7 @@ const menuItems = [
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { 
     isLoggedIn, 
     logout, 
@@ -30,12 +30,21 @@ export default function Profile() {
     userEmail, 
     demoBalance, 
     realBalance,
-    accountType 
+    accountType,
+    resetDemo,
   } = useAccount();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/auth');
+  };
+
+  const handleResetDemo = async () => {
+    await resetDemo();
+    toast({
+      title: "Demo Reset",
+      description: "Your demo balance has been reset to $10,000",
+    });
   };
 
   if (!isLoggedIn) {
@@ -46,7 +55,7 @@ export default function Profile() {
           <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-4">
             <User className="h-10 w-10 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Welcome to FentiCoin</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">Welcome to Crypto Wave</h2>
           <p className="text-muted-foreground text-center mb-6">Sign in to access your account and start trading</p>
           <Button 
             onClick={() => navigate('/auth')}
@@ -90,7 +99,16 @@ export default function Profile() {
         {/* Balances */}
         <div className="grid grid-cols-2 gap-3">
           <div className="p-4 rounded-xl bg-card border border-border/50">
-            <p className="text-xs text-muted-foreground mb-1">Demo Balance</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs text-muted-foreground">Demo Balance</p>
+              <button 
+                onClick={handleResetDemo}
+                className="text-primary hover:text-primary/80"
+                title="Reset Demo Balance"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
+            </div>
             <p className="text-lg font-bold text-foreground">
               ${demoBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </p>
@@ -135,7 +153,7 @@ export default function Profile() {
 
         {/* Version */}
         <p className="text-center text-xs text-muted-foreground">
-          FentiCoin v1.0.0
+          Crypto Wave v1.0.0
         </p>
       </main>
 
