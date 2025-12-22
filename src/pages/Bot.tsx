@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
@@ -88,9 +88,21 @@ const defaultBots: TradingBot[] = [
 export default function BotPage() {
   const [bots, setBots] = useState<TradingBot[]>(defaultBots);
   const { toast } = useToast();
-  const { currentBalance, accountType, updateBalance, user, isLoggedIn } = useAccount();
+  const { currentBalance, accountType, updateBalance, user } = useAccount();
   const tradingIntervals = useRef<Record<string, NodeJS.Timeout>>({});
   const scanningIntervals = useRef<Record<string, NodeJS.Timeout>>({});
+  
+  // Keep refs for latest state to avoid stale closures
+  const botsRef = useRef(bots);
+  const balanceRef = useRef(currentBalance);
+  
+  useEffect(() => {
+    botsRef.current = bots;
+  }, [bots]);
+  
+  useEffect(() => {
+    balanceRef.current = currentBalance;
+  }, [currentBalance]);
 
   // Clean up intervals on unmount
   useEffect(() => {
@@ -101,7 +113,7 @@ export default function BotPage() {
   }, []);
 
   // Log trade to database
-  const logTrade = async (bot: TradingBot, result: { profit: number; isWin: boolean }) => {
+  const logTrade = useCallback(async (bot: TradingBot, result: { profit: number; isWin: boolean }) => {
     if (!user) return;
     
     try {
@@ -117,14 +129,16 @@ export default function BotPage() {
     } catch (err) {
       console.error('Error logging trade:', err);
     }
-  };
+  }, [user, accountType]);
 
-  const executeTrade = async (botId: string) => {
-    const bot = bots.find(b => b.id === botId);
+  const executeTrade = useCallback(async (botId: string) => {
+    const bot = botsRef.current.find(b => b.id === botId);
     if (!bot || bot.status !== 'active') return;
 
+    const currentBal = balanceRef.current;
+    
     // Check balance
-    if (currentBalance < bot.stakeAmount) {
+    if (currentBal < bot.stakeAmount) {
       setBots(prev => prev.map(b => 
         b.id === botId ? { ...b, status: 'paused', currentAction: 'HOLD' } : b
       ));
@@ -176,19 +190,21 @@ export default function BotPage() {
       return b;
     }));
 
-    // Show trade notification
-    const notifTitle = result.isWin ? "Trade Won! 🎉" : "Trade Lost 📉";
-    const notifDesc = `${bot.name}: ${result.netProfit >= 0 ? '+' : ''}$${result.netProfit.toFixed(2)}`;
-    
-    toast({
-      title: notifTitle,
-      description: notifDesc,
-      variant: result.isWin ? "default" : "destructive",
-    });
-  };
+    // Show trade notification (less frequent to avoid spam)
+    if (Math.random() < 0.3) {
+      const notifTitle = result.isWin ? "Trade Won! 🎉" : "Trade Lost 📉";
+      const notifDesc = `${bot.name}: ${result.netProfit >= 0 ? '+' : ''}$${result.netProfit.toFixed(2)}`;
+      
+      toast({
+        title: notifTitle,
+        description: notifDesc,
+        variant: result.isWin ? "default" : "destructive",
+      });
+    }
+  }, [user, accountType, updateBalance, logTrade, toast]);
 
-  const updateBotAction = (botId: string) => {
-    const bot = bots.find(b => b.id === botId);
+  const updateBotAction = useCallback((botId: string) => {
+    const bot = botsRef.current.find(b => b.id === botId);
     if (!bot || bot.status !== 'active') return;
 
     let newAction: 'BUY' | 'SELL' | 'HOLD' | 'SCANNING' = 'SCANNING';
@@ -211,15 +227,15 @@ export default function BotPage() {
     setBots(prev => prev.map(b => 
       b.id === botId ? { ...b, currentAction: newAction } : b
     ));
-  };
+  }, []);
 
-  const toggleBot = (id: string) => {
-    const bot = bots.find(b => b.id === id);
+  const toggleBot = useCallback((id: string) => {
+    const bot = botsRef.current.find(b => b.id === id);
     if (!bot) return;
 
     if (bot.status === 'paused') {
       // Starting the bot
-      if (currentBalance < bot.stakeAmount) {
+      if (balanceRef.current < bot.stakeAmount) {
         toast({
           title: "Insufficient Balance",
           description: `You need at least $${bot.stakeAmount} to start this bot`,
@@ -228,7 +244,7 @@ export default function BotPage() {
         return;
       }
 
-      if (currentBalance === 0) {
+      if (balanceRef.current === 0) {
         toast({
           title: "Zero Balance",
           description: "Please deposit funds before starting a bot",
@@ -239,14 +255,17 @@ export default function BotPage() {
 
       // Trade frequency based on strategy
       const tradeIntervals = {
-        arbitrage: { min: 8000, max: 15000 },   // Fast: 8-15 seconds
-        scalping: { min: 5000, max: 10000 },    // Very fast: 5-10 seconds
-        signal: { min: 15000, max: 30000 },     // Slower: 15-30 seconds
+        arbitrage: { min: 3000, max: 6000 },   // Fast: 3-6 seconds
+        scalping: { min: 2000, max: 4000 },    // Very fast: 2-4 seconds
+        signal: { min: 5000, max: 10000 },     // Slower: 5-10 seconds
       };
 
       const { min, max } = tradeIntervals[bot.strategy];
       
-      // Start trading interval
+      // Execute first trade immediately
+      executeTrade(id);
+      
+      // Start continuous trading interval
       const tradeInterval = setInterval(() => {
         executeTrade(id);
       }, min + Math.random() * (max - min));
@@ -256,7 +275,7 @@ export default function BotPage() {
       // Start scanning interval (updates action display)
       const scanInterval = setInterval(() => {
         updateBotAction(id);
-      }, 2000);
+      }, 1000);
 
       scanningIntervals.current[id] = scanInterval;
 
@@ -290,7 +309,7 @@ export default function BotPage() {
       }
       return b;
     }));
-  };
+  }, [executeTrade, updateBotAction, toast]);
 
   const updateStakeAmount = (id: string, amount: string) => {
     const numAmount = parseFloat(amount);
@@ -334,69 +353,73 @@ export default function BotPage() {
   const activeBots = bots.filter(bot => bot.status === 'active').length;
   const totalTrades = bots.reduce((sum, bot) => sum + bot.tradesCount, 0);
   const totalWins = bots.reduce((sum, bot) => sum + bot.winCount, 0);
+  const totalLosses = bots.reduce((sum, bot) => sum + bot.lossCount, 0);
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <Header />
       
       <main className="px-4 py-4 space-y-5">
-        {/* Account Info */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
+        {/* PROMINENT TOTAL P/L BANNER */}
+        <div className={cn(
+          "p-5 rounded-2xl border-2 transition-all",
+          totalProfit >= 0 
+            ? "bg-gradient-to-br from-success/20 via-success/10 to-transparent border-success/50" 
+            : "bg-gradient-to-br from-destructive/20 via-destructive/10 to-transparent border-destructive/50"
+        )}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Available Balance ({accountType})</p>
-              <p className="text-2xl font-bold text-foreground">
-                ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              <p className="text-sm text-muted-foreground mb-1">Total Profit/Loss</p>
+              <p className={cn(
+                "text-4xl font-bold tracking-tight",
+                totalProfit >= 0 ? "text-success" : "text-destructive"
+              )}>
+                {totalProfit >= 0 ? '+' : ''}{totalProfit.toFixed(2)}
+                <span className="text-lg ml-1">USD</span>
               </p>
             </div>
-            {currentBalance === 0 && (
-              <span className="px-3 py-1 rounded-full bg-destructive/20 text-destructive text-xs font-medium">
-                Deposit Required
+            <div className={cn(
+              "w-16 h-16 rounded-full flex items-center justify-center",
+              totalProfit >= 0 ? "bg-success/20" : "bg-destructive/20"
+            )}>
+              {totalProfit >= 0 ? (
+                <TrendingUp className="h-8 w-8 text-success" />
+              ) : (
+                <TrendingDown className="h-8 w-8 text-destructive" />
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-4 mt-3 text-sm">
+            <span className="text-muted-foreground">
+              {totalTrades} trades
+            </span>
+            <span className="text-success">
+              {totalWins} wins
+            </span>
+            <span className="text-destructive">
+              {totalLosses} losses
+            </span>
+            {totalTrades > 0 && (
+              <span className="text-foreground font-medium">
+                {((totalWins / totalTrades) * 100).toFixed(0)}% win rate
               </span>
             )}
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 rounded-xl bg-card border border-border/50">
-            <div className="flex items-center gap-2 mb-2">
+        {/* Account Info */}
+        <div className="p-4 rounded-xl bg-card border border-border/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Balance ({accountType})</p>
+              <p className="text-2xl font-bold text-foreground">
+                ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-primary" />
-              <span className="text-sm text-muted-foreground">Active Bots</span>
+              <span className="text-lg font-bold text-primary">{activeBots} Active</span>
             </div>
-            <p className="text-2xl font-bold text-foreground">{activeBots}</p>
-          </div>
-          <div className="p-4 rounded-xl bg-card border border-border/50">
-            <div className="flex items-center gap-2 mb-2">
-              {totalProfit >= 0 ? (
-                <TrendingUp className="h-5 w-5 text-success" />
-              ) : (
-                <TrendingDown className="h-5 w-5 text-destructive" />
-              )}
-              <span className="text-sm text-muted-foreground">Total P/L</span>
-            </div>
-            <p className={cn(
-              "text-2xl font-bold",
-              totalProfit >= 0 ? "text-success" : "text-destructive"
-            )}>
-              {totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}
-            </p>
-          </div>
-          <div className="p-4 rounded-xl bg-card border border-border/50">
-            <div className="flex items-center gap-2 mb-2">
-              <Activity className="h-5 w-5 text-primary" />
-              <span className="text-sm text-muted-foreground">Total Trades</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{totalTrades}</p>
-          </div>
-          <div className="p-4 rounded-xl bg-card border border-border/50">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-5 w-5 text-success" />
-              <span className="text-sm text-muted-foreground">Win Rate</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">
-              {totalTrades > 0 ? ((totalWins / totalTrades) * 100).toFixed(0) : 0}%
-            </p>
           </div>
         </div>
 
