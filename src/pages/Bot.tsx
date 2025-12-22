@@ -6,11 +6,24 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAccount } from '@/contexts/AccountContext';
 import { cn } from '@/lib/utils';
-import { Bot, Play, Pause, TrendingUp, TrendingDown, Zap, Shield, DollarSign } from 'lucide-react';
+import { 
+  Bot, Play, Pause, TrendingUp, TrendingDown, 
+  DollarSign, Activity, Zap, BarChart3, ArrowUpDown
+} from 'lucide-react';
+import { 
+  type BotStrategy, 
+  executeBotTrade, 
+  getBotStrategyInfo,
+  analyzeSignals,
+  analyzeScalpingConditions,
+  findArbitrageOpportunity
+} from '@/lib/tradingStrategies';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TradingBot {
   id: string;
   name: string;
+  strategy: BotStrategy;
   description: string;
   profit: number;
   status: 'active' | 'paused';
@@ -18,74 +31,110 @@ interface TradingBot {
   crypto: string;
   stakeAmount: number;
   tradesCount: number;
-  winRate: number;
+  winCount: number;
+  lossCount: number;
+  currentAction: 'BUY' | 'SELL' | 'HOLD' | 'SCANNING';
+  lastTradeResult?: { profit: number; isWin: boolean };
 }
 
 const defaultBots: TradingBot[] = [
   {
     id: '1',
-    name: 'Wave Rider Pro',
-    description: 'Automated grid trading with smart entry points',
+    name: 'Arbitrage Hunter',
+    strategy: 'arbitrage',
+    description: 'Detects price differences across markets. Lower risk, frequent small profits.',
     profit: 0,
     status: 'paused',
     risk: 'low',
     crypto: 'BTC',
     stakeAmount: 10,
     tradesCount: 0,
-    winRate: 65,
+    winCount: 0,
+    lossCount: 0,
+    currentAction: 'SCANNING',
   },
   {
     id: '2',
-    name: 'Tsunami Accumulator',
-    description: 'Dollar cost averaging for long-term gains',
-    profit: 0,
-    status: 'paused',
-    risk: 'low',
-    crypto: 'ETH',
-    stakeAmount: 10,
-    tradesCount: 0,
-    winRate: 72,
-  },
-  {
-    id: '3',
-    name: 'Storm Chaser',
-    description: 'High-frequency momentum trading strategy',
+    name: 'Speed Scalper',
+    strategy: 'scalping',
+    description: 'High-frequency trades on small price movements. Fast execution, tight stop-loss.',
     profit: 0,
     status: 'paused',
     risk: 'high',
-    crypto: 'SOL',
-    stakeAmount: 25,
+    crypto: 'ETH',
+    stakeAmount: 15,
     tradesCount: 0,
-    winRate: 58,
+    winCount: 0,
+    lossCount: 0,
+    currentAction: 'SCANNING',
+  },
+  {
+    id: '3',
+    name: 'Signal Master',
+    strategy: 'signal',
+    description: 'Uses RSI, MA crossovers, and pattern recognition. Trades only when signals align.',
+    profit: 0,
+    status: 'paused',
+    risk: 'medium',
+    crypto: 'SOL',
+    stakeAmount: 20,
+    tradesCount: 0,
+    winCount: 0,
+    lossCount: 0,
+    currentAction: 'HOLD',
   },
 ];
 
 export default function BotPage() {
   const [bots, setBots] = useState<TradingBot[]>(defaultBots);
-  const [showCreate, setShowCreate] = useState(false);
-  const [newBotName, setNewBotName] = useState('');
-  const [selectedCrypto, setSelectedCrypto] = useState('BTC');
-  const [stakeAmount, setStakeAmount] = useState('10');
   const { toast } = useToast();
   const { currentBalance, accountType, updateBalance, user, isLoggedIn } = useAccount();
   const tradingIntervals = useRef<Record<string, NodeJS.Timeout>>({});
+  const scanningIntervals = useRef<Record<string, NodeJS.Timeout>>({});
 
   // Clean up intervals on unmount
   useEffect(() => {
     return () => {
       Object.values(tradingIntervals.current).forEach(interval => clearInterval(interval));
+      Object.values(scanningIntervals.current).forEach(interval => clearInterval(interval));
     };
   }, []);
 
-  const executeTrade = async (bot: TradingBot) => {
+  // Log trade to database
+  const logTrade = async (bot: TradingBot, result: { profit: number; isWin: boolean }) => {
+    if (!user) return;
+    
+    try {
+      await supabase.from('transactions').insert({
+        user_id: user.id,
+        type: 'bot_trade',
+        amount: Math.abs(result.profit),
+        currency: 'USD',
+        status: 'completed',
+        description: `${bot.name} (${bot.strategy}) - ${result.isWin ? 'WIN' : 'LOSS'}: ${result.profit >= 0 ? '+' : ''}$${result.profit.toFixed(2)} on ${bot.crypto}/USDT`,
+        account_type: accountType,
+      });
+    } catch (err) {
+      console.error('Error logging trade:', err);
+    }
+  };
+
+  const executeTrade = async (botId: string) => {
+    const bot = bots.find(b => b.id === botId);
+    if (!bot || bot.status !== 'active') return;
+
+    // Check balance
     if (currentBalance < bot.stakeAmount) {
-      // Not enough balance, pause the bot
       setBots(prev => prev.map(b => 
-        b.id === bot.id ? { ...b, status: 'paused' } : b
+        b.id === botId ? { ...b, status: 'paused', currentAction: 'HOLD' } : b
       ));
-      if (tradingIntervals.current[bot.id]) {
-        clearInterval(tradingIntervals.current[bot.id]);
-        delete tradingIntervals.current[bot.id];
+      if (tradingIntervals.current[botId]) {
+        clearInterval(tradingIntervals.current[botId]);
+        delete tradingIntervals.current[botId];
+      }
+      if (scanningIntervals.current[botId]) {
+        clearInterval(scanningIntervals.current[botId]);
+        delete scanningIntervals.current[botId];
       }
       toast({
         title: "Insufficient Balance",
@@ -95,27 +144,73 @@ export default function BotPage() {
       return;
     }
 
-    // Simulate trade with win rate probability
-    const isWin = Math.random() * 100 < bot.winRate;
-    const profitMultiplier = isWin ? (Math.random() * 0.15 + 0.05) : -(Math.random() * 0.1 + 0.05);
-    const tradeProfit = bot.stakeAmount * profitMultiplier;
+    // Execute trade based on strategy
+    const basePrice = bot.crypto === 'BTC' ? 98000 : bot.crypto === 'ETH' ? 3400 : 180;
+    const result = executeBotTrade(bot.strategy, bot.stakeAmount, basePrice);
+
+    // Skip if signal bot decided to hold
+    if (bot.strategy === 'signal' && result.netProfit === 0) {
+      return;
+    }
 
     // Update balance
-    if (user) {
-      await updateBalance(accountType, tradeProfit, tradeProfit > 0 ? 'add' : 'subtract');
+    if (user && result.netProfit !== 0) {
+      const operation = result.netProfit > 0 ? 'add' : 'subtract';
+      await updateBalance(accountType, Math.abs(result.netProfit), operation);
+      await logTrade(bot, { profit: result.netProfit, isWin: result.isWin });
     }
 
     // Update bot stats
     setBots(prev => prev.map(b => {
-      if (b.id === bot.id) {
+      if (b.id === botId) {
         return {
           ...b,
-          profit: b.profit + tradeProfit,
+          profit: b.profit + result.netProfit,
           tradesCount: b.tradesCount + 1,
+          winCount: result.isWin ? b.winCount + 1 : b.winCount,
+          lossCount: !result.isWin ? b.lossCount + 1 : b.lossCount,
+          currentAction: result.isWin ? 'BUY' : 'SELL',
+          lastTradeResult: { profit: result.netProfit, isWin: result.isWin },
         };
       }
       return b;
     }));
+
+    // Show trade notification
+    const notifTitle = result.isWin ? "Trade Won! 🎉" : "Trade Lost 📉";
+    const notifDesc = `${bot.name}: ${result.netProfit >= 0 ? '+' : ''}$${result.netProfit.toFixed(2)}`;
+    
+    toast({
+      title: notifTitle,
+      description: notifDesc,
+      variant: result.isWin ? "default" : "destructive",
+    });
+  };
+
+  const updateBotAction = (botId: string) => {
+    const bot = bots.find(b => b.id === botId);
+    if (!bot || bot.status !== 'active') return;
+
+    let newAction: 'BUY' | 'SELL' | 'HOLD' | 'SCANNING' = 'SCANNING';
+
+    switch (bot.strategy) {
+      case 'arbitrage':
+        const arb = findArbitrageOpportunity(98000);
+        newAction = arb.profitable ? 'BUY' : 'SCANNING';
+        break;
+      case 'scalping':
+        const scalp = analyzeScalpingConditions();
+        newAction = Math.abs(scalp.momentum) > 0.3 ? (scalp.momentum > 0 ? 'BUY' : 'SELL') : 'SCANNING';
+        break;
+      case 'signal':
+        const signals = analyzeSignals();
+        newAction = signals.overallSignal.action;
+        break;
+    }
+
+    setBots(prev => prev.map(b => 
+      b.id === botId ? { ...b, currentAction: newAction } : b
+    ));
   };
 
   const toggleBot = (id: string) => {
@@ -142,18 +237,31 @@ export default function BotPage() {
         return;
       }
 
-      // Start trading interval (every 10-30 seconds for demo)
-      const interval = setInterval(() => {
-        const currentBot = bots.find(b => b.id === id);
-        if (currentBot && currentBot.status === 'active') {
-          executeTrade(currentBot);
-        }
-      }, Math.random() * 20000 + 10000);
+      // Trade frequency based on strategy
+      const tradeIntervals = {
+        arbitrage: { min: 8000, max: 15000 },   // Fast: 8-15 seconds
+        scalping: { min: 5000, max: 10000 },    // Very fast: 5-10 seconds
+        signal: { min: 15000, max: 30000 },     // Slower: 15-30 seconds
+      };
 
-      tradingIntervals.current[id] = interval;
+      const { min, max } = tradeIntervals[bot.strategy];
+      
+      // Start trading interval
+      const tradeInterval = setInterval(() => {
+        executeTrade(id);
+      }, min + Math.random() * (max - min));
+
+      tradingIntervals.current[id] = tradeInterval;
+
+      // Start scanning interval (updates action display)
+      const scanInterval = setInterval(() => {
+        updateBotAction(id);
+      }, 2000);
+
+      scanningIntervals.current[id] = scanInterval;
 
       toast({
-        title: "Bot Activated",
+        title: "Bot Activated 🤖",
         description: `${bot.name} is now trading with $${bot.stakeAmount} stake`,
       });
     } else {
@@ -161,6 +269,10 @@ export default function BotPage() {
       if (tradingIntervals.current[id]) {
         clearInterval(tradingIntervals.current[id]);
         delete tradingIntervals.current[id];
+      }
+      if (scanningIntervals.current[id]) {
+        clearInterval(scanningIntervals.current[id]);
+        delete scanningIntervals.current[id];
       }
       toast({
         title: "Bot Paused",
@@ -170,7 +282,11 @@ export default function BotPage() {
 
     setBots(prev => prev.map(b => {
       if (b.id === id) {
-        return { ...b, status: b.status === 'active' ? 'paused' : 'active' };
+        return { 
+          ...b, 
+          status: b.status === 'active' ? 'paused' : 'active',
+          currentAction: b.status === 'active' ? 'HOLD' : 'SCANNING'
+        };
       }
       return b;
     }));
@@ -188,49 +304,6 @@ export default function BotPage() {
     }));
   };
 
-  const createBot = () => {
-    if (!newBotName) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter a bot name",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const stake = parseFloat(stakeAmount);
-    if (isNaN(stake) || stake < 1) {
-      toast({
-        title: "Invalid Stake",
-        description: "Minimum stake is $1",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newBot: TradingBot = {
-      id: Date.now().toString(),
-      name: newBotName,
-      description: 'Custom trading strategy',
-      profit: 0,
-      status: 'paused',
-      risk: 'medium',
-      crypto: selectedCrypto,
-      stakeAmount: stake,
-      tradesCount: 0,
-      winRate: 55 + Math.random() * 20,
-    };
-
-    setBots(prev => [newBot, ...prev]);
-    toast({
-      title: "Bot Created!",
-      description: `${newBotName} is ready to trade`,
-    });
-    setNewBotName('');
-    setStakeAmount('10');
-    setShowCreate(false);
-  };
-
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'low': return 'text-success bg-success/20';
@@ -240,8 +313,27 @@ export default function BotPage() {
     }
   };
 
+  const getActionColor = (action: string) => {
+    switch (action) {
+      case 'BUY': return 'text-success bg-success/20';
+      case 'SELL': return 'text-destructive bg-destructive/20';
+      case 'HOLD': return 'text-warning bg-warning/20';
+      default: return 'text-primary bg-primary/20';
+    }
+  };
+
+  const getStrategyIcon = (strategy: BotStrategy) => {
+    switch (strategy) {
+      case 'arbitrage': return <ArrowUpDown className="h-4 w-4" />;
+      case 'scalping': return <Zap className="h-4 w-4" />;
+      case 'signal': return <BarChart3 className="h-4 w-4" />;
+    }
+  };
+
   const totalProfit = bots.reduce((sum, bot) => sum + bot.profit, 0);
   const activeBots = bots.filter(bot => bot.status === 'active').length;
+  const totalTrades = bots.reduce((sum, bot) => sum + bot.tradesCount, 0);
+  const totalWins = bots.reduce((sum, bot) => sum + bot.winCount, 0);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -265,7 +357,7 @@ export default function BotPage() {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
           <div className="p-4 rounded-xl bg-card border border-border/50">
             <div className="flex items-center gap-2 mb-2">
@@ -276,8 +368,12 @@ export default function BotPage() {
           </div>
           <div className="p-4 rounded-xl bg-card border border-border/50">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-5 w-5 text-success" />
-              <span className="text-sm text-muted-foreground">Total Profit</span>
+              {totalProfit >= 0 ? (
+                <TrendingUp className="h-5 w-5 text-success" />
+              ) : (
+                <TrendingDown className="h-5 w-5 text-destructive" />
+              )}
+              <span className="text-sm text-muted-foreground">Total P/L</span>
             </div>
             <p className={cn(
               "text-2xl font-bold",
@@ -286,112 +382,93 @@ export default function BotPage() {
               {totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}
             </p>
           </div>
-        </div>
-
-        {/* Create Bot Section */}
-        {showCreate ? (
-          <div className="p-4 rounded-xl bg-card border border-border space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-foreground">Create New Bot</h3>
-              <button 
-                onClick={() => setShowCreate(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                ✕
-              </button>
+          <div className="p-4 rounded-xl bg-card border border-border/50">
+            <div className="flex items-center gap-2 mb-2">
+              <Activity className="h-5 w-5 text-primary" />
+              <span className="text-sm text-muted-foreground">Total Trades</span>
             </div>
-            
-            <Input
-              placeholder="Bot Name"
-              value={newBotName}
-              onChange={(e) => setNewBotName(e.target.value)}
-              className="bg-input border-border"
-            />
-
-            <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Trading Pair</label>
-              <div className="flex gap-2 flex-wrap">
-                {['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE'].map((crypto) => (
-                  <button
-                    key={crypto}
-                    onClick={() => setSelectedCrypto(crypto)}
-                    className={cn(
-                      "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                      selectedCrypto === crypto
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-muted-foreground"
-                    )}
-                  >
-                    {crypto}/USDT
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Stake Amount (USD)</label>
-              <Input
-                type="number"
-                placeholder="Min $1"
-                value={stakeAmount}
-                onChange={(e) => setStakeAmount(e.target.value)}
-                className="bg-input border-border"
-                min="1"
-              />
-            </div>
-
-            <Button onClick={createBot} className="w-full bg-primary hover:bg-primary/90">
-              <Zap className="h-4 w-4 mr-2" />
-              Create Bot
-            </Button>
+            <p className="text-2xl font-bold text-foreground">{totalTrades}</p>
           </div>
-        ) : (
-          <Button 
-            onClick={() => setShowCreate(true)}
-            className="w-full bg-primary hover:bg-primary/90"
-          >
-            <Bot className="h-4 w-4 mr-2" />
-            Create New Bot
-          </Button>
-        )}
+          <div className="p-4 rounded-xl bg-card border border-border/50">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="h-5 w-5 text-success" />
+              <span className="text-sm text-muted-foreground">Win Rate</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">
+              {totalTrades > 0 ? ((totalWins / totalTrades) * 100).toFixed(0) : 0}%
+            </p>
+          </div>
+        </div>
 
         {/* Bot List */}
         <div className="space-y-3">
-          <h3 className="font-bold text-foreground">Your Bots</h3>
+          <h3 className="font-bold text-foreground">Trading Bots</h3>
           
           {bots.map((bot, index) => (
             <div 
               key={bot.id}
-              className="p-4 rounded-xl bg-card border border-border/50 animate-slide-up"
+              className={cn(
+                "p-4 rounded-xl bg-card border transition-all duration-300",
+                bot.status === 'active' 
+                  ? "border-primary/50 shadow-lg shadow-primary/10" 
+                  : "border-border/50"
+              )}
               style={{ animationDelay: `${index * 0.05}s` }}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center",
+                    "w-12 h-12 rounded-full flex items-center justify-center",
                     bot.status === 'active' ? "bg-primary/20" : "bg-muted"
                   )}>
-                    <Bot className={cn(
-                      "h-5 w-5",
-                      bot.status === 'active' ? "text-primary animate-pulse" : "text-muted-foreground"
-                    )} />
+                    <span className="text-2xl">{getBotStrategyInfo(bot.strategy).icon}</span>
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">{bot.name}</p>
-                    <p className="text-xs text-muted-foreground">{bot.crypto}/USDT</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      {getStrategyIcon(bot.strategy)}
+                      <span className="text-xs text-muted-foreground capitalize">{bot.strategy}</span>
+                      <span className="text-xs text-muted-foreground">•</span>
+                      <span className="text-xs text-muted-foreground">{bot.crypto}/USDT</span>
+                    </div>
                   </div>
                 </div>
-                <div className={cn(
-                  "px-2 py-1 rounded-full text-xs font-medium",
-                  bot.status === 'active' 
-                    ? "bg-success/20 text-success" 
-                    : "bg-muted text-muted-foreground"
-                )}>
-                  {bot.status === 'active' ? 'Running' : 'Stopped'}
+                <div className="flex flex-col items-end gap-1">
+                  <div className={cn(
+                    "px-2 py-1 rounded-full text-xs font-medium",
+                    bot.status === 'active' 
+                      ? "bg-success/20 text-success" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {bot.status === 'active' ? 'Running' : 'Stopped'}
+                  </div>
+                  {bot.status === 'active' && (
+                    <div className={cn(
+                      "px-2 py-0.5 rounded text-xs font-bold animate-pulse",
+                      getActionColor(bot.currentAction)
+                    )}>
+                      {bot.currentAction}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <p className="text-sm text-muted-foreground mb-3">{bot.description}</p>
+
+              {/* Last Trade Result */}
+              {bot.lastTradeResult && (
+                <div className={cn(
+                  "mb-3 p-2 rounded-lg text-sm font-medium flex items-center gap-2",
+                  bot.lastTradeResult.isWin ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                )}>
+                  {bot.lastTradeResult.isWin ? (
+                    <TrendingUp className="h-4 w-4" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4" />
+                  )}
+                  Last: {bot.lastTradeResult.profit >= 0 ? '+' : ''}${bot.lastTradeResult.profit.toFixed(2)}
+                </div>
+              )}
 
               {/* Stake Amount Control */}
               <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-secondary/50">
@@ -408,17 +485,23 @@ export default function BotPage() {
                 <span className="text-sm text-muted-foreground">USD</span>
               </div>
 
+              {/* Stats Row */}
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <span className={cn(
                     "px-2 py-0.5 rounded-full text-xs font-medium",
                     getRiskColor(bot.risk)
                   )}>
-                    <Shield className="h-3 w-3 inline mr-1" />
                     {bot.risk} risk
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {bot.tradesCount} trades
+                  </span>
+                  <span className="text-xs text-success">
+                    {bot.winCount}W
+                  </span>
+                  <span className="text-xs text-destructive">
+                    {bot.lossCount}L
                   </span>
                 </div>
                 <div className={cn(
