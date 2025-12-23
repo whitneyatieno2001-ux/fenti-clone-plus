@@ -384,7 +384,9 @@ export default function BotPage() {
                 "text-4xl font-bold tracking-tight",
                 totalProfit >= 0 ? "text-success" : "text-destructive"
               )}>
-                {totalProfit >= 0 ? '+' : ''}{totalProfit.toFixed(2)}
+                {totalProfit >= 0 && <span className="text-xl font-normal opacity-60">+</span>}
+                {totalProfit < 0 && <span className="text-xl font-normal opacity-60">-</span>}
+                {Math.abs(totalProfit).toFixed(2)}
                 <span className="text-lg ml-1">USD</span>
               </p>
             </div>
@@ -499,7 +501,9 @@ export default function BotPage() {
                   ) : (
                     <TrendingDown className="h-4 w-4" />
                   )}
-                  Last: {bot.lastTradeResult.profit >= 0 ? '+' : ''}${bot.lastTradeResult.profit.toFixed(2)}
+                  Last: {bot.lastTradeResult.profit >= 0 && <span className="text-xs font-normal opacity-60">+</span>}
+                  {bot.lastTradeResult.profit < 0 && <span className="text-xs font-normal opacity-60">-</span>}
+                  ${Math.abs(bot.lastTradeResult.profit).toFixed(2)}
                 </div>
               )}
 
@@ -542,7 +546,9 @@ export default function BotPage() {
                   bot.profit >= 0 ? "text-success" : "text-destructive"
                 )}>
                   {bot.profit >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  {bot.profit >= 0 ? '+' : ''}${bot.profit.toFixed(2)}
+                  {bot.profit >= 0 && <span className="text-xs font-normal opacity-60">+</span>}
+                  {bot.profit < 0 && <span className="text-xs font-normal opacity-60">-</span>}
+                  ${Math.abs(bot.profit).toFixed(2)}
                 </div>
               </div>
 

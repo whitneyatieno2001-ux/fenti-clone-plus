@@ -93,17 +93,22 @@ export const executeArbitrageTrade = (stakeAmount: number, basePrice: number): T
   
   let profitPercent: number;
   if (isWin) {
-    // Arbitrage profits are small but consistent (0.1% to 0.8%)
-    profitPercent = 0.001 + Math.random() * 0.007;
+    // Arbitrage profits are small but consistent (0.5% to 2%)
+    profitPercent = 0.005 + Math.random() * 0.015;
   } else {
-    // Losses occur when spread closes before execution (-0.3% to -1.5%)
-    profitPercent = -(0.003 + Math.random() * 0.012);
+    // Losses occur when spread closes before execution (-0.8% to -2.5%)
+    profitPercent = -(0.008 + Math.random() * 0.017);
   }
   
   // Apply market friction
   const frictionCost = slippage + spread;
   const netProfitPercent = profitPercent - frictionCost + getMarketNoise();
-  const netProfit = stakeAmount * netProfitPercent;
+  let netProfit = stakeAmount * netProfitPercent;
+  
+  // Ensure minimum profit/loss of $0.15 to avoid $0.00 trades
+  if (Math.abs(netProfit) < 0.15) {
+    netProfit = isWin ? (0.15 + Math.random() * 0.35) : -(0.15 + Math.random() * 0.35);
+  }
   
   return {
     isWin: netProfit > 0,
@@ -148,16 +153,21 @@ export const executeScalpingTrade = (stakeAmount: number): TradeResult => {
   
   let profitPercent: number;
   if (isWin) {
-    // Quick small profits (0.3% to 2%)
-    profitPercent = 0.003 + Math.random() * 0.017;
+    // Quick small profits (0.8% to 3%)
+    profitPercent = 0.008 + Math.random() * 0.022;
   } else {
-    // Losses can be larger due to tight stop-loss triggers (-0.5% to -3%)
-    profitPercent = -(0.005 + Math.random() * 0.025);
+    // Losses can be larger due to tight stop-loss triggers (-1% to -4%)
+    profitPercent = -(0.01 + Math.random() * 0.03);
   }
   
   const frictionCost = slippage + spread;
   const netProfitPercent = profitPercent - frictionCost + getMarketNoise();
-  const netProfit = stakeAmount * netProfitPercent;
+  let netProfit = stakeAmount * netProfitPercent;
+  
+  // Ensure minimum profit/loss of $0.20 to avoid $0.00 trades
+  if (Math.abs(netProfit) < 0.20) {
+    netProfit = isWin ? (0.20 + Math.random() * 0.40) : -(0.20 + Math.random() * 0.40);
+  }
   
   return {
     isWin: netProfit > 0,
@@ -266,16 +276,21 @@ export const executeSignalTrade = (stakeAmount: number): TradeResult => {
   
   let profitPercent: number;
   if (isWin) {
-    // Signal trades aim for bigger profits (1% to 5%)
-    profitPercent = 0.01 + Math.random() * 0.04;
+    // Signal trades aim for bigger profits (1.5% to 6%)
+    profitPercent = 0.015 + Math.random() * 0.045;
   } else {
-    // But losses can also be bigger (-1% to -4%)
-    profitPercent = -(0.01 + Math.random() * 0.03);
+    // But losses can also be bigger (-1.5% to -5%)
+    profitPercent = -(0.015 + Math.random() * 0.035);
   }
   
   const frictionCost = slippage + spread;
   const netProfitPercent = profitPercent - frictionCost + getMarketNoise();
-  const netProfit = stakeAmount * netProfitPercent;
+  let netProfit = stakeAmount * netProfitPercent;
+  
+  // Ensure minimum profit/loss of $0.25 to avoid $0.00 trades
+  if (Math.abs(netProfit) < 0.25) {
+    netProfit = isWin ? (0.25 + Math.random() * 0.50) : -(0.25 + Math.random() * 0.50);
+  }
   
   return {
     isWin: netProfit > 0,
