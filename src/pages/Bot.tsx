@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { useAccount } from '@/contexts/AccountContext';
 import { cn } from '@/lib/utils';
 import { 
   Bot, Play, Pause, TrendingUp, TrendingDown, 
-  DollarSign, Activity, Zap, BarChart3, ArrowUpDown
+  DollarSign, Activity, Zap, BarChart3, ArrowUpDown, Settings2
 } from 'lucide-react';
 import { 
   type BotStrategy, 
@@ -35,6 +36,8 @@ interface TradingBot {
   lossCount: number;
   currentAction: 'BUY' | 'SELL' | 'HOLD' | 'SCANNING';
   lastTradeResult?: { profit: number; isWin: boolean };
+  winRate: number;
+  price: number;
 }
 
 const defaultBots: TradingBot[] = [
@@ -42,7 +45,7 @@ const defaultBots: TradingBot[] = [
     id: '1',
     name: 'Arbitrage Hunter',
     strategy: 'arbitrage',
-    description: 'Detects price differences across markets. Lower risk, frequent small profits.',
+    description: '60% win rate bot. Detects price differences across markets. Lower risk, frequent small profits.',
     profit: 0,
     status: 'paused',
     risk: 'low',
@@ -52,12 +55,14 @@ const defaultBots: TradingBot[] = [
     winCount: 0,
     lossCount: 0,
     currentAction: 'SCANNING',
+    winRate: 60,
+    price: 100,
   },
   {
     id: '2',
     name: 'Speed Scalper',
     strategy: 'scalping',
-    description: 'High-frequency trades on small price movements. Fast execution, tight stop-loss.',
+    description: '80% win rate bot. High-frequency trades on small price movements. Fast execution.',
     profit: 0,
     status: 'paused',
     risk: 'high',
@@ -67,12 +72,14 @@ const defaultBots: TradingBot[] = [
     winCount: 0,
     lossCount: 0,
     currentAction: 'SCANNING',
+    winRate: 80,
+    price: 150,
   },
   {
     id: '3',
     name: 'Signal Master',
     strategy: 'signal',
-    description: 'Uses RSI, MA crossovers, and pattern recognition. Trades only when signals align.',
+    description: '40% win rate bot. Uses RSI, MA crossovers, and pattern recognition.',
     profit: 0,
     status: 'paused',
     risk: 'medium',
@@ -82,10 +89,13 @@ const defaultBots: TradingBot[] = [
     winCount: 0,
     lossCount: 0,
     currentAction: 'HOLD',
+    winRate: 40,
+    price: 0,
   },
 ];
 
 export default function BotPage() {
+  const navigate = useNavigate();
   const [bots, setBots] = useState<TradingBot[]>(defaultBots);
   const { toast } = useToast();
   const { currentBalance, accountType, updateBalance, user } = useAccount();
@@ -559,6 +569,17 @@ export default function BotPage() {
                   </>
                 )}
               </Button>
+              
+              {/* Configure Button */}
+              <Button
+                onClick={() => navigate(`/bot/${bot.id}`)}
+                variant="outline"
+                className="w-full mt-2"
+              >
+                <Settings2 className="h-4 w-4 mr-2" />
+                Configure Bot
+              </Button>
+              
               {bot.status === 'paused' && currentBalance < bot.stakeAmount && (
                 <p className="text-xs text-destructive text-center mt-2">
                   Insufficient balance (need ${bot.stakeAmount})

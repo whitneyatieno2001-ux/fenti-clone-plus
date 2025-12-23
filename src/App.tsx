@@ -7,8 +7,10 @@ import { AccountProvider } from "./contexts/AccountContext";
 import Dashboard from "./pages/Dashboard";
 import Markets from "./pages/Markets";
 import Trade from "./pages/Trade";
+import AssetTrade from "./pages/AssetTrade";
 import Futures from "./pages/Futures";
 import Bot from "./pages/Bot";
+import BotTrade from "./pages/BotTrade";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -27,8 +29,10 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/trade" element={<Trade />} />
+            <Route path="/trade/:assetId" element={<AssetTrade />} />
             <Route path="/futures" element={<Futures />} />
             <Route path="/bot" element={<Bot />} />
+            <Route path="/bot/:botId" element={<BotTrade />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/auth" element={<Auth />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

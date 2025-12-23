@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { formatPrice, formatChange, type CryptoAsset } from '@/data/cryptoData';
 
@@ -8,12 +9,22 @@ interface CryptoCardProps {
 }
 
 export function CryptoCard({ crypto, onClick, variant = 'default' }: CryptoCardProps) {
+  const navigate = useNavigate();
   const isPositive = crypto.change24h >= 0;
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      // Navigate to asset trade page
+      navigate(`/trade/${crypto.id}`);
+    }
+  };
 
   if (variant === 'compact') {
     return (
       <div 
-        onClick={onClick}
+        onClick={handleClick}
         className={cn(
           "flex items-center justify-between p-4 rounded-xl transition-all duration-200 cursor-pointer",
           "bg-card hover:bg-secondary border border-border/50"
@@ -27,12 +38,13 @@ export function CryptoCard({ crypto, onClick, variant = 'default' }: CryptoCardP
             {crypto.icon}
           </div>
           <div>
-            <p className="font-semibold text-foreground">{crypto.symbol}</p>
+            {/* Dark black text for symbols */}
+            <p className="font-semibold text-gray-900 dark:text-foreground">{crypto.symbol}</p>
             <p className="text-sm text-muted-foreground">{crypto.name}</p>
           </div>
         </div>
         <div className="text-right">
-          <p className="font-semibold text-foreground">{formatPrice(crypto.price)}</p>
+          <p className="font-semibold text-gray-900 dark:text-foreground">{formatPrice(crypto.price)}</p>
           <p className={cn(
             "text-sm font-medium",
             isPositive ? "text-success" : "text-destructive"
@@ -46,7 +58,7 @@ export function CryptoCard({ crypto, onClick, variant = 'default' }: CryptoCardP
 
   return (
     <div 
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         "p-4 rounded-2xl transition-all duration-300 cursor-pointer border-2",
         isPositive 
@@ -70,9 +82,10 @@ export function CryptoCard({ crypto, onClick, variant = 'default' }: CryptoCardP
         </span>
       </div>
       <div>
-        <p className="font-bold text-foreground">{crypto.symbol}</p>
+        {/* Dark black text */}
+        <p className="font-bold text-gray-900 dark:text-foreground">{crypto.symbol}</p>
         <p className="text-sm text-muted-foreground mb-2">{crypto.name}</p>
-        <p className="font-bold text-lg text-foreground">{formatPrice(crypto.price)}</p>
+        <p className="font-bold text-lg text-gray-900 dark:text-foreground">{formatPrice(crypto.price)}</p>
       </div>
     </div>
   );
