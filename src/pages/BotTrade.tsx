@@ -40,7 +40,7 @@ interface BotConfig {
 const botConfigs: Record<string, BotConfig> = {
   '1': { id: '1', name: 'Arbitrage Hunter', strategy: 'arbitrage', winRate: 60, price: 100, crypto: 'BTC' },
   '2': { id: '2', name: 'Speed Scalper', strategy: 'scalping', winRate: 80, price: 150, crypto: 'ETH' },
-  '3': { id: '3', name: 'Signal Master', strategy: 'signal', winRate: 40, price: 0, crypto: 'SOL' },
+  '3': { id: '3', name: 'Signal Master', strategy: 'signal', winRate: 40, price: 0, crypto: 'SOL' }, // FREE bot
 };
 
 export default function BotTrade() {
@@ -128,10 +128,14 @@ export default function BotTrade() {
     
     const result = executeBotTrade(botConfig.strategy, stake, basePrice);
     
+    // Ensure minimum profit/loss of $0.10 to avoid $0.00 trades
+    const minProfit = 0.10 + Math.random() * 0.50; // $0.10 to $0.60 minimum
+    const baseProfit = Math.abs(result.netProfit) < minProfit ? minProfit : Math.abs(result.netProfit);
+    
     // Override result based on target win rate
     const actualProfit = isWin 
-      ? Math.abs(result.netProfit) 
-      : -Math.abs(result.netProfit);
+      ? baseProfit 
+      : -baseProfit;
     
     // Update balance
     if (user) {
@@ -237,11 +241,9 @@ export default function BotTrade() {
               <p className="text-sm text-muted-foreground">{botConfig.crypto}/USDT • {botConfig.winRate}% target</p>
             </div>
           </div>
-          {botConfig.price > 0 && (
-            <div className="ml-auto px-3 py-1 rounded-full bg-primary/20 text-primary text-sm font-medium">
-              ${botConfig.price}
-            </div>
-          )}
+          <div className="ml-auto px-3 py-1 rounded-full bg-primary/20 text-primary text-sm font-medium">
+            {botConfig.price > 0 ? `$${botConfig.price}` : 'FREE'}
+          </div>
         </div>
       </header>
       
@@ -258,7 +260,9 @@ export default function BotTrade() {
             "text-3xl font-bold",
             totalProfit >= 0 ? "text-success" : "text-destructive"
           )}>
-            {totalProfit >= 0 ? '+' : ''}{totalProfit.toFixed(2)} USD
+            {totalProfit >= 0 && <span className="text-lg font-normal opacity-70">+</span>}
+            {totalProfit < 0 && <span className="text-lg font-normal opacity-70">-</span>}
+            {Math.abs(totalProfit).toFixed(2)} USD
           </p>
           <div className="flex gap-4 mt-2 text-sm">
             <span className="text-muted-foreground">{tradesCount} trades</span>
@@ -400,7 +404,9 @@ export default function BotTrade() {
                       "ml-auto font-semibold",
                       log.profit >= 0 ? "text-success" : "text-destructive"
                     )}>
-                      {log.profit >= 0 ? '+' : ''}{log.profit.toFixed(2)}
+                      {log.profit >= 0 && <span className="text-xs font-normal opacity-60">+</span>}
+                      {log.profit < 0 && <span className="text-xs font-normal opacity-60">-</span>}
+                      {Math.abs(log.profit).toFixed(2)}
                     </span>
                   </div>
                 ))}
