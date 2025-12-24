@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDownToLine, ArrowUpFromLine, CreditCard, Building2, Smartphone, Wallet, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -13,18 +13,11 @@ interface TransactionModalProps {
   type: 'deposit' | 'withdraw';
 }
 
-const paymentMethods = [
-  { id: 'card', name: 'Credit/Debit Card', icon: CreditCard },
-  { id: 'bank', name: 'Bank Transfer', icon: Building2 },
-  { id: 'mobile', name: 'Mobile Money', icon: Smartphone },
-  { id: 'crypto', name: 'Crypto Wallet', icon: Wallet },
-];
-
-const quickAmounts = [10, 50, 100, 500];
+const quickAmounts = [500, 1000, 2500, 5000];
 
 export function TransactionModal({ isOpen, onClose, type }: TransactionModalProps) {
   const [amount, setAmount] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState('card');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { deposit, withdraw, currentBalance, accountType, isLoggedIn } = useAccount();
   const { toast } = useToast();
@@ -49,45 +42,76 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       return;
     }
 
+    if (!phoneNumber || phoneNumber.length < 9) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid M-Pesa phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (type === 'deposit' && numAmount < MINIMUM_DEPOSIT_AMOUNT) {
       toast({
         title: "Minimum Deposit",
-        description: `Minimum deposit is $${MINIMUM_DEPOSIT_AMOUNT}`,
+        description: `Minimum deposit is KES ${MINIMUM_DEPOSIT_AMOUNT}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (type === 'withdraw' && numAmount > currentBalance) {
+      toast({
+        title: "Insufficient Balance",
+        description: "You don't have enough funds for this withdrawal",
         variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    if (type === 'deposit') {
-      await deposit(numAmount);
-      toast({
-        title: "Deposit Successful!",
-        description: `$${numAmount.toLocaleString()} has been added to your ${accountType} account`,
+    try {
+      const { data, error } = await supabase.functions.invoke('mpesa-payment', {
+        body: {
+          action: type,
+          amount: numAmount,
+          phoneNumber: phoneNumber,
+        },
       });
-    } else {
-      const success = await withdraw(numAmount);
-      if (success) {
-        toast({
-          title: "Withdrawal Successful!",
-          description: `$${numAmount.toLocaleString()} has been withdrawn from your ${accountType} account`,
-        });
-      } else {
-        toast({
-          title: "Insufficient Balance",
-          description: "You don't have enough funds for this withdrawal",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-    }
 
-    setIsLoading(false);
-    setAmount('');
-    onClose();
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: type === 'deposit' ? "STK Push Sent!" : "Withdrawal Initiated!",
+          description: data.message,
+        });
+
+        // For deposits, we'll update balance after confirmation (in real app, this would be via callback)
+        // For demo, we'll simulate immediate update
+        if (type === 'deposit') {
+          await deposit(numAmount);
+        } else {
+          await withdraw(numAmount);
+        }
+
+        setAmount('');
+        setPhoneNumber('');
+        onClose();
+      } else {
+        throw new Error(data.error || 'Transaction failed');
+      }
+    } catch (error: any) {
+      console.error('M-Pesa error:', error);
+      toast({
+        title: "Transaction Failed",
+        description: error.message || "An error occurred while processing your request",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -98,12 +122,12 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
             {type === 'deposit' ? (
               <>
                 <ArrowDownToLine className="h-5 w-5 text-primary" />
-                Deposit Funds
+                Deposit via M-Pesa
               </>
             ) : (
               <>
                 <ArrowUpFromLine className="h-5 w-5 text-primary" />
-                Withdraw Funds
+                Withdraw to M-Pesa
               </>
             )}
           </DialogTitle>
@@ -114,7 +138,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
           <div className="p-4 rounded-xl bg-secondary/50">
             <p className="text-sm text-muted-foreground">Current Balance ({accountType})</p>
             <p className="text-2xl font-bold text-foreground">
-              ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              KES {currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </p>
           </div>
 
@@ -122,18 +146,46 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
           {type === 'deposit' && (
             <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
               <AlertCircle className="h-4 w-4 text-primary" />
-              <p className="text-sm text-primary">Minimum deposit: ${MINIMUM_DEPOSIT_AMOUNT}</p>
+              <p className="text-sm text-primary">Minimum deposit: KES {MINIMUM_DEPOSIT_AMOUNT}</p>
             </div>
           )}
+
+          {/* M-Pesa Info */}
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+            <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
+              <Smartphone className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">M-Pesa</p>
+              <p className="text-xs text-muted-foreground">Safaricom Mobile Money</p>
+            </div>
+          </div>
+
+          {/* Phone Number Input */}
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              M-Pesa Phone Number
+            </label>
+            <Input
+              type="tel"
+              placeholder="e.g., 0712345678"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="text-lg h-12 bg-input border-border"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Enter the phone number registered with M-Pesa
+            </p>
+          </div>
 
           {/* Amount Input */}
           <div>
             <label className="text-sm font-medium text-muted-foreground mb-2 block">
-              Amount (USD)
+              Amount (KES)
             </label>
             <Input
               type="number"
-              placeholder={type === 'deposit' ? `Min $${MINIMUM_DEPOSIT_AMOUNT}` : 'Enter amount'}
+              placeholder={type === 'deposit' ? `Min KES ${MINIMUM_DEPOSIT_AMOUNT}` : 'Enter amount'}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="text-lg h-12 bg-input border-border"
@@ -146,62 +198,34 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   onClick={() => setAmount(qa.toString())}
                   className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
                 >
-                  ${qa}
+                  KES {qa.toLocaleString()}
                 </button>
               ))}
-            </div>
-          </div>
-
-          {/* Payment Methods */}
-          <div>
-            <label className="text-sm font-medium text-muted-foreground mb-3 block">
-              Payment Method
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              {paymentMethods.map((method) => {
-                const Icon = method.icon;
-                return (
-                  <button
-                    key={method.id}
-                    onClick={() => setSelectedMethod(method.id)}
-                    className={cn(
-                      "p-3 rounded-xl border-2 flex flex-col items-center gap-2 transition-all",
-                      selectedMethod === method.id
-                        ? "border-primary bg-primary/10"
-                        : "border-border bg-secondary/30 hover:border-primary/50"
-                    )}
-                  >
-                    <Icon className={cn(
-                      "h-5 w-5",
-                      selectedMethod === method.id ? "text-primary" : "text-muted-foreground"
-                    )} />
-                    <span className={cn(
-                      "text-xs font-medium",
-                      selectedMethod === method.id ? "text-foreground" : "text-muted-foreground"
-                    )}>
-                      {method.name}
-                    </span>
-                  </button>
-                );
-              })}
             </div>
           </div>
 
           {/* Submit Button */}
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || !amount}
-            className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+            disabled={isLoading || !amount || !phoneNumber}
+            className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Processing...
               </span>
             ) : (
-              `${type === 'deposit' ? 'Deposit' : 'Withdraw'} $${amount || '0'}`
+              `${type === 'deposit' ? 'Deposit' : 'Withdraw'} KES ${amount ? parseInt(amount).toLocaleString() : '0'}`
             )}
           </Button>
+
+          <p className="text-xs text-center text-muted-foreground">
+            {type === 'deposit' 
+              ? "You will receive an STK push on your phone to complete the payment"
+              : "Funds will be sent to your M-Pesa account within a few minutes"
+            }
+          </p>
         </div>
       </DialogContent>
     </Dialog>
