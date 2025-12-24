@@ -8,8 +8,12 @@ interface PortfolioCardProps {
   onWithdraw: () => void;
 }
 
+// USD to KES exchange rate (approximately current rate)
+const USD_TO_KES_RATE = 130;
+
 export function PortfolioCard({ onDeposit, onWithdraw }: PortfolioCardProps) {
   const { accountType, currentBalance } = useAccount();
+  const kesBalance = currentBalance * USD_TO_KES_RATE;
 
   return (
     <div className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-secondary to-card border border-border">
@@ -41,10 +45,13 @@ export function PortfolioCard({ onDeposit, onWithdraw }: PortfolioCardProps) {
           </span>
         </div>
 
-        <div className="flex items-baseline gap-3 mb-1">
+        <div className="mb-1">
           <h2 className="text-4xl font-bold font-display text-foreground">
             ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            KES {kesBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
         </div>
 
         <div className="flex items-center gap-1 text-success mb-6">
