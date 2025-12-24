@@ -14,6 +14,7 @@ interface TransactionModalProps {
 }
 
 const quickAmounts = [500, 1000, 2500, 5000];
+const USD_TO_KES_RATE = 130;
 
 export function TransactionModal({ isOpen, onClose, type }: TransactionModalProps) {
   const [amount, setAmount] = useState('');
@@ -208,7 +209,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
           <Button
             onClick={handleSubmit}
             disabled={isLoading || !amount || !phoneNumber}
-            className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-semibold"
+            className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex flex-col items-center justify-center gap-0.5"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
@@ -216,7 +217,10 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 Processing...
               </span>
             ) : (
-              `${type === 'deposit' ? 'Deposit' : 'Withdraw'} KES ${amount ? parseInt(amount).toLocaleString() : '0'}`
+              <>
+                <span>{type === 'deposit' ? 'Deposit' : 'Withdraw'} ${amount ? (parseFloat(amount) / USD_TO_KES_RATE).toFixed(2) : '0.00'}</span>
+                <span className="text-xs opacity-80">KES {amount ? parseInt(amount).toLocaleString() : '0'}</span>
+              </>
             )}
           </Button>
 
