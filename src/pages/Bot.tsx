@@ -9,7 +9,8 @@ import { useAccount } from '@/contexts/AccountContext';
 import { cn } from '@/lib/utils';
 import { 
   Bot, Play, Pause, TrendingUp, TrendingDown, 
-  DollarSign, Activity, Zap, BarChart3, ArrowUpDown, Settings2
+  DollarSign, Activity, Zap, BarChart3, ArrowUpDown, Settings2,
+  CheckCircle2, XCircle, ScrollText
 } from 'lucide-react';
 import { 
   type BotStrategy, 
@@ -21,6 +22,17 @@ import {
 } from '@/lib/tradingStrategies';
 import { supabase } from '@/integrations/supabase/client';
 import { useTradingSound } from '@/hooks/useTradingSound';
+
+interface TradeLogEntry {
+  id: string;
+  time: Date;
+  botName: string;
+  asset: string;
+  direction: 'BUY' | 'SELL';
+  stake: number;
+  result: 'WIN' | 'LOSS';
+  profit: number;
+}
 
 interface TradingBot {
   id: string;
@@ -98,6 +110,7 @@ const defaultBots: TradingBot[] = [
 export default function BotPage() {
   const navigate = useNavigate();
   const [bots, setBots] = useState<TradingBot[]>(defaultBots);
+  const [tradeLogs, setTradeLogs] = useState<TradeLogEntry[]>([]);
   const { toast } = useToast();
   const { currentBalance, accountType, updateBalance, user } = useAccount();
   const tradingIntervals = useRef<Record<string, NodeJS.Timeout>>({});
@@ -186,6 +199,19 @@ export default function BotPage() {
 
       // Play trade sound
       playTradeSound(result.isWin);
+
+      // Add to trade logs
+      const logEntry: TradeLogEntry = {
+        id: Date.now().toString(),
+        time: new Date(),
+        botName: bot.name,
+        asset: `${bot.crypto}/USDT`,
+        direction: result.isWin ? 'BUY' : 'SELL',
+        stake: bot.stakeAmount,
+        result: result.isWin ? 'WIN' : 'LOSS',
+        profit: result.netProfit,
+      };
+      setTradeLogs(prev => [logEntry, ...prev].slice(0, 50));
     }
 
     // Update bot stats
@@ -597,6 +623,106 @@ export default function BotPage() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Professional Trade Logs Section */}
+        <div className="mt-6 rounded-2xl bg-card border border-border/50 overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-border/50 bg-gradient-to-r from-secondary/50 to-transparent">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <ScrollText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">Trade History</h3>
+                <p className="text-xs text-muted-foreground">{tradeLogs.length} recent trades</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success/10">
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                <span className="font-semibold text-success">{totalWins}</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10">
+                <XCircle className="h-4 w-4 text-destructive" />
+                <span className="font-semibold text-destructive">{totalLosses}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="max-h-[320px] overflow-y-auto">
+            {tradeLogs.length === 0 ? (
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center">
+                  <Activity className="h-8 w-8 text-muted-foreground/50" />
+                </div>
+                <p className="text-muted-foreground font-medium">No trades yet</p>
+                <p className="text-sm text-muted-foreground/70 mt-1">Start a bot to see live trades</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border/30">
+                {tradeLogs.map((log, index) => (
+                  <div 
+                    key={log.id} 
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/30",
+                      index === 0 && "animate-fade-in bg-muted/20"
+                    )}
+                  >
+                    {/* Result Icon */}
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                      log.result === 'WIN' ? "bg-success/20" : "bg-destructive/20"
+                    )}>
+                      {log.result === 'WIN' ? (
+                        <TrendingUp className="h-5 w-5 text-success" />
+                      ) : (
+                        <TrendingDown className="h-5 w-5 text-destructive" />
+                      )}
+                    </div>
+                    
+                    {/* Trade Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-foreground text-sm truncate">{log.botName}</span>
+                        <span className={cn(
+                          "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide",
+                          log.direction === 'BUY' ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+                        )}>
+                          {log.direction}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-muted-foreground">{log.asset}</span>
+                        <span className="text-xs text-muted-foreground/50">•</span>
+                        <span className="text-xs text-muted-foreground">${log.stake.toFixed(2)} stake</span>
+                        <span className="text-xs text-muted-foreground/50">•</span>
+                        <span className="text-xs text-muted-foreground">
+                          {log.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Result & Profit */}
+                    <div className="text-right shrink-0">
+                      <div className={cn(
+                        "text-sm font-bold",
+                        log.profit >= 0 ? "text-success" : "text-destructive"
+                      )}>
+                        {log.profit >= 0 ? '+' : ''}{log.profit.toFixed(2)}
+                        <span className="text-xs font-normal ml-1">USD</span>
+                      </div>
+                      <div className={cn(
+                        "text-[10px] font-bold uppercase tracking-wide mt-0.5",
+                        log.result === 'WIN' ? "text-success" : "text-destructive"
+                      )}>
+                        {log.result}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
