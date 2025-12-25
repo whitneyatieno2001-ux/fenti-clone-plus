@@ -1,69 +1,155 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 type WebkitWindow = Window & { webkitAudioContext?: typeof AudioContext };
 
-function getAudioContext() {
+function createAudioContext(): AudioContext {
   const w = window as WebkitWindow;
   const Ctx = window.AudioContext || w.webkitAudioContext;
   return new Ctx();
 }
 
-function playTone(opts: {
-  startHz: number;
-  endHz?: number;
-  durationMs: number;
-  type?: OscillatorType;
-  volume?: number;
-}) {
-  const ctx = getAudioContext();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = opts.type ?? 'sine';
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  const now = ctx.currentTime;
-  const dur = opts.durationMs / 1000;
-
-  const vol = opts.volume ?? 0.25;
-  gain.gain.setValueAtTime(vol, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
-
-  osc.frequency.setValueAtTime(opts.startHz, now);
-  if (opts.endHz && opts.endHz !== opts.startHz) {
-    osc.frequency.exponentialRampToValueAtTime(opts.endHz, now + Math.max(0.05, dur * 0.7));
-  }
-
-  osc.start(now);
-  osc.stop(now + dur);
-}
-
-// Simple, "binary bot" style cues: entry tick + win chime + loss buzz.
+// Professional trading sound hook with realistic audio cues
 export function useTradingSound() {
+  const ctxRef = useRef<AudioContext | null>(null);
+
+  const getCtx = useCallback(() => {
+    if (!ctxRef.current || ctxRef.current.state === 'closed') {
+      ctxRef.current = createAudioContext();
+    }
+    if (ctxRef.current.state === 'suspended') {
+      ctxRef.current.resume();
+    }
+    return ctxRef.current;
+  }, []);
+
+  // Entry tick: clean digital "click" notification
   const playEntrySound = useCallback(() => {
-    // Short "tick" like trade executed
-    playTone({ startHz: 900, endHz: 700, durationMs: 90, type: 'square', volume: 0.12 });
-  }, []);
+    const ctx = getCtx();
+    const now = ctx.currentTime;
 
+    // Click oscillator
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1800, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.04);
+
+    filter.type = 'highpass';
+    filter.frequency.value = 800;
+
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.1);
+  }, [getCtx]);
+
+  // Win sound: satisfying ascending chime (3-note arpeggio)
   const playWinSound = useCallback(() => {
-    // Chime up
-    playTone({ startHz: 520, endHz: 1040, durationMs: 180, type: 'triangle', volume: 0.2 });
-    setTimeout(() => playTone({ startHz: 780, endHz: 1240, durationMs: 140, type: 'triangle', volume: 0.14 }), 120);
-  }, []);
+    const ctx = getCtx();
+    const now = ctx.currentTime;
 
+    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5 major chord
+    const delays = [0, 0.07, 0.14];
+
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+
+      const start = now + delays[i];
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.18, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(start);
+      osc.stop(start + 0.4);
+    });
+
+    // Add subtle high shimmer
+    const shimmer = ctx.createOscillator();
+    const shimmerGain = ctx.createGain();
+    shimmer.type = 'sine';
+    shimmer.frequency.value = 1567.98; // G6
+
+    shimmerGain.gain.setValueAtTime(0, now + 0.15);
+    shimmerGain.gain.linearRampToValueAtTime(0.06, now + 0.18);
+    shimmerGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+    shimmer.connect(shimmerGain);
+    shimmerGain.connect(ctx.destination);
+    shimmer.start(now + 0.15);
+    shimmer.stop(now + 0.55);
+  }, [getCtx]);
+
+  // Loss sound: subtle descending tone (non-harsh)
   const playLossSound = useCallback(() => {
-    // Buzz down
-    playTone({ startHz: 420, endHz: 160, durationMs: 220, type: 'sawtooth', volume: 0.18 });
-  }, []);
+    const ctx = getCtx();
+    const now = ctx.currentTime;
 
+    // Main tone - descending
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(440, now);
+    osc1.frequency.exponentialRampToValueAtTime(220, now + 0.25);
+
+    filter.type = 'lowpass';
+    filter.frequency.value = 1200;
+
+    gain1.gain.setValueAtTime(0.12, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+    osc1.connect(filter);
+    filter.connect(gain1);
+    gain1.connect(ctx.destination);
+
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    // Subtle second tone
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(349.23, now + 0.05); // F4
+    osc2.frequency.exponentialRampToValueAtTime(174.61, now + 0.25);
+
+    gain2.gain.setValueAtTime(0.08, now + 0.05);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+    osc2.connect(ctx.destination);
+    gain2.connect(ctx.destination);
+    osc2.connect(gain2);
+
+    osc2.start(now + 0.05);
+    osc2.stop(now + 0.3);
+  }, [getCtx]);
+
+  // Combined trade sound with entry + result
   const playTradeSound = useCallback(
     (isWin: boolean) => {
       playEntrySound();
       setTimeout(() => {
-        if (isWin) playWinSound();
-        else playLossSound();
-      }, 110);
+        if (isWin) {
+          playWinSound();
+        } else {
+          playLossSound();
+        }
+      }, 150);
     },
     [playEntrySound, playWinSound, playLossSound]
   );
