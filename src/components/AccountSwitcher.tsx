@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAccount } from '@/contexts/AccountContext';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import usFlag from '@/assets/us-flag.png';
 
 export function AccountSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
@@ -60,11 +61,12 @@ export function AccountSwitcher() {
             accountType === 'real' ? "bg-gray-50" : "hover:bg-gray-50"
           )}
         >
-          <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+          <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-muted">
             <img 
-              src="https://flagcdn.com/w80/us.png" 
-              alt="USA Flag"
+              src={usFlag}
+              alt="USA flag (real account)"
               className="w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
           <div className="flex-1">
