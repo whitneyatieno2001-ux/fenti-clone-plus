@@ -161,10 +161,10 @@ export default function BotTrade() {
     setTotalProfit(prev => prev + actualProfit);
     setTradesCount(prev => prev + 1);
     if (isWin) setWinsCount(prev => prev + 1);
-    
+
     // Play trade sound
     playTradeSound(isWin);
-    
+
     await logTradeToDb(log);
     
     // Handle Martingale

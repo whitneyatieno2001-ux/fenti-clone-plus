@@ -183,7 +183,7 @@ export default function BotPage() {
       const operation = result.netProfit > 0 ? 'add' : 'subtract';
       await updateBalance(accountType, Math.abs(result.netProfit), operation);
       await logTrade(bot, { profit: result.netProfit, isWin: result.isWin });
-      
+
       // Play trade sound
       playTradeSound(result.isWin);
     }
