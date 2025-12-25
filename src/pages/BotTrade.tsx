@@ -17,6 +17,7 @@ import {
 } from '@/lib/tradingStrategies';
 import { CandlestickChart } from '@/components/CandlestickChart';
 import { supabase } from '@/integrations/supabase/client';
+import { useTradingSound } from '@/hooks/useTradingSound';
 
 interface TradeLog {
   id: string;
@@ -58,6 +59,8 @@ export default function BotTrade() {
   const [tradeLogs, setTradeLogs] = useState<TradeLog[]>([]);
   const [tradesCount, setTradesCount] = useState(0);
   const [winsCount, setWinsCount] = useState(0);
+  
+  const { playTradeSound } = useTradingSound();
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const balanceRef = useRef(currentBalance);
@@ -158,6 +161,9 @@ export default function BotTrade() {
     setTotalProfit(prev => prev + actualProfit);
     setTradesCount(prev => prev + 1);
     if (isWin) setWinsCount(prev => prev + 1);
+    
+    // Play trade sound
+    playTradeSound(isWin);
     
     await logTradeToDb(log);
     
