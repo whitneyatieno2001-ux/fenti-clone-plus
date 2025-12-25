@@ -20,6 +20,7 @@ import {
   findArbitrageOpportunity
 } from '@/lib/tradingStrategies';
 import { supabase } from '@/integrations/supabase/client';
+import { useTradingSound } from '@/hooks/useTradingSound';
 
 interface TradingBot {
   id: string;
@@ -101,7 +102,7 @@ export default function BotPage() {
   const { currentBalance, accountType, updateBalance, user } = useAccount();
   const tradingIntervals = useRef<Record<string, NodeJS.Timeout>>({});
   const scanningIntervals = useRef<Record<string, NodeJS.Timeout>>({});
-  
+  const { playTradeSound } = useTradingSound();
   // Keep refs for latest state to avoid stale closures
   const botsRef = useRef(bots);
   const balanceRef = useRef(currentBalance);
@@ -182,6 +183,9 @@ export default function BotPage() {
       const operation = result.netProfit > 0 ? 'add' : 'subtract';
       await updateBalance(accountType, Math.abs(result.netProfit), operation);
       await logTrade(bot, { profit: result.netProfit, isWin: result.isWin });
+      
+      // Play trade sound
+      playTradeSound(result.isWin);
     }
 
     // Update bot stats

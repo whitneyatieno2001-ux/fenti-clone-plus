@@ -60,59 +60,12 @@ export function AccountSwitcher() {
             accountType === 'real' ? "bg-gray-50" : "hover:bg-gray-50"
           )}
         >
-          <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center">
-            {/* USA Flag SVG that fills circle completely */}
-            <svg viewBox="0 0 48 48" className="w-full h-full">
-              <defs>
-                <clipPath id="circleClip">
-                  <circle cx="24" cy="24" r="24" />
-                </clipPath>
-              </defs>
-              <g clipPath="url(#circleClip)">
-                {/* Red and white stripes */}
-                <rect x="0" y="0" width="48" height="3.7" fill="#B22234" />
-                <rect x="0" y="3.7" width="48" height="3.7" fill="white" />
-                <rect x="0" y="7.4" width="48" height="3.7" fill="#B22234" />
-                <rect x="0" y="11.1" width="48" height="3.7" fill="white" />
-                <rect x="0" y="14.8" width="48" height="3.7" fill="#B22234" />
-                <rect x="0" y="18.5" width="48" height="3.7" fill="white" />
-                <rect x="0" y="22.2" width="48" height="3.7" fill="#B22234" />
-                <rect x="0" y="25.9" width="48" height="3.7" fill="white" />
-                <rect x="0" y="29.6" width="48" height="3.7" fill="#B22234" />
-                <rect x="0" y="33.3" width="48" height="3.7" fill="white" />
-                <rect x="0" y="37" width="48" height="3.7" fill="#B22234" />
-                <rect x="0" y="40.7" width="48" height="3.7" fill="white" />
-                <rect x="0" y="44.4" width="48" height="3.6" fill="#B22234" />
-                {/* Blue canton */}
-                <rect x="0" y="0" width="20" height="26" fill="#3C3B6E" />
-                {/* Stars (simplified) */}
-                <g fill="white" fontSize="4">
-                  <text x="2" y="5">★</text>
-                  <text x="6" y="5">★</text>
-                  <text x="10" y="5">★</text>
-                  <text x="14" y="5">★</text>
-                  <text x="4" y="9">★</text>
-                  <text x="8" y="9">★</text>
-                  <text x="12" y="9">★</text>
-                  <text x="16" y="9">★</text>
-                  <text x="2" y="13">★</text>
-                  <text x="6" y="13">★</text>
-                  <text x="10" y="13">★</text>
-                  <text x="14" y="13">★</text>
-                  <text x="4" y="17">★</text>
-                  <text x="8" y="17">★</text>
-                  <text x="12" y="17">★</text>
-                  <text x="16" y="17">★</text>
-                  <text x="2" y="21">★</text>
-                  <text x="6" y="21">★</text>
-                  <text x="10" y="21">★</text>
-                  <text x="14" y="21">★</text>
-                  <text x="4" y="25">★</text>
-                  <text x="8" y="25">★</text>
-                  <text x="12" y="25">★</text>
-                </g>
-              </g>
-            </svg>
+          <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+            <img 
+              src="https://flagcdn.com/w80/us.png" 
+              alt="USA Flag"
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
