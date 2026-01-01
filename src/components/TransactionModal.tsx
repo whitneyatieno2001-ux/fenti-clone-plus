@@ -14,8 +14,7 @@ interface TransactionModalProps {
 }
 
 const PAYHERO_DEPOSIT_LINK = 'https://short.payhero.co.ke/s/L9sqoCZ7EW2riRENtemoSK';
-const quickAmounts = [500, 1000, 2500, 5000];
-const USD_TO_KES_RATE = 130;
+const quickAmounts = [5, 10, 25, 50];
 
 export function TransactionModal({ isOpen, onClose, type }: TransactionModalProps) {
   const [amount, setAmount] = useState('');
@@ -206,7 +205,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
             <div className="p-4 rounded-xl bg-secondary/50">
               <p className="text-sm text-muted-foreground">Current Balance ({accountType})</p>
               <p className="text-2xl font-bold text-foreground">
-                KES {currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
             </div>
 
@@ -280,7 +279,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
-              Minimum deposit: KES {MINIMUM_DEPOSIT_AMOUNT}
+              Minimum deposit: ${MINIMUM_DEPOSIT_AMOUNT}
             </p>
           </div>
         </DialogContent>
@@ -304,7 +303,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
           <div className="p-4 rounded-xl bg-secondary/50">
             <p className="text-sm text-muted-foreground">Current Balance ({accountType})</p>
             <p className="text-2xl font-bold text-foreground">
-              KES {currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </p>
           </div>
 
@@ -339,7 +338,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
           {/* Amount Input */}
           <div>
             <label className="text-sm font-medium text-muted-foreground mb-2 block">
-              Amount (KES)
+              Amount (USD)
             </label>
             <Input
               type="number"
@@ -356,7 +355,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   onClick={() => setAmount(qa.toString())}
                   className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
                 >
-                  KES {qa.toLocaleString()}
+                  ${qa}
                 </button>
               ))}
             </div>
@@ -366,7 +365,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
           <Button
             onClick={handleWithdraw}
             disabled={isLoading || !amount || !phoneNumber}
-            className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex flex-col items-center justify-center gap-0.5"
+            className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
@@ -374,10 +373,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 Processing...
               </span>
             ) : (
-              <>
-                <span>Withdraw ${amount ? (parseFloat(amount) / USD_TO_KES_RATE).toFixed(2) : '0.00'}</span>
-                <span className="text-xs opacity-80">KES {amount ? parseInt(amount).toLocaleString() : '0'}</span>
-              </>
+              <span>Withdraw ${amount ? parseFloat(amount).toFixed(2) : '0.00'}</span>
             )}
           </Button>
 
