@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionModalProps {
@@ -13,6 +13,7 @@ interface TransactionModalProps {
   type: 'deposit' | 'withdraw';
 }
 
+const PAYHERO_DEPOSIT_LINK = 'https://short.payhero.co.ke/s/L9sqoCZ7EW2riRENtemoSK';
 const quickAmounts = [500, 1000, 2500, 5000];
 const USD_TO_KES_RATE = 130;
 
@@ -20,10 +21,25 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [amount, setAmount] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { deposit, withdraw, currentBalance, accountType, isLoggedIn } = useAccount();
+  const { withdraw, currentBalance, accountType, isLoggedIn } = useAccount();
   const { toast } = useToast();
 
-  const handleSubmit = async () => {
+  const handleDeposit = () => {
+    if (!isLoggedIn) {
+      toast({
+        title: "Login Required",
+        description: "Please login to make deposits",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Open PayHero link in new tab
+    window.open(PAYHERO_DEPOSIT_LINK, '_blank');
+    onClose();
+  };
+
+  const handleWithdraw = async () => {
     if (!isLoggedIn) {
       toast({
         title: "Login Required",
@@ -52,16 +68,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       return;
     }
 
-    if (type === 'deposit' && numAmount < MINIMUM_DEPOSIT_AMOUNT) {
-      toast({
-        title: "Minimum Deposit",
-        description: `Minimum deposit is KES ${MINIMUM_DEPOSIT_AMOUNT}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (type === 'withdraw' && numAmount > currentBalance) {
+    if (numAmount > currentBalance) {
       toast({
         title: "Insufficient Balance",
         description: "You don't have enough funds for this withdrawal",
@@ -75,7 +82,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     try {
       const { data, error } = await supabase.functions.invoke('mpesa-payment', {
         body: {
-          action: type,
+          action: 'withdraw',
           amount: numAmount,
           phoneNumber: phoneNumber,
         },
@@ -85,18 +92,11 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
 
       if (data.success) {
         toast({
-          title: type === 'deposit' ? "STK Push Sent!" : "Withdrawal Initiated!",
+          title: "Withdrawal Initiated!",
           description: data.message,
         });
 
-        // For deposits, we'll update balance after confirmation (in real app, this would be via callback)
-        // For demo, we'll simulate immediate update
-        if (type === 'deposit') {
-          await deposit(numAmount);
-        } else {
-          await withdraw(numAmount);
-        }
-
+        await withdraw(numAmount);
         setAmount('');
         setPhoneNumber('');
         onClose();
@@ -115,22 +115,68 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     }
   };
 
+  // Deposit UI - Simple redirect
+  if (type === 'deposit') {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-foreground">
+              <ArrowDownToLine className="h-5 w-5 text-primary" />
+              Deposit Funds
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Current Balance */}
+            <div className="p-4 rounded-xl bg-secondary/50">
+              <p className="text-sm text-muted-foreground">Current Balance ({accountType})</p>
+              <p className="text-2xl font-bold text-foreground">
+                KES {currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+
+            {/* PayHero Info */}
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 border border-primary/20">
+              <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
+                <Smartphone className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">PayHero</p>
+                <p className="text-xs text-muted-foreground">Secure Payment Gateway</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground text-center">
+              You'll be redirected to PayHero to complete your deposit securely.
+            </p>
+
+            {/* Deposit Button */}
+            <Button
+              onClick={handleDeposit}
+              className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-2"
+            >
+              <ExternalLink className="h-5 w-5" />
+              Deposit Now
+            </Button>
+
+            <p className="text-xs text-center text-muted-foreground">
+              Minimum deposit: KES {MINIMUM_DEPOSIT_AMOUNT}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Withdraw UI - Keep M-Pesa flow
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
-            {type === 'deposit' ? (
-              <>
-                <ArrowDownToLine className="h-5 w-5 text-primary" />
-                Deposit via M-Pesa
-              </>
-            ) : (
-              <>
-                <ArrowUpFromLine className="h-5 w-5 text-primary" />
-                Withdraw to M-Pesa
-              </>
-            )}
+            <ArrowUpFromLine className="h-5 w-5 text-primary" />
+            Withdraw to M-Pesa
           </DialogTitle>
         </DialogHeader>
 
@@ -142,14 +188,6 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               KES {currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </p>
           </div>
-
-          {/* Minimum Deposit Notice */}
-          {type === 'deposit' && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/20">
-              <AlertCircle className="h-4 w-4 text-primary" />
-              <p className="text-sm text-primary">Minimum deposit: KES {MINIMUM_DEPOSIT_AMOUNT}</p>
-            </div>
-          )}
 
           {/* M-Pesa Info */}
           <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
@@ -186,11 +224,11 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
             </label>
             <Input
               type="number"
-              placeholder={type === 'deposit' ? `Min KES ${MINIMUM_DEPOSIT_AMOUNT}` : 'Enter amount'}
+              placeholder="Enter amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="text-lg h-12 bg-input border-border"
-              min={type === 'deposit' ? MINIMUM_DEPOSIT_AMOUNT : 1}
+              min={1}
             />
             <div className="flex gap-2 mt-3">
               {quickAmounts.map((qa) => (
@@ -207,7 +245,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
 
           {/* Submit Button */}
           <Button
-            onClick={handleSubmit}
+            onClick={handleWithdraw}
             disabled={isLoading || !amount || !phoneNumber}
             className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex flex-col items-center justify-center gap-0.5"
           >
@@ -218,17 +256,14 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               </span>
             ) : (
               <>
-                <span>{type === 'deposit' ? 'Deposit' : 'Withdraw'} ${amount ? (parseFloat(amount) / USD_TO_KES_RATE).toFixed(2) : '0.00'}</span>
+                <span>Withdraw ${amount ? (parseFloat(amount) / USD_TO_KES_RATE).toFixed(2) : '0.00'}</span>
                 <span className="text-xs opacity-80">KES {amount ? parseInt(amount).toLocaleString() : '0'}</span>
               </>
             )}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            {type === 'deposit' 
-              ? "You will receive an STK push on your phone to complete the payment"
-              : "Funds will be sent to your M-Pesa account within a few minutes"
-            }
+            Funds will be sent to your M-Pesa account within a few minutes
           </p>
         </div>
       </DialogContent>
