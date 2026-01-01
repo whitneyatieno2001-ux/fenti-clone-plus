@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionModalProps {
@@ -21,8 +21,69 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [amount, setAmount] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { withdraw, currentBalance, accountType, isLoggedIn } = useAccount();
+  const [phoneSaved, setPhoneSaved] = useState(false);
+  const [existingPhone, setExistingPhone] = useState('');
+  const { withdraw, currentBalance, accountType, isLoggedIn, user } = useAccount();
   const { toast } = useToast();
+
+  // Load user's saved phone number
+  useEffect(() => {
+    const loadPhoneNumber = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('profiles')
+        .select('phone_number')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (data?.phone_number) {
+        setExistingPhone(data.phone_number);
+        setPhoneNumber(data.phone_number);
+        setPhoneSaved(true);
+      }
+    };
+    
+    if (isOpen) {
+      loadPhoneNumber();
+    }
+  }, [user, isOpen]);
+
+  const savePhoneNumber = async () => {
+    if (!user || !phoneNumber || phoneNumber.length < 9) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid M-Pesa phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ phone_number: phoneNumber })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setPhoneSaved(true);
+      setExistingPhone(phoneNumber);
+      toast({
+        title: "Phone Saved!",
+        description: "Your M-Pesa number has been saved for deposits",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save phone number",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDeposit = () => {
     if (!isLoggedIn) {
@@ -33,9 +94,22 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       });
       return;
     }
+
+    if (!phoneSaved) {
+      toast({
+        title: "Save Phone Number First",
+        description: "Please save your M-Pesa number before depositing",
+        variant: "destructive",
+      });
+      return;
+    }
     
     // Open PayHero link in new tab
     window.open(PAYHERO_DEPOSIT_LINK, '_blank');
+    toast({
+      title: "Complete Payment",
+      description: "Use the same M-Pesa number to receive your deposit automatically",
+    });
     onClose();
   };
 
@@ -115,7 +189,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     }
   };
 
-  // Deposit UI - Simple redirect
+  // Deposit UI - Save phone then redirect
   if (type === 'deposit') {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -147,14 +221,59 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground text-center">
-              You'll be redirected to PayHero to complete your deposit securely.
-            </p>
+            {/* Phone Number Input */}
+            <div>
+              <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                M-Pesa Phone Number
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  type="tel"
+                  placeholder="e.g., 0712345678"
+                  value={phoneNumber}
+                  onChange={(e) => {
+                    setPhoneNumber(e.target.value);
+                    if (e.target.value !== existingPhone) {
+                      setPhoneSaved(false);
+                    }
+                  }}
+                  className="text-lg h-12 bg-input border-border flex-1"
+                  disabled={isLoading}
+                />
+                {!phoneSaved ? (
+                  <Button
+                    onClick={savePhoneNumber}
+                    disabled={isLoading || !phoneNumber}
+                    className="h-12 px-4 bg-primary"
+                  >
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                  </Button>
+                ) : (
+                  <div className="h-12 px-4 flex items-center text-green-500">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {phoneSaved 
+                  ? "Use this same number when paying via PayHero" 
+                  : "Save your M-Pesa number to receive deposits automatically"}
+              </p>
+            </div>
+
+            {/* Important Notice */}
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+              <p className="text-xs text-amber-500">
+                Pay with the same M-Pesa number saved above. Your deposit will reflect automatically.
+              </p>
+            </div>
 
             {/* Deposit Button */}
             <Button
               onClick={handleDeposit}
-              className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-2"
+              disabled={!phoneSaved}
+              className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <ExternalLink className="h-5 w-5" />
               Deposit Now
