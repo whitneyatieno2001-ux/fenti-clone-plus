@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink, CheckCircle2, Bitcoin, Wallet, ChevronLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionModalProps {
@@ -12,6 +12,9 @@ interface TransactionModalProps {
   onClose: () => void;
   type: 'deposit' | 'withdraw';
 }
+
+type PaymentCategory = 'select' | 'crypto' | 'mobile';
+type PaymentMethod = 'binance' | 'mpesa' | 'airtel' | 'paypal' | null;
 
 const PAYHERO_DEPOSIT_LINK = 'https://short.payhero.co.ke/s/L9sqoCZ7EW2riRENtemoSK';
 const quickAmounts = [5, 10, 25, 50];
@@ -22,8 +25,18 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [isLoading, setIsLoading] = useState(false);
   const [phoneSaved, setPhoneSaved] = useState(false);
   const [existingPhone, setExistingPhone] = useState('');
+  const [paymentCategory, setPaymentCategory] = useState<PaymentCategory>('select');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const { withdraw, currentBalance, accountType, isLoggedIn, user } = useAccount();
   const { toast } = useToast();
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setPaymentCategory('select');
+      setPaymentMethod(null);
+    }
+  }, [isOpen]);
 
   // Load user's saved phone number
   useEffect(() => {
@@ -52,7 +65,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     if (!user || !phoneNumber || phoneNumber.length < 9) {
       toast({
         title: "Invalid phone number",
-        description: "Please enter a valid M-Pesa phone number",
+        description: "Please enter a valid phone number",
         variant: "destructive",
       });
       return;
@@ -71,7 +84,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       setExistingPhone(phoneNumber);
       toast({
         title: "Phone Saved!",
-        description: "Your M-Pesa number has been saved for deposits",
+        description: "Your phone number has been saved for deposits",
       });
     } catch (error: any) {
       toast({
@@ -94,22 +107,47 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       return;
     }
 
-    if (!phoneSaved) {
+    if (paymentMethod === 'binance') {
       toast({
-        title: "Save Phone Number First",
-        description: "Please save your M-Pesa number before depositing",
-        variant: "destructive",
+        title: "Coming Soon",
+        description: "Binance payments will be available soon",
       });
       return;
     }
-    
-    // Open PayHero link in new tab
-    window.open(PAYHERO_DEPOSIT_LINK, '_blank');
-    toast({
-      title: "Complete Payment",
-      description: "Use the same M-Pesa number to receive your deposit automatically",
-    });
-    onClose();
+
+    if (paymentMethod === 'mpesa') {
+      if (!phoneSaved) {
+        toast({
+          title: "Save Phone Number First",
+          description: "Please save your M-Pesa number before depositing",
+          variant: "destructive",
+        });
+        return;
+      }
+      window.open(PAYHERO_DEPOSIT_LINK, '_blank');
+      toast({
+        title: "Complete Payment",
+        description: "Use the same M-Pesa number to receive your deposit automatically",
+      });
+      onClose();
+      return;
+    }
+
+    if (paymentMethod === 'airtel') {
+      toast({
+        title: "Coming Soon",
+        description: "Airtel Money payments will be available soon",
+      });
+      return;
+    }
+
+    if (paymentMethod === 'paypal') {
+      toast({
+        title: "Coming Soon",
+        description: "PayPal payments will be available soon",
+      });
+      return;
+    }
   };
 
   const handleWithdraw = async () => {
@@ -188,13 +226,26 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     }
   };
 
-  // Deposit UI - Save phone then redirect
+  const goBack = () => {
+    if (paymentMethod) {
+      setPaymentMethod(null);
+    } else {
+      setPaymentCategory('select');
+    }
+  };
+
+  // Deposit UI
   if (type === 'deposit') {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-foreground">
+              {(paymentCategory !== 'select' || paymentMethod) && (
+                <Button variant="ghost" size="icon" onClick={goBack} className="h-8 w-8 mr-1">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              )}
               <ArrowDownToLine className="h-5 w-5 text-primary" />
               Deposit Funds
             </DialogTitle>
@@ -209,74 +260,270 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               </p>
             </div>
 
-            {/* PayHero Info */}
-            <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 border border-primary/20">
-              <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center">
-                <Smartphone className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground">PayHero</p>
-                <p className="text-xs text-muted-foreground">Secure Payment Gateway</p>
-              </div>
-            </div>
-
-            {/* Phone Number Input */}
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                M-Pesa Phone Number
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  type="tel"
-                  placeholder="e.g., 0712345678"
-                  value={phoneNumber}
-                  onChange={(e) => {
-                    setPhoneNumber(e.target.value);
-                    if (e.target.value !== existingPhone) {
-                      setPhoneSaved(false);
-                    }
-                  }}
-                  className="text-lg h-12 bg-input border-border flex-1"
-                  disabled={isLoading}
-                />
-                {!phoneSaved ? (
-                  <Button
-                    onClick={savePhoneNumber}
-                    disabled={isLoading || !phoneNumber}
-                    className="h-12 px-4 bg-primary"
-                  >
-                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
-                  </Button>
-                ) : (
-                  <div className="h-12 px-4 flex items-center text-green-500">
-                    <CheckCircle2 className="h-5 w-5" />
+            {/* Payment Category Selection */}
+            {paymentCategory === 'select' && (
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">Select Payment Method</p>
+                
+                {/* Crypto Option */}
+                <button
+                  onClick={() => setPaymentCategory('crypto')}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-orange-500 flex items-center justify-center">
+                    <Bitcoin className="h-6 w-6 text-white" />
                   </div>
-                )}
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground">Crypto Payments</p>
+                    <p className="text-xs text-muted-foreground">Pay with cryptocurrency</p>
+                  </div>
+                </button>
+
+                {/* Mobile Money Option */}
+                <button
+                  onClick={() => setPaymentCategory('mobile')}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
+                    <Wallet className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground">Mobile Money</p>
+                    <p className="text-xs text-muted-foreground">M-Pesa, Airtel Money, PayPal</p>
+                  </div>
+                </button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {phoneSaved 
-                  ? "Use this same number when paying via PayHero" 
-                  : "Save your M-Pesa number to receive deposits automatically"}
-              </p>
-            </div>
+            )}
 
-            {/* Important Notice */}
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-              <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-              <p className="text-xs text-amber-500">
-                Pay with the same M-Pesa number saved above. Your deposit will reflect automatically.
-              </p>
-            </div>
+            {/* Crypto Options */}
+            {paymentCategory === 'crypto' && !paymentMethod && (
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">Select Crypto Provider</p>
+                
+                <button
+                  onClick={() => setPaymentMethod('binance')}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-yellow-500 flex items-center justify-center">
+                    <span className="text-xl font-bold text-black">B</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground">Binance</p>
+                    <p className="text-xs text-muted-foreground">Pay with Binance Pay</p>
+                  </div>
+                </button>
+              </div>
+            )}
 
-            {/* Deposit Button */}
-            <Button
-              onClick={handleDeposit}
-              disabled={!phoneSaved}
-              className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <ExternalLink className="h-5 w-5" />
-              Deposit Now
-            </Button>
+            {/* Mobile Money Options */}
+            {paymentCategory === 'mobile' && !paymentMethod && (
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">Select Payment Provider</p>
+                
+                {/* M-Pesa */}
+                <button
+                  onClick={() => setPaymentMethod('mpesa')}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
+                    <Smartphone className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground">M-Pesa</p>
+                    <p className="text-xs text-muted-foreground">Safaricom Mobile Money</p>
+                  </div>
+                </button>
+
+                {/* Airtel Money */}
+                <button
+                  onClick={() => setPaymentMethod('airtel')}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center">
+                    <Smartphone className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground">Airtel Money</p>
+                    <p className="text-xs text-muted-foreground">Airtel Mobile Money</p>
+                  </div>
+                </button>
+
+                {/* PayPal */}
+                <button
+                  onClick={() => setPaymentMethod('paypal')}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-blue-600 flex items-center justify-center">
+                    <span className="text-lg font-bold text-white">P</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground">PayPal</p>
+                    <p className="text-xs text-muted-foreground">Pay with PayPal</p>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* Binance Selected */}
+            {paymentMethod === 'binance' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+                  <div className="h-12 w-12 rounded-full bg-yellow-500 flex items-center justify-center">
+                    <span className="text-xl font-bold text-black">B</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">Binance Pay</p>
+                    <p className="text-xs text-muted-foreground">Coming Soon</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                  <p className="text-xs text-amber-500">
+                    Binance Pay integration is coming soon. Please use M-Pesa for now.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleDeposit}
+                  disabled
+                  className="w-full h-14 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  Coming Soon
+                </Button>
+              </div>
+            )}
+
+            {/* M-Pesa Selected */}
+            {paymentMethod === 'mpesa' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+                  <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
+                    <Smartphone className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">M-Pesa via PayHero</p>
+                    <p className="text-xs text-muted-foreground">Secure Payment Gateway</p>
+                  </div>
+                </div>
+
+                {/* Phone Number Input */}
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                    M-Pesa Phone Number
+                  </label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="tel"
+                      placeholder="e.g., 0712345678"
+                      value={phoneNumber}
+                      onChange={(e) => {
+                        setPhoneNumber(e.target.value);
+                        if (e.target.value !== existingPhone) {
+                          setPhoneSaved(false);
+                        }
+                      }}
+                      className="text-lg h-12 bg-input border-border flex-1"
+                      disabled={isLoading}
+                    />
+                    {!phoneSaved ? (
+                      <Button
+                        onClick={savePhoneNumber}
+                        disabled={isLoading || !phoneNumber}
+                        className="h-12 px-4 bg-primary"
+                      >
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                      </Button>
+                    ) : (
+                      <div className="h-12 px-4 flex items-center text-green-500">
+                        <CheckCircle2 className="h-5 w-5" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {phoneSaved 
+                      ? "Use this same number when paying via PayHero" 
+                      : "Save your M-Pesa number to receive deposits automatically"}
+                  </p>
+                </div>
+
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                  <p className="text-xs text-amber-500">
+                    Pay with the same M-Pesa number saved above. Your deposit will reflect automatically.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleDeposit}
+                  disabled={!phoneSaved}
+                  className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <ExternalLink className="h-5 w-5" />
+                  Deposit Now
+                </Button>
+              </div>
+            )}
+
+            {/* Airtel Money Selected */}
+            {paymentMethod === 'airtel' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                  <div className="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center">
+                    <Smartphone className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">Airtel Money</p>
+                    <p className="text-xs text-muted-foreground">Coming Soon</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                  <p className="text-xs text-amber-500">
+                    Airtel Money integration is coming soon. Please use M-Pesa for now.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleDeposit}
+                  disabled
+                  className="w-full h-14 bg-red-500 hover:bg-red-600 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  Coming Soon
+                </Button>
+              </div>
+            )}
+
+            {/* PayPal Selected */}
+            {paymentMethod === 'paypal' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                  <div className="h-12 w-12 rounded-full bg-blue-600 flex items-center justify-center">
+                    <span className="text-lg font-bold text-white">P</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">PayPal</p>
+                    <p className="text-xs text-muted-foreground">Coming Soon</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                  <p className="text-xs text-amber-500">
+                    PayPal integration is coming soon. Please use M-Pesa for now.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleDeposit}
+                  disabled
+                  className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  Coming Soon
+                </Button>
+              </div>
+            )}
 
             <p className="text-xs text-center text-muted-foreground">
               Minimum deposit: ${MINIMUM_DEPOSIT_AMOUNT}
