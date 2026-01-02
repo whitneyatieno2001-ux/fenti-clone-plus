@@ -13,7 +13,7 @@ interface TransactionModalProps {
   type: 'deposit' | 'withdraw';
 }
 
-type PaymentCategory = 'select' | 'crypto' | 'mobile';
+type PaymentCategory = 'select' | 'crypto' | 'mobile' | 'card';
 type PaymentMethod = 'binance' | 'mpesa' | 'airtel' | 'paypal' | 'card' | null;
 
 const PAYHERO_DEPOSIT_LINK = 'https://short.payhero.co.ke/s/L9sqoCZ7EW2riRENtemoSK';
@@ -292,6 +292,20 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                     <p className="text-xs text-muted-foreground">M-Pesa, Airtel Money, PayPal</p>
                   </div>
                 </button>
+
+                {/* Card Payment Option */}
+                <button
+                  onClick={() => setPaymentCategory('card')}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
+                    <CreditCard className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground">Card Payment</p>
+                    <p className="text-xs text-muted-foreground">Visa, Mastercard, etc.</p>
+                  </div>
+                </button>
               </div>
             )}
 
@@ -362,19 +376,36 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   </div>
                 </button>
 
-                {/* Card Payment */}
-                <button
-                  onClick={() => setPaymentMethod('card')}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
-                >
+              </div>
+            )}
+
+            {/* Card Payment Category */}
+            {paymentCategory === 'card' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
                   <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
                     <CreditCard className="h-6 w-6 text-white" />
                   </div>
-                  <div className="text-left">
+                  <div>
                     <p className="font-semibold text-foreground">Card Payment</p>
-                    <p className="text-xs text-muted-foreground">Visa, Mastercard, etc.</p>
+                    <p className="text-xs text-muted-foreground">Coming Soon</p>
                   </div>
-                </button>
+                </div>
+
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                  <p className="text-xs text-amber-500">
+                    Card payments (Visa, Mastercard) will be available soon. Please use M-Pesa for now.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleDeposit}
+                  disabled
+                  className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  Coming Soon
+                </Button>
               </div>
             )}
 
@@ -498,35 +529,6 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               </div>
             )}
 
-            {/* Card Payment Selected */}
-            {paymentMethod === 'card' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                  <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
-                    <CreditCard className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">Card Payment</p>
-                    <p className="text-xs text-muted-foreground">Coming Soon</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                  <p className="text-xs text-amber-500">
-                    Card payment integration is coming soon. Please use M-Pesa for now.
-                  </p>
-                </div>
-
-                <Button
-                  onClick={handleDeposit}
-                  disabled
-                  className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  Coming Soon
-                </Button>
-              </div>
-            )}
 
             <p className="text-xs text-center text-muted-foreground">
               Minimum deposit: ${MINIMUM_DEPOSIT_AMOUNT}
