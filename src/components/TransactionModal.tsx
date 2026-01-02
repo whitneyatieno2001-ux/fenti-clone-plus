@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink, CheckCircle2, Bitcoin, Wallet, ChevronLeft } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink, Bitcoin, Wallet, ChevronLeft, CreditCard, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionModalProps {
@@ -14,7 +14,7 @@ interface TransactionModalProps {
 }
 
 type PaymentCategory = 'select' | 'crypto' | 'mobile';
-type PaymentMethod = 'binance' | 'mpesa' | 'airtel' | 'paypal' | null;
+type PaymentMethod = 'binance' | 'mpesa' | 'airtel' | 'paypal' | 'card' | null;
 
 const PAYHERO_DEPOSIT_LINK = 'https://short.payhero.co.ke/s/L9sqoCZ7EW2riRENtemoSK';
 const quickAmounts = [5, 10, 25, 50];
@@ -116,18 +116,10 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     }
 
     if (paymentMethod === 'mpesa') {
-      if (!phoneSaved) {
-        toast({
-          title: "Save Phone Number First",
-          description: "Please save your M-Pesa number before depositing",
-          variant: "destructive",
-        });
-        return;
-      }
       window.open(PAYHERO_DEPOSIT_LINK, '_blank');
       toast({
         title: "Complete Payment",
-        description: "Use the same M-Pesa number to receive your deposit automatically",
+        description: "Complete your M-Pesa payment on the PayHero page",
       });
       onClose();
       return;
@@ -145,6 +137,14 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       toast({
         title: "Coming Soon",
         description: "PayPal payments will be available soon",
+      });
+      return;
+    }
+
+    if (paymentMethod === 'card') {
+      toast({
+        title: "Coming Soon",
+        description: "Card payments will be available soon",
       });
       return;
     }
@@ -361,6 +361,20 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                     <p className="text-xs text-muted-foreground">Pay with PayPal</p>
                   </div>
                 </button>
+
+                {/* Card Payment */}
+                <button
+                  onClick={() => setPaymentMethod('card')}
+                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
+                >
+                  <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
+                    <CreditCard className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground">Card Payment</p>
+                    <p className="text-xs text-muted-foreground">Visa, Mastercard, etc.</p>
+                  </div>
+                </button>
               </div>
             )}
 
@@ -407,60 +421,19 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   </div>
                 </div>
 
-                {/* Phone Number Input */}
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                    M-Pesa Phone Number
-                  </label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="tel"
-                      placeholder="e.g., 0712345678"
-                      value={phoneNumber}
-                      onChange={(e) => {
-                        setPhoneNumber(e.target.value);
-                        if (e.target.value !== existingPhone) {
-                          setPhoneSaved(false);
-                        }
-                      }}
-                      className="text-lg h-12 bg-input border-border flex-1"
-                      disabled={isLoading}
-                    />
-                    {!phoneSaved ? (
-                      <Button
-                        onClick={savePhoneNumber}
-                        disabled={isLoading || !phoneNumber}
-                        className="h-12 px-4 bg-primary"
-                      >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
-                      </Button>
-                    ) : (
-                      <div className="h-12 px-4 flex items-center text-green-500">
-                        <CheckCircle2 className="h-5 w-5" />
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {phoneSaved 
-                      ? "Use this same number when paying via PayHero" 
-                      : "Save your M-Pesa number to receive deposits automatically"}
-                  </p>
-                </div>
-
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                  <p className="text-xs text-amber-500">
-                    Pay with the same M-Pesa number saved above. Your deposit will reflect automatically.
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <AlertCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                  <p className="text-xs text-green-400">
+                    You will be redirected to PayHero to complete your M-Pesa payment securely.
                   </p>
                 </div>
 
                 <Button
                   onClick={handleDeposit}
-                  disabled={!phoneSaved}
-                  className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-2"
                 >
                   <ExternalLink className="h-5 w-5" />
-                  Deposit Now
+                  Pay with M-Pesa
                 </Button>
               </div>
             )}
@@ -519,6 +492,36 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   onClick={handleDeposit}
                   disabled
                   className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  Coming Soon
+                </Button>
+              </div>
+            )}
+
+            {/* Card Payment Selected */}
+            {paymentMethod === 'card' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                  <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
+                    <CreditCard className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">Card Payment</p>
+                    <p className="text-xs text-muted-foreground">Coming Soon</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                  <p className="text-xs text-amber-500">
+                    Card payment integration is coming soon. Please use M-Pesa for now.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleDeposit}
+                  disabled
+                  className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   Coming Soon
                 </Button>
