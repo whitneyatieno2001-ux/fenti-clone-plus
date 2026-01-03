@@ -149,6 +149,7 @@ export default function BotPage() {
         status: 'completed',
         description: `${bot.name} (${bot.strategy}) - ${result.isWin ? 'WIN' : 'LOSS'}: ${result.profit >= 0 ? '+' : ''}$${result.profit.toFixed(2)} on ${bot.crypto}/USDT`,
         account_type: accountType,
+        profit_loss: result.profit, // Store signed P/L value
       });
     } catch (err) {
       console.error('Error logging trade:', err);
