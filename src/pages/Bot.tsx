@@ -116,9 +116,20 @@ export default function BotPage() {
   const tradingIntervals = useRef<Record<string, NodeJS.Timeout>>({});
   const scanningIntervals = useRef<Record<string, NodeJS.Timeout>>({});
   const { playTradeSound } = useTradingSound();
+  
+  // Track starting balance for accurate P/L calculation
+  const [startingBalance, setStartingBalance] = useState<number | null>(null);
+  
   // Keep refs for latest state to avoid stale closures
   const botsRef = useRef(bots);
   const balanceRef = useRef(currentBalance);
+  
+  // Set starting balance when page loads
+  useEffect(() => {
+    if (startingBalance === null && currentBalance > 0) {
+      setStartingBalance(currentBalance);
+    }
+  }, [currentBalance, startingBalance]);
   
   useEffect(() => {
     botsRef.current = bots;
@@ -390,7 +401,10 @@ export default function BotPage() {
     }
   };
 
-  const totalProfit = bots.reduce((sum, bot) => sum + bot.profit, 0);
+  // Calculate P/L from actual balance change for accuracy
+  const sessionProfit = bots.reduce((sum, bot) => sum + bot.profit, 0);
+  const actualProfit = startingBalance !== null ? currentBalance - startingBalance : sessionProfit;
+  const totalProfit = actualProfit;
   const activeBots = bots.filter(bot => bot.status === 'active').length;
   const totalTrades = bots.reduce((sum, bot) => sum + bot.tradesCount, 0);
   const totalWins = bots.reduce((sum, bot) => sum + bot.winCount, 0);
