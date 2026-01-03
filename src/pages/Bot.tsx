@@ -203,10 +203,31 @@ export default function BotPage() {
       return;
     }
 
-    // Update balance
+    // Update balance (must succeed so P/L always matches balance)
     if (user && result.netProfit !== 0) {
       const operation = result.netProfit > 0 ? 'add' : 'subtract';
-      await updateBalance(accountType, Math.abs(result.netProfit), operation);
+      const ok = await updateBalance(accountType, Math.abs(result.netProfit), operation);
+      if (!ok) {
+        // Pause bot if we couldn't apply the trade to the balance
+        setBots(prev => prev.map(b => 
+          b.id === botId ? { ...b, status: 'paused', currentAction: 'HOLD' } : b
+        ));
+        if (tradingIntervals.current[botId]) {
+          clearInterval(tradingIntervals.current[botId]);
+          delete tradingIntervals.current[botId];
+        }
+        if (scanningIntervals.current[botId]) {
+          clearInterval(scanningIntervals.current[botId]);
+          delete scanningIntervals.current[botId];
+        }
+        toast({
+          title: "Balance update failed",
+          description: `${bot.name} was paused because the trade couldn't be applied to your balance`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       await logTrade(bot, { profit: result.netProfit, isWin: result.isWin });
 
       // Play trade sound
