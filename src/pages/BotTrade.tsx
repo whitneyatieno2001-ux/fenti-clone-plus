@@ -153,10 +153,24 @@ export default function BotTrade() {
       ? baseProfit 
       : -baseProfit;
     
-    // Update balance
+    // Update balance (must succeed for P/L to be considered applied)
     if (user) {
       const operation = actualProfit > 0 ? 'add' : 'subtract';
-      await updateBalance(accountType, Math.abs(actualProfit), operation);
+      const ok = await updateBalance(accountType, Math.abs(actualProfit), operation);
+      if (!ok) {
+        // Stop if balance update failed so UI P/L never diverges from balance
+        setIsRunning(false);
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        toast({
+          title: "Balance update failed",
+          description: "Trade was not applied to your balance. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     // Create log entry
@@ -206,15 +220,21 @@ export default function BotTrade() {
         });
         return;
       }
-      
+
+      // Snapshot balance at the moment the bot starts (P/L will be balance delta from here)
+      setStartingBalance(currentBalance);
+      setTradeLogs([]);
+      setTradesCount(0);
+      setWinsCount(0);
+
       setCurrentStake(stakeAmount);
-      
+
       // Start trading
       executeTrade();
       intervalRef.current = setInterval(() => {
         executeTrade();
       }, 3000 + Math.random() * 2000);
-      
+
       setIsRunning(true);
       toast({
         title: "Bot Started",
