@@ -55,10 +55,12 @@ export default function BotTrade() {
   const [martingaleEnabled, setMartingaleEnabled] = useState(false);
   const [martingaleMultiplier, setMartingaleMultiplier] = useState(2);
   const [currentStake, setCurrentStake] = useState(10);
-  const [totalProfit, setTotalProfit] = useState(0);
   const [tradeLogs, setTradeLogs] = useState<TradeLog[]>([]);
   const [tradesCount, setTradesCount] = useState(0);
   const [winsCount, setWinsCount] = useState(0);
+  
+  // Track starting balance for accurate P/L calculation
+  const [startingBalance, setStartingBalance] = useState<number | null>(null);
   
   const { playTradeSound } = useTradingSound();
   
@@ -67,6 +69,16 @@ export default function BotTrade() {
   const currentStakeRef = useRef(currentStake);
   
   const botConfig = botId ? botConfigs[botId] : null;
+  
+  // Set starting balance when page loads
+  useEffect(() => {
+    if (startingBalance === null && currentBalance > 0) {
+      setStartingBalance(currentBalance);
+    }
+  }, [currentBalance, startingBalance]);
+  
+  // Calculate actual P/L from balance change
+  const totalProfit = startingBalance !== null ? currentBalance - startingBalance : 0;
   
   useEffect(() => {
     balanceRef.current = currentBalance;
@@ -159,7 +171,6 @@ export default function BotTrade() {
     };
     
     setTradeLogs(prev => [log, ...prev].slice(0, 100));
-    setTotalProfit(prev => prev + actualProfit);
     setTradesCount(prev => prev + 1);
     if (isWin) setWinsCount(prev => prev + 1);
 
