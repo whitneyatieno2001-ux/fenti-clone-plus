@@ -103,6 +103,7 @@ export type Database = {
           currency: string
           description: string | null
           id: string
+          profit_loss: number | null
           status: string
           type: string
           user_id: string
@@ -114,6 +115,7 @@ export type Database = {
           currency?: string
           description?: string | null
           id?: string
+          profit_loss?: number | null
           status?: string
           type: string
           user_id: string
@@ -125,6 +127,7 @@ export type Database = {
           currency?: string
           description?: string | null
           id?: string
+          profit_loss?: number | null
           status?: string
           type?: string
           user_id?: string

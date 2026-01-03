@@ -96,6 +96,7 @@ export default function BotTrade() {
         status: 'completed',
         description: `${botConfig?.name} - ${log.result}: ${log.profit >= 0 ? '+' : ''}$${log.profit.toFixed(2)} on ${log.asset}/USDT`,
         account_type: accountType,
+        profit_loss: log.profit, // Store signed P/L value
       });
     } catch (err) {
       console.error('Error logging trade:', err);
