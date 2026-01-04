@@ -15,8 +15,8 @@ interface TransactionModalProps {
 
 type PaymentCategory = 'select' | 'crypto' | 'mobile' | 'card';
 type PaymentMethod = 'binance' | 'mpesa' | 'airtel' | 'paypal' | 'card' | null;
-type WithdrawCategory = 'select' | 'mobile';
-type WithdrawMethod = 'mpesa' | 'airtel' | null;
+type WithdrawCategory = 'select' | 'crypto' | 'mobile' | 'card';
+type WithdrawMethod = 'binance' | 'mpesa' | 'airtel' | 'card' | null;
 
 const PAYHERO_DEPOSIT_LINK = 'https://short.payhero.co.ke/s/L9sqoCZ7EW2riRENtemoSK';
 const quickAmounts = [5, 10, 25, 50];
@@ -584,6 +584,20 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
             <div className="space-y-3">
               <p className="text-sm font-medium text-muted-foreground">Select Withdrawal Method</p>
 
+              {/* Crypto Option */}
+              <button
+                onClick={() => setWithdrawCategory('crypto')}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-orange-500 flex items-center justify-center">
+                  <Bitcoin className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-foreground">Crypto Payments</p>
+                  <p className="text-xs text-muted-foreground">Withdraw to crypto wallet</p>
+                </div>
+              </button>
+
               {/* Mobile Money Option */}
               <button
                 onClick={() => setWithdrawCategory('mobile')}
@@ -597,6 +611,98 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   <p className="text-xs text-muted-foreground">M-Pesa, Airtel Money</p>
                 </div>
               </button>
+
+              {/* Card Option */}
+              <button
+                onClick={() => setWithdrawCategory('card')}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
+                  <CreditCard className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-foreground">Card / Bank</p>
+                  <p className="text-xs text-muted-foreground">Withdraw to card or bank</p>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Crypto Options */}
+          {withdrawCategory === 'crypto' && !withdrawMethod && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Select Crypto Provider</p>
+
+              <button
+                onClick={() => setWithdrawMethod('binance')}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-yellow-500 flex items-center justify-center">
+                  <span className="text-xl font-bold text-black">B</span>
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-foreground">Binance</p>
+                  <p className="text-xs text-muted-foreground">Withdraw via Binance Pay</p>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Card Category */}
+          {withdrawCategory === 'card' && !withdrawMethod && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
+                  <CreditCard className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Card / Bank Withdrawal</p>
+                  <p className="text-xs text-muted-foreground">Coming Soon</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                <p className="text-xs text-amber-500">
+                  Card and bank withdrawals will be available soon. Please use M-Pesa for now.
+                </p>
+              </div>
+
+              <Button
+                disabled
+                className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white font-semibold disabled:opacity-50"
+              >
+                Coming Soon
+              </Button>
+            </div>
+          )}
+
+          {/* Binance Withdraw (Coming Soon) */}
+          {withdrawMethod === 'binance' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+                <div className="h-12 w-12 rounded-full bg-yellow-500 flex items-center justify-center">
+                  <span className="text-xl font-bold text-black">B</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Binance Pay</p>
+                  <p className="text-xs text-muted-foreground">Coming Soon</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                <p className="text-xs text-amber-500">
+                  Binance Pay withdrawals will be available soon. Please use M-Pesa for now.
+                </p>
+              </div>
+
+              <Button
+                disabled
+                className="w-full h-14 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold disabled:opacity-50"
+              >
+                Coming Soon
+              </Button>
             </div>
           )}
 
