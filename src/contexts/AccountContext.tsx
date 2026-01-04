@@ -139,28 +139,26 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const updateBalance = async (type: AccountType, amount: number, operation: 'add' | 'subtract'): Promise<boolean> => {
     if (!user) return false;
 
-    const column = type === 'demo' ? 'demo_balance' : 'real_balance';
-    const currentBal = type === 'demo' ? demoBalance : realBalance;
-    const newBalance = operation === 'add' ? currentBal + amount : currentBal - amount;
-
-    if (newBalance < 0) return false;
+    const delta = operation === 'add' ? amount : -amount;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ [column]: newBalance })
-        .eq('user_id', user.id);
+      const { data, error } = await supabase.rpc('adjust_profile_balance', {
+        p_account_type: type,
+        p_delta: delta,
+      });
 
       if (error) throw error;
 
+      const newBalance = Number(data);
       if (type === 'demo') {
         setDemoBalance(newBalance);
       } else {
         setRealBalance(newBalance);
       }
       return true;
-    } catch (err) {
-      console.error('Error updating balance:', err);
+    } catch (err: any) {
+      // insufficient_funds or other known errors
+      console.error('Error updating balance:', err?.message || err);
       return false;
     }
   };

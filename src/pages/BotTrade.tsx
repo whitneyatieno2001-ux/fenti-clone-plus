@@ -59,26 +59,16 @@ export default function BotTrade() {
   const [tradesCount, setTradesCount] = useState(0);
   const [winsCount, setWinsCount] = useState(0);
   
-  // Track starting balance for accurate P/L calculation
-  const [startingBalance, setStartingBalance] = useState<number | null>(null);
+  // Cumulative P/L for the session (sum of individual trade profits)
+  const [totalProfit, setTotalProfit] = useState(0);
   
   const { playTradeSound } = useTradingSound();
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const balanceRef = useRef(currentBalance);
   const currentStakeRef = useRef(currentStake);
-  
+
   const botConfig = botId ? botConfigs[botId] : null;
-  
-  // Set starting balance when page loads
-  useEffect(() => {
-    if (startingBalance === null && currentBalance > 0) {
-      setStartingBalance(currentBalance);
-    }
-  }, [currentBalance, startingBalance]);
-  
-  // Calculate actual P/L from balance change
-  const totalProfit = startingBalance !== null ? currentBalance - startingBalance : 0;
   
   useEffect(() => {
     balanceRef.current = currentBalance;
@@ -173,6 +163,9 @@ export default function BotTrade() {
       }
     }
     
+    // Update cumulative P/L
+    setTotalProfit(prev => prev + actualProfit);
+
     // Create log entry
     const log: TradeLog = {
       id: Date.now().toString(),
@@ -221,8 +214,7 @@ export default function BotTrade() {
         return;
       }
 
-      // Snapshot balance at the moment the bot starts (P/L will be balance delta from here)
-      setStartingBalance(currentBalance);
+      // Reset session stats (P/L keeps accumulating across start/stop)
       setTradeLogs([]);
       setTradesCount(0);
       setWinsCount(0);
