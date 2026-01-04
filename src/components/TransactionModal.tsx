@@ -15,6 +15,8 @@ interface TransactionModalProps {
 
 type PaymentCategory = 'select' | 'crypto' | 'mobile' | 'card';
 type PaymentMethod = 'binance' | 'mpesa' | 'airtel' | 'paypal' | 'card' | null;
+type WithdrawCategory = 'select' | 'mobile';
+type WithdrawMethod = 'mpesa' | 'airtel' | null;
 
 const PAYHERO_DEPOSIT_LINK = 'https://short.payhero.co.ke/s/L9sqoCZ7EW2riRENtemoSK';
 const quickAmounts = [5, 10, 25, 50];
@@ -27,6 +29,8 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [existingPhone, setExistingPhone] = useState('');
   const [paymentCategory, setPaymentCategory] = useState<PaymentCategory>('select');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
+  const [withdrawCategory, setWithdrawCategory] = useState<WithdrawCategory>('select');
+  const [withdrawMethod, setWithdrawMethod] = useState<WithdrawMethod>(null);
   const { withdraw, currentBalance, accountType, isLoggedIn, user } = useAccount();
   const { toast } = useToast();
 
@@ -35,6 +39,9 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     if (!isOpen) {
       setPaymentCategory('select');
       setPaymentMethod(null);
+      setWithdrawCategory('select');
+      setWithdrawMethod(null);
+      setAmount('');
     }
   }, [isOpen]);
 
@@ -227,10 +234,18 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   };
 
   const goBack = () => {
-    if (paymentMethod) {
-      setPaymentMethod(null);
+    if (type === 'deposit') {
+      if (paymentMethod) {
+        setPaymentMethod(null);
+      } else {
+        setPaymentCategory('select');
+      }
     } else {
-      setPaymentCategory('select');
+      if (withdrawMethod) {
+        setWithdrawMethod(null);
+      } else {
+        setWithdrawCategory('select');
+      }
     }
   };
 
@@ -539,14 +554,19 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     );
   }
 
-  // Withdraw UI - Keep M-Pesa flow
+  // Withdraw UI with category/method flow like deposit
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
+            {(withdrawCategory !== 'select' || withdrawMethod) && (
+              <Button variant="ghost" size="icon" onClick={goBack} className="h-8 w-8 mr-1">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
             <ArrowUpFromLine className="h-5 w-5 text-primary" />
-            Withdraw to M-Pesa
+            Withdraw Funds
           </DialogTitle>
         </DialogHeader>
 
@@ -559,79 +579,168 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
             </p>
           </div>
 
-          {/* M-Pesa Info */}
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
-            <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
-              <Smartphone className="h-6 w-6 text-white" />
+          {/* Category Selection */}
+          {withdrawCategory === 'select' && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Select Withdrawal Method</p>
+
+              {/* Mobile Money Option */}
+              <button
+                onClick={() => setWithdrawCategory('mobile')}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
+                  <Wallet className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-foreground">Mobile Money</p>
+                  <p className="text-xs text-muted-foreground">M-Pesa, Airtel Money</p>
+                </div>
+              </button>
             </div>
-            <div>
-              <p className="font-semibold text-foreground">M-Pesa</p>
-              <p className="text-xs text-muted-foreground">Safaricom Mobile Money</p>
+          )}
+
+          {/* Mobile Money Options */}
+          {withdrawCategory === 'mobile' && !withdrawMethod && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">Select Provider</p>
+
+              {/* M-Pesa */}
+              <button
+                onClick={() => setWithdrawMethod('mpesa')}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
+                  <Smartphone className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-foreground">M-Pesa</p>
+                  <p className="text-xs text-muted-foreground">Safaricom Mobile Money</p>
+                </div>
+              </button>
+
+              {/* Airtel Money */}
+              <button
+                onClick={() => setWithdrawMethod('airtel')}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+              >
+                <div className="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center">
+                  <Smartphone className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-foreground">Airtel Money</p>
+                  <p className="text-xs text-muted-foreground">Coming Soon</p>
+                </div>
+              </button>
             </div>
-          </div>
+          )}
 
-          {/* Phone Number Input */}
-          <div>
-            <label className="text-sm font-medium text-muted-foreground mb-2 block">
-              M-Pesa Phone Number
-            </label>
-            <Input
-              type="tel"
-              placeholder="e.g., 0712345678"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className="text-lg h-12 bg-input border-border"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Enter the phone number registered with M-Pesa
-            </p>
-          </div>
+          {/* M-Pesa Withdraw Form */}
+          {withdrawMethod === 'mpesa' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+                <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
+                  <Smartphone className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">M-Pesa</p>
+                  <p className="text-xs text-muted-foreground">Safaricom Mobile Money</p>
+                </div>
+              </div>
 
-          {/* Amount Input */}
-          <div>
-            <label className="text-sm font-medium text-muted-foreground mb-2 block">
-              Amount (USD)
-            </label>
-            <Input
-              type="number"
-              placeholder="Enter amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="text-lg h-12 bg-input border-border"
-              min={1}
-            />
-            <div className="flex gap-2 mt-3">
-              {quickAmounts.map((qa) => (
-                <button
-                  key={qa}
-                  onClick={() => setAmount(qa.toString())}
-                  className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
-                >
-                  ${qa}
-                </button>
-              ))}
+              {/* Phone Number Input */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                  M-Pesa Phone Number
+                </label>
+                <Input
+                  type="tel"
+                  placeholder="e.g., 0712345678"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="text-lg h-12 bg-input border-border"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter the phone number registered with M-Pesa
+                </p>
+              </div>
+
+              {/* Amount Input */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                  Amount (USD)
+                </label>
+                <Input
+                  type="number"
+                  placeholder="Enter amount"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="text-lg h-12 bg-input border-border"
+                  min={1}
+                />
+                <div className="flex gap-2 mt-3">
+                  {quickAmounts.map((qa) => (
+                    <button
+                      key={qa}
+                      onClick={() => setAmount(qa.toString())}
+                      className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
+                    >
+                      ${qa}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                onClick={handleWithdraw}
+                disabled={isLoading || !amount || !phoneNumber}
+                className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center"
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </span>
+                ) : (
+                  <span>Withdraw ${amount ? parseFloat(amount).toFixed(2) : '0.00'}</span>
+                )}
+              </Button>
+
+              <p className="text-xs text-center text-muted-foreground">
+                Funds will be sent to your M-Pesa account within a few minutes
+              </p>
             </div>
-          </div>
+          )}
 
-          {/* Submit Button */}
-          <Button
-            onClick={handleWithdraw}
-            disabled={isLoading || !amount || !phoneNumber}
-            className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center"
-          >
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Processing...
-              </span>
-            ) : (
-              <span>Withdraw ${amount ? parseFloat(amount).toFixed(2) : '0.00'}</span>
-            )}
-          </Button>
+          {/* Airtel Money (Coming Soon) */}
+          {withdrawMethod === 'airtel' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                <div className="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center">
+                  <Smartphone className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Airtel Money</p>
+                  <p className="text-xs text-muted-foreground">Coming Soon</p>
+                </div>
+              </div>
 
-          <p className="text-xs text-center text-muted-foreground">
-            Funds will be sent to your M-Pesa account within a few minutes
-          </p>
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                <p className="text-xs text-amber-500">
+                  Airtel Money withdrawals will be available soon. Please use M-Pesa for now.
+                </p>
+              </div>
+
+              <Button
+                disabled
+                className="w-full h-14 bg-red-500 hover:bg-red-600 text-white font-semibold disabled:opacity-50"
+              >
+                Coming Soon
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

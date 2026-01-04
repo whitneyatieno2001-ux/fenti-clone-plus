@@ -139,7 +139,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      adjust_profile_balance: {
+        Args: { p_account_type: string; p_delta: number }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
