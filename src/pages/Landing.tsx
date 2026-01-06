@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAccount } from '@/contexts/AccountContext';
+import { CandlestickVisual } from '@/components/CandlestickVisual';
 import { 
   TrendingUp, 
   Shield, 
@@ -15,7 +16,6 @@ import {
   Award,
   ArrowRight
 } from 'lucide-react';
-import heroTrader from '@/assets/hero-trader.jpg';
 import traderCharts from '@/assets/trader-charts.jpg';
 
 export default function Landing() {
@@ -129,22 +129,16 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Hero image */}
+            {/* Candlestick chart visual */}
             <div className="relative animate-slide-up hidden lg:block">
-              <div className="relative">
-                <img 
-                  src={traderCharts} 
-                  alt="Professional trader analyzing candlestick charts" 
-                  className="w-full max-w-lg mx-auto rounded-2xl shadow-2xl border border-border"
-                />
-                {/* Floating profit indicator */}
-                <div className="absolute -top-4 -right-4 bg-success text-success-foreground px-4 py-2 rounded-lg shadow-lg animate-float">
-                  <p className="text-sm font-semibold">+$1,234.50</p>
-                </div>
-                <div className="absolute -bottom-4 -left-4 bg-card border border-border px-4 py-3 rounded-lg shadow-lg">
-                  <p className="text-xs text-muted-foreground">Today&apos;s Profit</p>
-                  <p className="text-lg font-bold text-success">+12.5%</p>
-                </div>
+              <CandlestickVisual />
+              {/* Floating profit indicator */}
+              <div className="absolute -top-4 -right-4 bg-success text-success-foreground px-4 py-2 rounded-lg shadow-lg animate-float">
+                <p className="text-sm font-semibold">+$1,234.50</p>
+              </div>
+              <div className="absolute -bottom-4 -left-4 bg-card border border-border px-4 py-3 rounded-lg shadow-lg">
+                <p className="text-xs text-muted-foreground">Today&apos;s Profit</p>
+                <p className="text-lg font-bold text-success">+12.5%</p>
               </div>
             </div>
           </div>
