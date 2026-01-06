@@ -15,6 +15,7 @@ import {
   Award,
   ArrowRight
 } from 'lucide-react';
+import heroTrader from '@/assets/hero-trader.jpg';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -76,11 +77,11 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto relative">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="animate-fade-in">
-              <p className="text-primary font-semibold mb-4 tracking-wide">Trading for</p>
+              <p className="text-primary font-semibold mb-4 tracking-wide">Start Your Journey</p>
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-foreground leading-tight mb-6">
-                Anyone<br />
-                <span className="text-gradient">Anywhere</span><br />
-                Anytime
+                Trade<br />
+                <span className="text-gradient">Smarter</span><br />
+                Grow Faster
               </h1>
               <p className="text-lg text-muted-foreground mb-8 max-w-lg">
                 Experience the future of cryptocurrency trading with advanced tools, real-time analytics, and automated trading bots.
@@ -127,65 +128,22 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Hero image/chart visual */}
+            {/* Hero image */}
             <div className="relative animate-slide-up hidden lg:block">
-              <div className="relative bg-card rounded-2xl border border-border p-6 shadow-card">
-                {/* Mock trading interface */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                      <span className="text-primary font-bold">₿</span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-foreground">BTC/USDT</p>
-                      <p className="text-sm text-success">+2.45%</p>
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">$67,234.50</p>
+              <div className="relative">
+                <img 
+                  src={heroTrader} 
+                  alt="Professional trader" 
+                  className="w-full max-w-md mx-auto rounded-2xl shadow-2xl border border-border"
+                />
+                {/* Floating profit indicator */}
+                <div className="absolute -top-4 -right-4 bg-success text-success-foreground px-4 py-2 rounded-lg shadow-lg animate-float">
+                  <p className="text-sm font-semibold">+$1,234.50</p>
                 </div>
-                
-                {/* Mock chart */}
-                <div className="h-48 relative overflow-hidden rounded-lg bg-secondary/50">
-                  <svg className="w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="hsl(45 93% 47%)" stopOpacity="0.3" />
-                        <stop offset="100%" stopColor="hsl(45 93% 47%)" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d="M0,100 Q50,80 100,90 T200,60 T300,70 T400,30 L400,150 L0,150 Z"
-                      fill="url(#chartGradient)"
-                    />
-                    <path
-                      d="M0,100 Q50,80 100,90 T200,60 T300,70 T400,30"
-                      fill="none"
-                      stroke="hsl(45 93% 47%)"
-                      strokeWidth="3"
-                    />
-                  </svg>
+                <div className="absolute -bottom-4 -left-4 bg-card border border-border px-4 py-3 rounded-lg shadow-lg">
+                  <p className="text-xs text-muted-foreground">Today&apos;s Profit</p>
+                  <p className="text-lg font-bold text-success">+12.5%</p>
                 </div>
-
-                {/* Quick stats */}
-                <div className="grid grid-cols-3 gap-4 mt-4">
-                  <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground">24h High</p>
-                    <p className="text-sm font-semibold text-foreground">$68,500</p>
-                  </div>
-                  <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground">24h Low</p>
-                    <p className="text-sm font-semibold text-foreground">$65,200</p>
-                  </div>
-                  <div className="text-center p-3 bg-secondary/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground">Volume</p>
-                    <p className="text-sm font-semibold text-foreground">$2.4B</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating elements */}
-              <div className="absolute -top-4 -right-4 bg-success text-success-foreground px-4 py-2 rounded-lg shadow-lg animate-float">
-                <p className="text-sm font-semibold">+$1,234.50</p>
               </div>
             </div>
           </div>
