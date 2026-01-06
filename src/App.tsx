@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AccountProvider } from "./contexts/AccountContext";
+import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Markets from "./pages/Markets";
 import Trade from "./pages/Trade";
@@ -25,7 +26,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Landing />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/trade" element={<Trade />} />
