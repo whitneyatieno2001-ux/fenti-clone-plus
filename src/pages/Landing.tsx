@@ -16,6 +16,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import heroTrader from '@/assets/hero-trader.jpg';
+import traderCharts from '@/assets/trader-charts.jpg';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -132,9 +133,9 @@ export default function Landing() {
             <div className="relative animate-slide-up hidden lg:block">
               <div className="relative">
                 <img 
-                  src={heroTrader} 
-                  alt="Professional trader" 
-                  className="w-full max-w-md mx-auto rounded-2xl shadow-2xl border border-border"
+                  src={traderCharts} 
+                  alt="Professional trader analyzing candlestick charts" 
+                  className="w-full max-w-lg mx-auto rounded-2xl shadow-2xl border border-border"
                 />
                 {/* Floating profit indicator */}
                 <div className="absolute -top-4 -right-4 bg-success text-success-foreground px-4 py-2 rounded-lg shadow-lg animate-float">
