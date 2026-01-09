@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink, Bitcoin, Wallet, ChevronLeft, CreditCard, CheckCircle2, Copy } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink, Bitcoin, Wallet, ChevronLeft, CreditCard, CheckCircle2, Copy, Clock, QrCode } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionModalProps {
@@ -31,6 +31,10 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const [withdrawCategory, setWithdrawCategory] = useState<WithdrawCategory>('select');
   const [withdrawMethod, setWithdrawMethod] = useState<WithdrawMethod>(null);
+  const [cryptoAmount, setCryptoAmount] = useState('');
+  const [cryptoGenerated, setCryptoGenerated] = useState(false);
+  const [cryptoTimer, setCryptoTimer] = useState(900); // 15 minutes
+  const [paymentId, setPaymentId] = useState('');
   const { withdraw, currentBalance, accountType, isLoggedIn, user } = useAccount();
   const { toast } = useToast();
 
@@ -42,8 +46,51 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       setWithdrawCategory('select');
       setWithdrawMethod(null);
       setAmount('');
+      setCryptoAmount('');
+      setCryptoGenerated(false);
+      setCryptoTimer(900);
+      setPaymentId('');
     }
   }, [isOpen]);
+
+  // Crypto payment timer countdown
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (cryptoGenerated && cryptoTimer > 0) {
+      interval = setInterval(() => {
+        setCryptoTimer(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [cryptoGenerated, cryptoTimer]);
+
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const generatePaymentAddress = () => {
+    const numAmount = parseFloat(cryptoAmount);
+    if (isNaN(numAmount) || numAmount < 28) {
+      toast({
+        title: "Invalid Amount",
+        description: "Minimum deposit is $28.00",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Generate a random payment ID
+    setPaymentId(Math.floor(1000000000 + Math.random() * 9000000000).toString());
+    setCryptoGenerated(true);
+    setCryptoTimer(900);
+  };
+
+  const cancelCryptoPayment = () => {
+    setCryptoGenerated(false);
+    setCryptoTimer(900);
+    setPaymentId('');
+  };
 
   // Load user's saved phone number
   useEffect(() => {
@@ -424,62 +471,124 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               </div>
             )}
 
-            {/* Binance Selected */}
-            {paymentMethod === 'binance' && (
+            {/* Binance/Crypto Selected */}
+            {paymentMethod === 'binance' && !cryptoGenerated && (
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-                  <div className="h-12 w-12 rounded-full bg-yellow-500 flex items-center justify-center">
-                    <span className="text-xl font-bold text-black">B</span>
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
+                  <div className="h-12 w-12 rounded-full bg-orange-500 flex items-center justify-center">
+                    <Bitcoin className="h-6 w-6 text-white" />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">Crypto Deposit</p>
-                    <p className="text-xs text-muted-foreground">Send crypto to wallet address</p>
+                    <p className="text-xs text-muted-foreground">Enter amount and generate payment address</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Wallet Address (ERC-20 / BEP-20)</p>
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 border border-border">
-                    <code className="flex-1 text-xs text-foreground break-all font-mono">
-                      0x89887304cc8bfb8e8f529740eb4ab08feb246196
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={() => {
-                        navigator.clipboard.writeText('0x89887304cc8bfb8e8f529740eb4ab08feb246196');
-                        toast({
-                          title: "Copied!",
-                          description: "Wallet address copied to clipboard",
-                        });
-                      }}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
+                  <label className="text-sm font-medium text-muted-foreground">Amount (USD)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input
+                      type="number"
+                      placeholder="28"
+                      value={cryptoAmount}
+                      onChange={(e) => setCryptoAmount(e.target.value)}
+                      className="pl-8 h-12 bg-secondary/50 border-border text-foreground"
+                    />
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                  <p className="text-xs text-amber-500">
-                    Send USDT, USDC, or BNB to this address. Your balance will be credited after confirmation. Contact support if needed.
-                  </p>
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border space-y-2">
+                  <p className="text-sm font-medium text-primary">Transaction Information</p>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Processing Fee:</span>
+                    <span className="text-foreground">0.5%</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Processing Time:</span>
+                    <span className="text-foreground">~30 minutes</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Min. Deposit:</span>
+                    <span className="text-foreground">$28.00</span>
+                  </div>
                 </div>
 
                 <Button
-                  onClick={() => {
-                    navigator.clipboard.writeText('0x89887304cc8bfb8e8f529740eb4ab08feb246196');
-                    toast({
-                      title: "Address Copied!",
-                      description: "Send crypto to complete your deposit",
-                    });
-                    onClose();
-                  }}
-                  className="w-full h-14 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold flex items-center justify-center gap-2"
+                  onClick={generatePaymentAddress}
+                  className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                 >
-                  <Copy className="h-5 w-5" />
-                  Copy Address & Close
+                  Generate Payment Address
+                </Button>
+              </div>
+            )}
+
+            {/* Crypto Payment Generated */}
+            {paymentMethod === 'binance' && cryptoGenerated && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border text-center space-y-2">
+                  <p className="font-semibold text-foreground text-lg">Payment Created</p>
+                  <p className="text-sm text-muted-foreground">Status: <span className="text-amber-400">Waiting</span></p>
+                  <p className="text-sm text-muted-foreground">
+                    Please send exactly <span className="font-bold text-foreground">{(parseFloat(cryptoAmount) / 95000).toFixed(8)} BTC</span>
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-primary">
+                    <Clock className="h-4 w-4" />
+                    <span className="font-mono font-bold">{formatTimer(cryptoTimer)} remaining</span>
+                  </div>
+                </div>
+
+                {/* QR Code placeholder styled */}
+                <div className="flex justify-center">
+                  <div className="p-4 bg-white rounded-xl">
+                    <div className="w-40 h-40 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2ZmZiIvPjxnIGZpbGw9IiMwMDAiPjxyZWN0IHg9IjEwIiB5PSIxMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIi8+PHJlY3QgeD0iMjAiIHk9IjIwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIGZpbGw9IiNmZmYiLz48cmVjdCB4PSIzMCIgeT0iMzAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIvPjxyZWN0IHg9IjEzMCIgeT0iMTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIvPjxyZWN0IHg9IjE0MCIgeT0iMjAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2ZmZiIvPjxyZWN0IHg9IjE1MCIgeT0iMzAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIvPjxyZWN0IHg9IjEwIiB5PSIxMzAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIvPjxyZWN0IHg9IjIwIiB5PSIxNDAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI2ZmZiIvPjxyZWN0IHg9IjMwIiB5PSIxNTAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIvPjxyZWN0IHg9IjgwIiB5PSIxMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iMTAwIiB5PSIxMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iODAiIHk9IjMwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxMDAiIHk9IjMwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSI5MCIgeT0iNDAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIvPjxyZWN0IHg9IjgwIiB5PSI1MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iMTAwIiB5PSI1MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iOTAiIHk9IjYwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSI4MCIgeT0iODAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIvPjxyZWN0IHg9IjkwIiB5PSI5MCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iOTUiIHk9Ijk1IiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxMCIgeT0iODAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIvPjxyZWN0IHg9IjMwIiB5PSI4MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iNTAiIHk9IjgwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxMCIgeT0iMTAwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSI1MCIgeT0iMTAwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxMzAiIHk9IjgwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxNTAiIHk9IjgwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxNzAiIHk9IjgwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxMzAiIHk9IjEwMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iMTcwIiB5PSIxMDAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIvPjxyZWN0IHg9IjgwIiB5PSIxMzAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIvPjxyZWN0IHg9IjEwMCIgeT0iMTMwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSI4MCIgeT0iMTUwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxMDAiIHk9IjE1MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iOTAiIHk9IjE2MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iODAiIHk9IjE3MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iMTAwIiB5PSIxNzAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIvPjxyZWN0IHg9IjEzMCIgeT0iMTMwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxNTAiIHk9IjEzMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iMTcwIiB5PSIxMzAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIvPjxyZWN0IHg9IjEzMCIgeT0iMTUwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxNzAiIHk9IjE1MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PHJlY3QgeD0iMTMwIiB5PSIxNzAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIvPjxyZWN0IHg9IjE1MCIgeT0iMTcwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSIxNzAiIHk9IjE3MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIi8+PC9nPjwvc3ZnPg==')] bg-contain bg-center bg-no-repeat" />
+                  </div>
+                </div>
+
+                {/* Wallet Address */}
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 border border-border">
+                  <code className="flex-1 text-xs text-foreground break-all font-mono">
+                    0x89887304cc8bfb8e8f529740eb4ab08feb246196
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText('0x89887304cc8bfb8e8f529740eb4ab08feb246196');
+                      toast({
+                        title: "Copied!",
+                        description: "Wallet address copied to clipboard",
+                      });
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Payment Info */}
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border space-y-2">
+                  <p className="text-sm font-medium text-primary">Payment Information</p>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Amount in USD:</span>
+                    <span className="text-foreground">${cryptoAmount}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Amount in BTC:</span>
+                    <span className="text-foreground">{(parseFloat(cryptoAmount) / 95000).toFixed(8)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Payment ID:</span>
+                    <span className="text-foreground">{paymentId}</span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={cancelCryptoPayment}
+                  variant="destructive"
+                  className="w-full h-14 font-semibold"
+                >
+                  Cancel Payment
                 </Button>
               </div>
             )}
