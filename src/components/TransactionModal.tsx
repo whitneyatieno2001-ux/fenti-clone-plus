@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink, Bitcoin, Wallet, ChevronLeft, CreditCard, CheckCircle2 } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, ExternalLink, Bitcoin, Wallet, ChevronLeft, CreditCard, CheckCircle2, Copy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionModalProps {
@@ -432,24 +432,54 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                     <span className="text-xl font-bold text-black">B</span>
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground">Binance Pay</p>
-                    <p className="text-xs text-muted-foreground">Coming Soon</p>
+                    <p className="font-semibold text-foreground">Crypto Deposit</p>
+                    <p className="text-xs text-muted-foreground">Send crypto to wallet address</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Wallet Address (ERC-20 / BEP-20)</p>
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 border border-border">
+                    <code className="flex-1 text-xs text-foreground break-all font-mono">
+                      0x89887304cc8bfb8e8f529740eb4ab08feb246196
+                    </code>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => {
+                        navigator.clipboard.writeText('0x89887304cc8bfb8e8f529740eb4ab08feb246196');
+                        toast({
+                          title: "Copied!",
+                          description: "Wallet address copied to clipboard",
+                        });
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                   <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
                   <p className="text-xs text-amber-500">
-                    Binance Pay integration is coming soon. Please use M-Pesa for now.
+                    Send USDT, USDC, or BNB to this address. Your balance will be credited after confirmation. Contact support if needed.
                   </p>
                 </div>
 
                 <Button
-                  onClick={handleDeposit}
-                  disabled
-                  className="w-full h-14 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                  onClick={() => {
+                    navigator.clipboard.writeText('0x89887304cc8bfb8e8f529740eb4ab08feb246196');
+                    toast({
+                      title: "Address Copied!",
+                      description: "Send crypto to complete your deposit",
+                    });
+                    onClose();
+                  }}
+                  className="w-full h-14 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold flex items-center justify-center gap-2"
                 >
-                  Coming Soon
+                  <Copy className="h-5 w-5" />
+                  Copy Address & Close
                 </Button>
               </div>
             )}
