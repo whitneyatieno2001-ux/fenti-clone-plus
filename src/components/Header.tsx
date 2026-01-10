@@ -4,7 +4,7 @@ import { useAccount } from '@/contexts/AccountContext';
 import { Button } from '@/components/ui/button';
 import { User, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import zaFlag from '@/assets/za-flag.png';
+import usFlag from '@/assets/us-flag.png';
 
 export function Header() {
   const location = useLocation();
@@ -51,11 +51,11 @@ export function Header() {
                   <span className="text-white text-sm font-bold">Ð</span>
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-border bg-muted">
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-border">
                   <img
-                    src={zaFlag}
-                    alt="South Africa flag (real account)"
-                    className="w-full h-full object-cover"
+                    src={usFlag}
+                    alt="USA flag (real account)"
+                    className="w-full h-full object-cover object-center"
                     loading="lazy"
                   />
                 </div>
@@ -118,11 +118,11 @@ export function Header() {
                     accountType === 'real' ? "bg-gray-50" : "hover:bg-gray-50"
                   )}
                 >
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 bg-muted">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
                     <img
-                      src={zaFlag}
-                      alt="South Africa flag (real account)"
-                      className="w-full h-full object-cover"
+                      src={usFlag}
+                      alt="USA flag (real account)"
+                      className="w-full h-full object-cover object-center"
                       loading="lazy"
                     />
                   </div>
