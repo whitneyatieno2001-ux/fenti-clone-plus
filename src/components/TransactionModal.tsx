@@ -916,12 +916,17 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   Amount (USD)
                 </label>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="Enter amount"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                      setAmount(val);
+                    }
+                  }}
                   className="text-lg h-12 bg-input border-border"
-                  min={1}
                 />
                 <div className="flex gap-2 mt-3">
                   {quickAmounts.map((qa) => (

@@ -566,12 +566,17 @@ export default function BotPage() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Stake:</span>
                 <Input
-                  type="number"
-                  value={bot.stakeAmount}
-                  onChange={(e) => updateStakeAmount(bot.id, e.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  value={bot.stakeAmount === 0 ? '' : bot.stakeAmount}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                      updateStakeAmount(bot.id, val);
+                    }
+                  }}
                   className="w-20 h-8 text-sm bg-input border-border"
                   disabled={bot.status === 'active'}
-                  min="1"
                 />
                 <span className="text-sm text-muted-foreground">USD</span>
               </div>
