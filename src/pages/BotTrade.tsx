@@ -324,12 +324,19 @@ export default function BotTrade() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Base Stake:</span>
             <Input
-              type="number"
-              value={stakeAmount}
-              onChange={(e) => setStakeAmount(Number(e.target.value) || 1)}
+              type="text"
+              inputMode="decimal"
+              value={stakeAmount === 0 ? '' : stakeAmount}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '') {
+                  setStakeAmount(0);
+                } else if (/^\d*\.?\d*$/.test(val)) {
+                  setStakeAmount(Number(val));
+                }
+              }}
               className="w-24 h-8 text-sm bg-input"
               disabled={isRunning}
-              min={1}
             />
             <span className="text-sm text-muted-foreground">USD</span>
           </div>
@@ -360,13 +367,19 @@ export default function BotTrade() {
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground">Multiplier:</span>
               <Input
-                type="number"
-                value={martingaleMultiplier}
-                onChange={(e) => setMartingaleMultiplier(Number(e.target.value) || 1.5)}
+                type="text"
+                inputMode="decimal"
+                value={martingaleMultiplier === 0 ? '' : martingaleMultiplier}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '') {
+                    setMartingaleMultiplier(0);
+                  } else if (/^\d*\.?\d*$/.test(val)) {
+                    setMartingaleMultiplier(Number(val));
+                  }
+                }}
                 className="w-20 h-8 text-sm bg-input"
                 disabled={isRunning}
-                min={1.1}
-                step={0.1}
               />
               <span className="text-sm text-muted-foreground">x</span>
             </div>
