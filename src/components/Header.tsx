@@ -4,6 +4,7 @@ import { useAccount } from '@/contexts/AccountContext';
 import { Button } from '@/components/ui/button';
 import { User, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import zaFlag from '@/assets/za-flag.png';
 
 export function Header() {
   const location = useLocation();
@@ -50,12 +51,13 @@ export function Header() {
                   <span className="text-white text-sm font-bold">Ð</span>
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-border">
-                  <div className="w-full h-full flex flex-col">
-                    <div className="h-1/3 bg-red-600" />
-                    <div className="h-1/3 bg-white" />
-                    <div className="h-1/3 bg-blue-900" />
-                  </div>
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-border bg-muted">
+                  <img
+                    src={zaFlag}
+                    alt="South Africa flag (real account)"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
               )}
               <div className="text-left">
@@ -116,20 +118,13 @@ export function Header() {
                     accountType === 'real' ? "bg-gray-50" : "hover:bg-gray-50"
                   )}
                 >
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
-                    <div className="w-full h-full flex flex-col relative">
-                      <div className="absolute inset-0 flex flex-col">
-                        {[...Array(7)].map((_, i) => (
-                          <div 
-                            key={i} 
-                            className={cn("flex-1", i % 2 === 0 ? "bg-red-600" : "bg-white")} 
-                          />
-                        ))}
-                      </div>
-                      <div className="absolute top-0 left-0 w-5 h-4 bg-blue-900 flex items-center justify-center">
-                        <span className="text-white text-[6px]">★</span>
-                      </div>
-                    </div>
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 bg-muted">
+                    <img
+                      src={zaFlag}
+                      alt="South Africa flag (real account)"
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1">

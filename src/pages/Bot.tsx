@@ -110,6 +110,9 @@ const defaultBots: TradingBot[] = [
 export default function BotPage() {
   const navigate = useNavigate();
   const [bots, setBots] = useState<TradingBot[]>(defaultBots);
+  const [stakeInputs, setStakeInputs] = useState<Record<string, string>>(() =>
+    Object.fromEntries(defaultBots.map((b) => [b.id, String(b.stakeAmount)]))
+  );
   const [tradeLogs, setTradeLogs] = useState<TradeLogEntry[]>([]);
   const { toast } = useToast();
   const { currentBalance, accountType, updateBalance, user } = useAccount();
@@ -568,11 +571,14 @@ export default function BotPage() {
                 <Input
                   type="text"
                   inputMode="decimal"
-                  value={bot.stakeAmount === 0 ? '' : bot.stakeAmount}
+                  value={stakeInputs[bot.id] ?? String(bot.stakeAmount)}
                   onChange={(e) => {
                     const val = e.target.value;
                     if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                      updateStakeAmount(bot.id, val);
+                      setStakeInputs((prev) => ({ ...prev, [bot.id]: val }));
+                      if (val !== '') {
+                        updateStakeAmount(bot.id, val);
+                      }
                     }
                   }}
                   className="w-20 h-8 text-sm bg-input border-border"
