@@ -489,10 +489,16 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       placeholder="28"
                       value={cryptoAmount}
-                      onChange={(e) => setCryptoAmount(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setCryptoAmount(val);
+                        }
+                      }}
                       className="pl-8 h-12 bg-secondary/50 border-border text-foreground"
                     />
                   </div>
