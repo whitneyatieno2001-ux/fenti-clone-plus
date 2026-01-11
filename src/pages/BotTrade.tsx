@@ -8,7 +8,7 @@ import { useAccount } from '@/contexts/AccountContext';
 import { cn } from '@/lib/utils';
 import { 
   ArrowLeft, Play, Pause, TrendingUp, TrendingDown, 
-  DollarSign, Settings2, ScrollText
+  DollarSign, Settings2, ScrollText, Lock, Unlock
 } from 'lucide-react';
 import { 
   type BotStrategy, 
@@ -18,6 +18,14 @@ import {
 import { CandlestickChart } from '@/components/CandlestickChart';
 import { supabase } from '@/integrations/supabase/client';
 import { useTradingSound } from '@/hooks/useTradingSound';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface TradeLog {
   id: string;
@@ -62,6 +70,11 @@ export default function BotTrade() {
   // Cumulative P/L for the session (sum of individual trade profits)
   const [totalProfit, setTotalProfit] = useState(0);
   
+  // Purchase state
+  const [isUnlocked, setIsUnlocked] = useState<boolean | null>(null);
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  
   const { playTradeSound } = useTradingSound();
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,6 +82,37 @@ export default function BotTrade() {
   const currentStakeRef = useRef(currentStake);
 
   const botConfig = botId ? botConfigs[botId] : null;
+  
+  // Check if bot is unlocked
+  useEffect(() => {
+    const checkPurchase = async () => {
+      if (!user || !botConfig) return;
+      
+      // Free bots are always unlocked
+      if (botConfig.price === 0) {
+        setIsUnlocked(true);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('bot_purchases')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('bot_id', botConfig.id)
+          .maybeSingle();
+        
+        if (error) throw error;
+        
+        setIsUnlocked(!!data);
+      } catch (err) {
+        console.error('Error checking bot purchase:', err);
+        setIsUnlocked(false);
+      }
+    };
+    
+    checkPurchase();
+  }, [user, botConfig]);
   
   useEffect(() => {
     balanceRef.current = currentBalance;
@@ -245,11 +289,86 @@ export default function BotTrade() {
       });
     }
   };
+  
+  // Handle purchase bot
+  const handlePurchaseBot = async () => {
+    if (!botConfig || !user) return;
+    
+    // Check if user has enough balance
+    if (currentBalance < botConfig.price) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You need $${botConfig.price} to purchase this bot. Your balance: $${currentBalance.toFixed(2)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsPurchasing(true);
+    
+    try {
+      // Deduct the price from user's balance
+      const success = await updateBalance(accountType, botConfig.price, 'subtract');
+      
+      if (!success) {
+        throw new Error('Failed to deduct balance');
+      }
+      
+      // Record the purchase
+      const { error } = await supabase.from('bot_purchases').insert({
+        user_id: user.id,
+        bot_id: botConfig.id,
+        price: botConfig.price,
+      });
+      
+      if (error) throw error;
+      
+      // Log the transaction
+      await supabase.from('transactions').insert({
+        user_id: user.id,
+        type: 'bot_purchase',
+        amount: botConfig.price,
+        currency: 'USD',
+        status: 'completed',
+        description: `Purchased ${botConfig.name} (${botConfig.winRate}% win rate)`,
+        account_type: accountType,
+        profit_loss: -botConfig.price,
+      });
+      
+      // Update local state
+      setIsUnlocked(true);
+      
+      toast({
+        title: "Bot Purchased! 🎉",
+        description: `${botConfig.name} is now unlocked and ready to trade!`,
+      });
+      
+      setPurchaseDialogOpen(false);
+    } catch (err) {
+      console.error('Error purchasing bot:', err);
+      toast({
+        title: "Purchase Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
 
   if (!botConfig) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <p className="text-foreground">Bot not found</p>
+      </div>
+    );
+  }
+  
+  // Show loading state while checking purchase status
+  if (isUnlocked === null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }
@@ -267,7 +386,19 @@ export default function BotTrade() {
           <div className="flex items-center gap-3">
             <span className="text-2xl">{strategyInfo.icon}</span>
             <div>
-              <h1 className="font-bold text-foreground">{botConfig.name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-bold text-foreground">{botConfig.name}</h1>
+                {botConfig.price > 0 && (
+                  <span className={cn(
+                    "px-2 py-0.5 rounded-full text-xs font-bold",
+                    isUnlocked 
+                      ? "bg-success/20 text-success" 
+                      : "bg-warning/20 text-warning"
+                  )}>
+                    {isUnlocked ? "Owned" : "Locked"}
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground">{botConfig.crypto}/USDT • {botConfig.winRate}% target</p>
             </div>
           </div>
@@ -278,186 +409,297 @@ export default function BotTrade() {
       </header>
       
       <main className="px-4 py-4 space-y-4">
-        {/* P/L Display */}
-        <div className={cn(
-          "p-4 rounded-xl border-2",
-          totalProfit >= 0 
-            ? "bg-success/10 border-success/30" 
-            : "bg-destructive/10 border-destructive/30"
-        )}>
-          <p className="text-sm text-muted-foreground">Total P/L</p>
-          <p className={cn(
-            "text-3xl font-bold",
-            totalProfit >= 0 ? "text-success" : "text-destructive"
-          )}>
-            {totalProfit >= 0 && <span className="text-lg font-normal opacity-70">+</span>}
-            {totalProfit < 0 && <span className="text-lg font-normal opacity-70">-</span>}
-            {Math.abs(totalProfit).toFixed(2)} USD
-          </p>
-          <div className="flex gap-4 mt-2 text-sm">
-            <span className="text-muted-foreground">{tradesCount} trades</span>
-            <span className="text-success">{winsCount} wins</span>
-            <span className="text-destructive">{tradesCount - winsCount} losses</span>
-            {tradesCount > 0 && (
-              <span className="text-foreground font-medium">
-                {((winsCount / tradesCount) * 100).toFixed(0)}% rate
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Live Chart */}
-        <CandlestickChart 
-          symbol={botConfig.crypto} 
-          currentPrice={botConfig.crypto === 'BTC' ? 98000 : botConfig.crypto === 'ETH' ? 3400 : 180} 
-        />
-
-        {/* Bot Configuration */}
-        <div className="p-4 rounded-xl bg-card border border-border/50 space-y-4">
-          <div className="flex items-center gap-2">
-            <Settings2 className="h-5 w-5 text-muted-foreground" />
-            <span className="font-semibold text-foreground">Configuration</span>
-          </div>
-          
-          {/* Stake Amount */}
-          <div className="flex items-center gap-3">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Base Stake:</span>
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={stakeAmount === 0 ? '' : stakeAmount}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === '') {
-                  setStakeAmount(0);
-                } else if (/^\d*\.?\d*$/.test(val)) {
-                  setStakeAmount(Number(val));
-                }
-              }}
-              className="w-24 h-8 text-sm bg-input"
-              disabled={isRunning}
-            />
-            <span className="text-sm text-muted-foreground">USD</span>
-          </div>
-          
-          {/* Current Stake (if Martingale active) */}
-          {martingaleEnabled && (
-            <div className="flex items-center gap-3 p-2 rounded bg-secondary/50">
-              <span className="text-sm text-muted-foreground">Current Stake:</span>
-              <span className="font-bold text-foreground">${currentStake.toFixed(2)}</span>
+        {/* Locked State Overlay */}
+        {!isUnlocked && (
+          <div className="p-6 rounded-2xl bg-card border-2 border-warning/50 text-center">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-warning/20 flex items-center justify-center">
+              <Lock className="h-10 w-10 text-warning" />
             </div>
-          )}
-          
-          {/* Martingale Toggle */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Martingale</p>
-              <p className="text-xs text-muted-foreground">Multiply stake after loss, reset after win</p>
-            </div>
-            <Switch
-              checked={martingaleEnabled}
-              onCheckedChange={setMartingaleEnabled}
-              disabled={isRunning}
-            />
-          </div>
-          
-          {/* Martingale Multiplier */}
-          {martingaleEnabled && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">Multiplier:</span>
-              <Input
-                type="text"
-                inputMode="decimal"
-                value={martingaleMultiplier === 0 ? '' : martingaleMultiplier}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === '') {
-                    setMartingaleMultiplier(0);
-                  } else if (/^\d*\.?\d*$/.test(val)) {
-                    setMartingaleMultiplier(Number(val));
-                  }
-                }}
-                className="w-20 h-8 text-sm bg-input"
-                disabled={isRunning}
-              />
-              <span className="text-sm text-muted-foreground">x</span>
-            </div>
-          )}
-        </div>
-
-        {/* Start/Stop Button */}
-        <Button
-          onClick={toggleBot}
-          className={cn(
-            "w-full h-14 font-bold text-lg",
-            isRunning 
-              ? "bg-destructive hover:bg-destructive/90" 
-              : "bg-success hover:bg-success/90"
-          )}
-        >
-          {isRunning ? (
-            <>
-              <Pause className="h-5 w-5 mr-2" />
-              Stop Trading
-            </>
-          ) : (
-            <>
-              <Play className="h-5 w-5 mr-2" />
-              Start Trading
-            </>
-          )}
-        </Button>
-
-        {/* Bot Logs Section */}
-        <div className="rounded-xl bg-card border border-border/50 overflow-hidden">
-          <div className="flex items-center gap-2 p-3 border-b border-border/50 bg-secondary/30">
-            <ScrollText className="h-5 w-5 text-muted-foreground" />
-            <span className="font-semibold text-foreground">Bot Logs</span>
-            <span className="ml-auto text-xs text-muted-foreground">{tradeLogs.length} entries</span>
-          </div>
-          
-          <div className="max-h-80 overflow-y-auto">
-            {tradeLogs.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground text-sm">
-                No trades yet. Start the bot to see logs.
+            <h2 className="text-xl font-bold text-foreground mb-2">Bot Locked</h2>
+            <p className="text-muted-foreground mb-4">
+              This bot has a {botConfig.winRate}% target win rate. Pay ${botConfig.price} to unlock it.
+            </p>
+            <div className="p-4 rounded-xl bg-secondary/50 mb-4">
+              <div className="flex justify-between mb-2">
+                <span className="text-muted-foreground">Bot Price:</span>
+                <span className="font-bold text-foreground">${botConfig.price}</span>
               </div>
-            ) : (
-              <div className="divide-y divide-border/30">
-                {tradeLogs.map((log) => (
-                  <div key={log.id} className="p-3 flex items-center gap-3 text-sm">
-                    <span className="text-xs text-muted-foreground w-16">
-                      {log.time.toLocaleTimeString()}
-                    </span>
-                    <span className="text-foreground font-medium w-20">{log.asset}</span>
-                    <span className={cn(
-                      "px-2 py-0.5 rounded text-xs font-bold w-12 text-center",
-                      log.direction === 'BUY' ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
-                    )}>
-                      {log.direction}
-                    </span>
-                    <span className="text-muted-foreground w-16">${log.stake.toFixed(2)}</span>
-                    <span className={cn(
-                      "px-2 py-0.5 rounded text-xs font-bold w-12 text-center",
-                      log.result === 'WIN' ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
-                    )}>
-                      {log.result}
-                    </span>
-                    <span className={cn(
-                      "ml-auto font-semibold",
-                      log.profit >= 0 ? "text-success" : "text-destructive"
-                    )}>
-                      {log.profit >= 0 && <span className="text-xs font-normal opacity-60">+</span>}
-                      {log.profit < 0 && <span className="text-xs font-normal opacity-60">-</span>}
-                      {Math.abs(log.profit).toFixed(2)}
-                    </span>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Your Balance:</span>
+                <span className={cn(
+                  "font-bold",
+                  currentBalance >= botConfig.price ? "text-success" : "text-destructive"
+                )}>
+                  ${currentBalance.toFixed(2)}
+                </span>
+              </div>
+            </div>
+            {currentBalance < botConfig.price && (
+              <p className="text-sm text-destructive mb-4">
+                Insufficient balance. You need ${(botConfig.price - currentBalance).toFixed(2)} more.
+              </p>
+            )}
+            <Button 
+              onClick={() => setPurchaseDialogOpen(true)}
+              disabled={currentBalance < botConfig.price}
+              className="w-full bg-warning hover:bg-warning/90 text-warning-foreground"
+              size="lg"
+            >
+              <Unlock className="h-5 w-5 mr-2" />
+              Unlock for ${botConfig.price}
+            </Button>
+          </div>
+        )}
+        
+        {isUnlocked && (
+          <>
+            {/* P/L Display */}
+            <div className={cn(
+              "p-4 rounded-xl border-2",
+              totalProfit >= 0 
+                ? "bg-success/10 border-success/30" 
+                : "bg-destructive/10 border-destructive/30"
+            )}>
+              <p className="text-sm text-muted-foreground">Total P/L</p>
+              <p className={cn(
+                "text-3xl font-bold",
+                totalProfit >= 0 ? "text-success" : "text-destructive"
+              )}>
+                {totalProfit >= 0 && <span className="text-lg font-normal opacity-70">+</span>}
+                {totalProfit < 0 && <span className="text-lg font-normal opacity-70">-</span>}
+                {Math.abs(totalProfit).toFixed(2)} USD
+              </p>
+              <div className="flex gap-4 mt-2 text-sm">
+                <span className="text-muted-foreground">{tradesCount} trades</span>
+                <span className="text-success">{winsCount} wins</span>
+                <span className="text-destructive">{tradesCount - winsCount} losses</span>
+                {tradesCount > 0 && (
+                  <span className="text-foreground font-medium">
+                    {((winsCount / tradesCount) * 100).toFixed(0)}% rate
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Live Chart */}
+            <CandlestickChart 
+              symbol={botConfig.crypto} 
+              currentPrice={botConfig.crypto === 'BTC' ? 98000 : botConfig.crypto === 'ETH' ? 3400 : 180} 
+            />
+
+            {/* Bot Configuration */}
+            <div className="p-4 rounded-xl bg-card border border-border/50 space-y-4">
+              <div className="flex items-center gap-2">
+                <Settings2 className="h-5 w-5 text-muted-foreground" />
+                <span className="font-semibold text-foreground">Configuration</span>
+              </div>
+              
+              {/* Stake Amount */}
+              <div className="flex items-center gap-3">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Base Stake:</span>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={stakeAmount === 0 ? '' : stakeAmount}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setStakeAmount(0);
+                    } else if (/^\d*\.?\d*$/.test(val)) {
+                      setStakeAmount(Number(val));
+                    }
+                  }}
+                  className="w-24 h-8 text-sm bg-input"
+                  disabled={isRunning}
+                />
+                <span className="text-sm text-muted-foreground">USD</span>
+              </div>
+              
+              {/* Current Stake (if Martingale active) */}
+              {martingaleEnabled && (
+                <div className="flex items-center gap-3 p-2 rounded bg-secondary/50">
+                  <span className="text-sm text-muted-foreground">Current Stake:</span>
+                  <span className="font-bold text-foreground">${currentStake.toFixed(2)}</span>
+                </div>
+              )}
+              
+              {/* Martingale Toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Martingale</p>
+                  <p className="text-xs text-muted-foreground">Multiply stake after loss, reset after win</p>
+                </div>
+                <Switch
+                  checked={martingaleEnabled}
+                  onCheckedChange={setMartingaleEnabled}
+                  disabled={isRunning}
+                />
+              </div>
+              
+              {/* Martingale Multiplier */}
+              {martingaleEnabled && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">Multiplier:</span>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    value={martingaleMultiplier === 0 ? '' : martingaleMultiplier}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setMartingaleMultiplier(0);
+                      } else if (/^\d*\.?\d*$/.test(val)) {
+                        setMartingaleMultiplier(Number(val));
+                      }
+                    }}
+                    className="w-20 h-8 text-sm bg-input"
+                    disabled={isRunning}
+                  />
+                  <span className="text-sm text-muted-foreground">x</span>
+                </div>
+              )}
+            </div>
+
+            {/* Start/Stop Button */}
+            <Button
+              onClick={toggleBot}
+              className={cn(
+                "w-full h-14 font-bold text-lg",
+                isRunning 
+                  ? "bg-destructive hover:bg-destructive/90" 
+                  : "bg-success hover:bg-success/90"
+              )}
+            >
+              {isRunning ? (
+                <>
+                  <Pause className="h-5 w-5 mr-2" />
+                  Stop Trading
+                </>
+              ) : (
+                <>
+                  <Play className="h-5 w-5 mr-2" />
+                  Start Trading
+                </>
+              )}
+            </Button>
+
+            {/* Bot Logs Section */}
+            <div className="rounded-xl bg-card border border-border/50 overflow-hidden">
+              <div className="flex items-center gap-2 p-3 border-b border-border/50 bg-secondary/30">
+                <ScrollText className="h-5 w-5 text-muted-foreground" />
+                <span className="font-semibold text-foreground">Bot Logs</span>
+                <span className="ml-auto text-xs text-muted-foreground">{tradeLogs.length} entries</span>
+              </div>
+              
+              <div className="max-h-80 overflow-y-auto">
+                {tradeLogs.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground text-sm">
+                    No trades yet. Start the bot to see logs.
                   </div>
-                ))}
+                ) : (
+                  <div className="divide-y divide-border/30">
+                    {tradeLogs.map((log) => (
+                      <div key={log.id} className="p-3 flex items-center gap-3 text-sm">
+                        <span className="text-xs text-muted-foreground w-16">
+                          {log.time.toLocaleTimeString()}
+                        </span>
+                        <span className="text-foreground font-medium w-20">{log.asset}</span>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-xs font-bold w-12 text-center",
+                          log.direction === 'BUY' ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+                        )}>
+                          {log.direction}
+                        </span>
+                        <span className="text-muted-foreground w-16">${log.stake.toFixed(2)}</span>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-xs font-bold w-12 text-center",
+                          log.result === 'WIN' ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive"
+                        )}>
+                          {log.result}
+                        </span>
+                        <span className={cn(
+                          "ml-auto font-semibold",
+                          log.profit >= 0 ? "text-success" : "text-destructive"
+                        )}>
+                          {log.profit >= 0 && <span className="text-xs font-normal opacity-60">+</span>}
+                          {log.profit < 0 && <span className="text-xs font-normal opacity-60">-</span>}
+                          {Math.abs(log.profit).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </main>
+      
+      {/* Purchase Dialog */}
+      <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-warning" />
+              Unlock {botConfig.name}
+            </DialogTitle>
+            <DialogDescription>
+              This bot has a {botConfig.winRate}% target win rate and costs ${botConfig.price} to unlock.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-4 rounded-xl bg-secondary/50 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Bot Price:</span>
+                <span className="font-bold text-foreground">${botConfig.price}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Your Balance:</span>
+                <span className={cn(
+                  "font-bold",
+                  currentBalance >= botConfig.price ? "text-success" : "text-destructive"
+                )}>
+                  ${currentBalance.toFixed(2)}
+                </span>
+              </div>
+              <div className="border-t border-border pt-2 flex justify-between">
+                <span className="text-muted-foreground">After Purchase:</span>
+                <span className="font-bold text-foreground">
+                  ${(currentBalance - botConfig.price).toFixed(2)}
+                </span>
+              </div>
+            </div>
+            
+            {currentBalance < botConfig.price && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
+                Insufficient balance. You need ${(botConfig.price - currentBalance).toFixed(2)} more to unlock this bot.
               </div>
             )}
           </div>
-        </div>
-      </main>
+          
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPurchaseDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handlePurchaseBot}
+              disabled={isPurchasing || currentBalance < botConfig.price}
+              className="bg-warning hover:bg-warning/90 text-warning-foreground"
+            >
+              {isPurchasing ? (
+                "Processing..."
+              ) : (
+                <>
+                  <Unlock className="h-4 w-4 mr-2" />
+                  Confirm Purchase
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

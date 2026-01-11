@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      bot_purchases: {
+        Row: {
+          bot_id: string
+          id: string
+          price: number
+          purchased_at: string
+          user_id: string
+        }
+        Insert: {
+          bot_id: string
+          id?: string
+          price: number
+          purchased_at?: string
+          user_id: string
+        }
+        Update: {
+          bot_id?: string
+          id?: string
+          price?: number
+          purchased_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bots: {
         Row: {
           account_type: string

@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { 
   Bot, Play, Pause, TrendingUp, TrendingDown, 
   DollarSign, Activity, Zap, BarChart3, ArrowUpDown, Settings2,
-  CheckCircle2, XCircle, ScrollText
+  CheckCircle2, XCircle, ScrollText, Lock, Unlock
 } from 'lucide-react';
 import { 
   type BotStrategy, 
@@ -22,6 +22,14 @@ import {
 } from '@/lib/tradingStrategies';
 import { supabase } from '@/integrations/supabase/client';
 import { useTradingSound } from '@/hooks/useTradingSound';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface TradeLogEntry {
   id: string;
@@ -103,7 +111,7 @@ const defaultBots: TradingBot[] = [
     lossCount: 0,
     currentAction: 'HOLD',
     winRate: 40,
-    price: 0,
+    price: 0, // FREE bot
   },
 ];
 
@@ -114,6 +122,10 @@ export default function BotPage() {
     Object.fromEntries(defaultBots.map((b) => [b.id, String(b.stakeAmount)]))
   );
   const [tradeLogs, setTradeLogs] = useState<TradeLogEntry[]>([]);
+  const [purchasedBots, setPurchasedBots] = useState<Set<string>>(new Set());
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
+  const [selectedBotForPurchase, setSelectedBotForPurchase] = useState<TradingBot | null>(null);
+  const [isPurchasing, setIsPurchasing] = useState(false);
   const { toast } = useToast();
   const { currentBalance, accountType, updateBalance, user } = useAccount();
   const tradingIntervals = useRef<Record<string, NodeJS.Timeout>>({});
@@ -132,6 +144,30 @@ export default function BotPage() {
     balanceRef.current = currentBalance;
   }, [currentBalance]);
 
+  // Fetch user's purchased bots
+  useEffect(() => {
+    const fetchPurchasedBots = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('bot_purchases')
+          .select('bot_id')
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+        
+        if (data) {
+          setPurchasedBots(new Set(data.map(p => p.bot_id)));
+        }
+      } catch (err) {
+        console.error('Error fetching purchased bots:', err);
+      }
+    };
+    
+    fetchPurchasedBots();
+  }, [user]);
+
   // Clean up intervals on unmount
   useEffect(() => {
     return () => {
@@ -139,6 +175,87 @@ export default function BotPage() {
       Object.values(scanningIntervals.current).forEach(interval => clearInterval(interval));
     };
   }, []);
+  
+  // Check if a bot is unlocked (free or purchased)
+  const isBotUnlocked = useCallback((bot: TradingBot) => {
+    if (bot.price === 0) return true; // Free bot
+    return purchasedBots.has(bot.id);
+  }, [purchasedBots]);
+  
+  // Handle purchase bot
+  const handlePurchaseBot = async () => {
+    if (!selectedBotForPurchase || !user) return;
+    
+    const bot = selectedBotForPurchase;
+    
+    // Check if user has enough balance
+    if (currentBalance < bot.price) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You need $${bot.price} to purchase this bot. Your balance: $${currentBalance.toFixed(2)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsPurchasing(true);
+    
+    try {
+      // Deduct the price from user's balance
+      const success = await updateBalance(accountType, bot.price, 'subtract');
+      
+      if (!success) {
+        throw new Error('Failed to deduct balance');
+      }
+      
+      // Record the purchase
+      const { error } = await supabase.from('bot_purchases').insert({
+        user_id: user.id,
+        bot_id: bot.id,
+        price: bot.price,
+      });
+      
+      if (error) throw error;
+      
+      // Log the transaction
+      await supabase.from('transactions').insert({
+        user_id: user.id,
+        type: 'bot_purchase',
+        amount: bot.price,
+        currency: 'USD',
+        status: 'completed',
+        description: `Purchased ${bot.name} (${bot.winRate}% win rate)`,
+        account_type: accountType,
+        profit_loss: -bot.price,
+      });
+      
+      // Update local state
+      setPurchasedBots(prev => new Set([...prev, bot.id]));
+      
+      toast({
+        title: "Bot Purchased! 🎉",
+        description: `${bot.name} is now unlocked and ready to trade!`,
+      });
+      
+      setPurchaseDialogOpen(false);
+      setSelectedBotForPurchase(null);
+    } catch (err) {
+      console.error('Error purchasing bot:', err);
+      toast({
+        title: "Purchase Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPurchasing(false);
+    }
+  };
+  
+  // Open purchase dialog
+  const openPurchaseDialog = (bot: TradingBot) => {
+    setSelectedBotForPurchase(bot);
+    setPurchaseDialogOpen(true);
+  };
 
   // Log trade to database
   const logTrade = useCallback(async (bot: TradingBot, result: { profit: number; isWin: boolean }) => {
@@ -496,17 +613,43 @@ export default function BotPage() {
         <div className="space-y-3">
           <h3 className="font-bold text-foreground">Trading Bots</h3>
           
-          {bots.map((bot, index) => (
+          {bots.map((bot, index) => {
+            const isUnlocked = isBotUnlocked(bot);
+            
+            return (
             <div 
               key={bot.id}
               className={cn(
-                "p-4 rounded-xl bg-card border transition-all duration-300",
+                "p-4 rounded-xl bg-card border transition-all duration-300 relative",
+                !isUnlocked && "opacity-80",
                 bot.status === 'active' 
                   ? "border-primary/50 shadow-lg shadow-primary/10" 
                   : "border-border/50"
               )}
               style={{ animationDelay: `${index * 0.05}s` }}
             >
+              {/* Lock overlay for paid bots */}
+              {!isUnlocked && (
+                <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] rounded-xl z-10 flex items-center justify-center">
+                  <div className="text-center p-4">
+                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-warning/20 flex items-center justify-center">
+                      <Lock className="h-8 w-8 text-warning" />
+                    </div>
+                    <p className="font-bold text-foreground text-lg mb-1">Locked Bot</p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {bot.winRate}% win rate • ${bot.price} to unlock
+                    </p>
+                    <Button 
+                      onClick={() => openPurchaseDialog(bot)}
+                      className="bg-warning hover:bg-warning/90 text-warning-foreground"
+                    >
+                      <Unlock className="h-4 w-4 mr-2" />
+                      Unlock for ${bot.price}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className={cn(
@@ -516,12 +659,31 @@ export default function BotPage() {
                     <span className="text-2xl">{getBotStrategyInfo(bot.strategy).icon}</span>
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground">{bot.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-foreground">{bot.name}</p>
+                      {bot.price > 0 && (
+                        <span className={cn(
+                          "px-2 py-0.5 rounded-full text-xs font-bold",
+                          isUnlocked 
+                            ? "bg-success/20 text-success" 
+                            : "bg-warning/20 text-warning"
+                        )}>
+                          {isUnlocked ? "Owned" : `$${bot.price}`}
+                        </span>
+                      )}
+                      {bot.price === 0 && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-primary/20 text-primary">
+                          FREE
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 mt-1">
                       {getStrategyIcon(bot.strategy)}
                       <span className="text-xs text-muted-foreground capitalize">{bot.strategy}</span>
                       <span className="text-xs text-muted-foreground">•</span>
                       <span className="text-xs text-muted-foreground">{bot.crypto}/USDT</span>
+                      <span className="text-xs text-muted-foreground">•</span>
+                      <span className="text-xs font-medium text-primary">{bot.winRate}% target</span>
                     </div>
                   </div>
                 </div>
@@ -582,7 +744,7 @@ export default function BotPage() {
                     }
                   }}
                   className="w-20 h-8 text-sm bg-input border-border"
-                  disabled={bot.status === 'active'}
+                  disabled={bot.status === 'active' || !isUnlocked}
                 />
                 <span className="text-sm text-muted-foreground">USD</span>
               </div>
@@ -617,47 +779,60 @@ export default function BotPage() {
                 </div>
               </div>
 
-              <Button
-                onClick={() => toggleBot(bot.id)}
-                disabled={bot.status === 'paused' && currentBalance < bot.stakeAmount}
-                className={cn(
-                  "w-full",
-                  bot.status === 'active'
-                    ? "bg-destructive/20 text-destructive hover:bg-destructive/30 border border-destructive/30"
-                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
-                )}
-                variant={bot.status === 'active' ? "outline" : "default"}
-              >
-                {bot.status === 'active' ? (
-                  <>
-                    <Pause className="h-4 w-4 mr-2" />
-                    Stop Trading
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Start Trading
-                  </>
-                )}
-              </Button>
-              
-              {/* Configure Button */}
-              <Button
-                onClick={() => navigate(`/bot/${bot.id}`)}
-                variant="outline"
-                className="w-full mt-2"
-              >
-                <Settings2 className="h-4 w-4 mr-2" />
-                Configure Bot
-              </Button>
-              
-              {bot.status === 'paused' && currentBalance < bot.stakeAmount && (
-                <p className="text-xs text-destructive text-center mt-2">
-                  Insufficient balance (need ${bot.stakeAmount})
-                </p>
+              {isUnlocked ? (
+                <>
+                  <Button
+                    onClick={() => toggleBot(bot.id)}
+                    disabled={bot.status === 'paused' && currentBalance < bot.stakeAmount}
+                    className={cn(
+                      "w-full",
+                      bot.status === 'active'
+                        ? "bg-destructive/20 text-destructive hover:bg-destructive/30 border border-destructive/30"
+                        : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                    )}
+                    variant={bot.status === 'active' ? "outline" : "default"}
+                  >
+                    {bot.status === 'active' ? (
+                      <>
+                        <Pause className="h-4 w-4 mr-2" />
+                        Stop Trading
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-2" />
+                        Start Trading
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Configure Button */}
+                  <Button
+                    onClick={() => navigate(`/bot/${bot.id}`)}
+                    variant="outline"
+                    className="w-full mt-2"
+                  >
+                    <Settings2 className="h-4 w-4 mr-2" />
+                    Configure Bot
+                  </Button>
+                  
+                  {bot.status === 'paused' && currentBalance < bot.stakeAmount && (
+                    <p className="text-xs text-destructive text-center mt-2">
+                      Insufficient balance (need ${bot.stakeAmount})
+                    </p>
+                  )}
+                </>
+              ) : (
+                <Button
+                  onClick={() => openPurchaseDialog(bot)}
+                  className="w-full bg-warning hover:bg-warning/90 text-warning-foreground"
+                >
+                  <Unlock className="h-4 w-4 mr-2" />
+                  Unlock for ${bot.price}
+                </Button>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Professional Trade Logs Section */}
@@ -762,6 +937,71 @@ export default function BotPage() {
       </main>
 
       <BottomNav />
+      
+      {/* Purchase Dialog */}
+      <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-warning" />
+              Unlock {selectedBotForPurchase?.name}
+            </DialogTitle>
+            <DialogDescription>
+              This bot has a {selectedBotForPurchase?.winRate}% target win rate and costs ${selectedBotForPurchase?.price} to unlock.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-4 rounded-xl bg-secondary/50 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Bot Price:</span>
+                <span className="font-bold text-foreground">${selectedBotForPurchase?.price}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Your Balance:</span>
+                <span className={cn(
+                  "font-bold",
+                  currentBalance >= (selectedBotForPurchase?.price || 0) ? "text-success" : "text-destructive"
+                )}>
+                  ${currentBalance.toFixed(2)}
+                </span>
+              </div>
+              <div className="border-t border-border pt-2 flex justify-between">
+                <span className="text-muted-foreground">After Purchase:</span>
+                <span className="font-bold text-foreground">
+                  ${(currentBalance - (selectedBotForPurchase?.price || 0)).toFixed(2)}
+                </span>
+              </div>
+            </div>
+            
+            {currentBalance < (selectedBotForPurchase?.price || 0) && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
+                Insufficient balance. You need ${((selectedBotForPurchase?.price || 0) - currentBalance).toFixed(2)} more to unlock this bot.
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPurchaseDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handlePurchaseBot}
+              disabled={isPurchasing || currentBalance < (selectedBotForPurchase?.price || 0)}
+              className="bg-warning hover:bg-warning/90 text-warning-foreground"
+            >
+              {isPurchasing ? (
+                "Processing..."
+              ) : (
+                <>
+                  <Unlock className="h-4 w-4 mr-2" />
+                  Confirm Purchase
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
