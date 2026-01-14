@@ -16,10 +16,14 @@ const getCountryFlagFromPhone = (phoneNumber: string | null): string => {
   // Remove any + or spaces
   const cleanPhone = phoneNumber.replace(/[\s+\-]/g, '');
   
-  // Check for country prefixes
+  // Check for country prefixes (international format)
   if (cleanPhone.startsWith('254')) return keFlag;  // Kenya
   if (cleanPhone.startsWith('27')) return zaFlag;   // South Africa
   if (cleanPhone.startsWith('1')) return usFlag;    // USA
+  
+  // Check for local formats (without country code)
+  if (cleanPhone.startsWith('07') || cleanPhone.startsWith('01')) return keFlag;  // Kenya local (07xx, 01xx)
+  if (cleanPhone.startsWith('0')) return zaFlag;   // South Africa local (0xx)
   
   return usFlag; // Default to US flag
 };
