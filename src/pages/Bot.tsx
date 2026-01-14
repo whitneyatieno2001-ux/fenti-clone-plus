@@ -22,14 +22,7 @@ import {
 } from '@/lib/tradingStrategies';
 import { supabase } from '@/integrations/supabase/client';
 import { useTradingSound } from '@/hooks/useTradingSound';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { BotPurchaseModal } from '@/components/BotPurchaseModal';
 
 interface TradeLogEntry {
   id: string;
@@ -125,7 +118,6 @@ export default function BotPage() {
   const [purchasedBots, setPurchasedBots] = useState<Set<string>>(new Set());
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [selectedBotForPurchase, setSelectedBotForPurchase] = useState<TradingBot | null>(null);
-  const [isPurchasing, setIsPurchasing] = useState(false);
   const { toast } = useToast();
   const { currentBalance, accountType, updateBalance, user } = useAccount();
   const tradingIntervals = useRef<Record<string, NodeJS.Timeout>>({});
@@ -181,75 +173,6 @@ export default function BotPage() {
     if (bot.price === 0) return true; // Free bot
     return purchasedBots.has(bot.id);
   }, [purchasedBots]);
-  
-  // Handle purchase bot
-  const handlePurchaseBot = async () => {
-    if (!selectedBotForPurchase || !user) return;
-    
-    const bot = selectedBotForPurchase;
-    
-    // Check if user has enough balance
-    if (currentBalance < bot.price) {
-      toast({
-        title: "Insufficient Balance",
-        description: `You need $${bot.price} to purchase this bot. Your balance: $${currentBalance.toFixed(2)}`,
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsPurchasing(true);
-    
-    try {
-      // Deduct the price from user's balance
-      const success = await updateBalance(accountType, bot.price, 'subtract');
-      
-      if (!success) {
-        throw new Error('Failed to deduct balance');
-      }
-      
-      // Record the purchase
-      const { error } = await supabase.from('bot_purchases').insert({
-        user_id: user.id,
-        bot_id: bot.id,
-        price: bot.price,
-      });
-      
-      if (error) throw error;
-      
-      // Log the transaction
-      await supabase.from('transactions').insert({
-        user_id: user.id,
-        type: 'bot_purchase',
-        amount: bot.price,
-        currency: 'USD',
-        status: 'completed',
-        description: `Purchased ${bot.name} (${bot.winRate}% win rate)`,
-        account_type: accountType,
-        profit_loss: -bot.price,
-      });
-      
-      // Update local state
-      setPurchasedBots(prev => new Set([...prev, bot.id]));
-      
-      toast({
-        title: "Bot Purchased! 🎉",
-        description: `${bot.name} is now unlocked and ready to trade!`,
-      });
-      
-      setPurchaseDialogOpen(false);
-      setSelectedBotForPurchase(null);
-    } catch (err) {
-      console.error('Error purchasing bot:', err);
-      toast({
-        title: "Purchase Failed",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPurchasing(false);
-    }
-  };
   
   // Open purchase dialog
   const openPurchaseDialog = (bot: TradingBot) => {
@@ -938,70 +861,23 @@ export default function BotPage() {
 
       <BottomNav />
       
-      {/* Purchase Dialog */}
-      <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-warning" />
-              Unlock {selectedBotForPurchase?.name}
-            </DialogTitle>
-            <DialogDescription>
-              This bot has a {selectedBotForPurchase?.winRate}% target win rate and costs ${selectedBotForPurchase?.price} to unlock.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="p-4 rounded-xl bg-secondary/50 space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Bot Price:</span>
-                <span className="font-bold text-foreground">${selectedBotForPurchase?.price}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Your Balance:</span>
-                <span className={cn(
-                  "font-bold",
-                  currentBalance >= (selectedBotForPurchase?.price || 0) ? "text-success" : "text-destructive"
-                )}>
-                  ${currentBalance.toFixed(2)}
-                </span>
-              </div>
-              <div className="border-t border-border pt-2 flex justify-between">
-                <span className="text-muted-foreground">After Purchase:</span>
-                <span className="font-bold text-foreground">
-                  ${(currentBalance - (selectedBotForPurchase?.price || 0)).toFixed(2)}
-                </span>
-              </div>
-            </div>
-            
-            {currentBalance < (selectedBotForPurchase?.price || 0) && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
-                Insufficient balance. You need ${((selectedBotForPurchase?.price || 0) - currentBalance).toFixed(2)} more to unlock this bot.
-              </div>
-            )}
-          </div>
-          
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setPurchaseDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handlePurchaseBot}
-              disabled={isPurchasing || currentBalance < (selectedBotForPurchase?.price || 0)}
-              className="bg-warning hover:bg-warning/90 text-warning-foreground"
-            >
-              {isPurchasing ? (
-                "Processing..."
-              ) : (
-                <>
-                  <Unlock className="h-4 w-4 mr-2" />
-                  Confirm Purchase
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Purchase Modal */}
+      <BotPurchaseModal
+        isOpen={purchaseDialogOpen}
+        onClose={() => setPurchaseDialogOpen(false)}
+        bot={selectedBotForPurchase ? {
+          id: selectedBotForPurchase.id,
+          name: selectedBotForPurchase.name,
+          price: selectedBotForPurchase.price,
+          winRate: selectedBotForPurchase.winRate,
+        } : null}
+        onPurchaseSuccess={() => {
+          if (selectedBotForPurchase) {
+            setPurchasedBots(prev => new Set([...prev, selectedBotForPurchase.id]));
+          }
+          setPurchaseDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

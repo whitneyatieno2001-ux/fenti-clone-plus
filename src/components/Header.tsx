@@ -1,15 +1,59 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAccount } from '@/contexts/AccountContext';
 import { Button } from '@/components/ui/button';
 import { User, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import usFlag from '@/assets/us-flag.png';
+import keFlag from '@/assets/ke-flag.png';
+import zaFlag from '@/assets/za-flag.png';
+
+// Country phone prefixes to flag mapping
+const getCountryFlagFromPhone = (phoneNumber: string | null): string => {
+  if (!phoneNumber) return usFlag;
+  
+  // Remove any + or spaces
+  const cleanPhone = phoneNumber.replace(/[\s+\-]/g, '');
+  
+  // Check for country prefixes
+  if (cleanPhone.startsWith('254')) return keFlag;  // Kenya
+  if (cleanPhone.startsWith('27')) return zaFlag;   // South Africa
+  if (cleanPhone.startsWith('1')) return usFlag;    // USA
+  
+  return usFlag; // Default to US flag
+};
 
 export function Header() {
   const location = useLocation();
-  const { accountType, setAccountType, demoBalance, realBalance, currentBalance } = useAccount();
+  const { accountType, setAccountType, demoBalance, realBalance, currentBalance, user } = useAccount();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [userPhone, setUserPhone] = useState<string | null>(null);
+  const [countryFlag, setCountryFlag] = useState<string>(usFlag);
+
+  // Fetch user's phone number to determine country flag
+  useEffect(() => {
+    const fetchUserPhone = async () => {
+      if (!user) return;
+      
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('phone_number')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (data?.phone_number) {
+          setUserPhone(data.phone_number);
+          setCountryFlag(getCountryFlagFromPhone(data.phone_number));
+        }
+      } catch (err) {
+        console.error('Error fetching user phone:', err);
+      }
+    };
+    
+    fetchUserPhone();
+  }, [user]);
 
   const getTitle = () => {
     switch (location.pathname) {
@@ -53,8 +97,8 @@ export function Header() {
               ) : (
                 <div className="w-8 h-8 rounded-full overflow-hidden border border-border">
                   <img
-                    src={usFlag}
-                    alt="USA flag (real account)"
+                    src={countryFlag}
+                    alt="Country flag (real account)"
                     className="w-full h-full object-cover object-center"
                     loading="lazy"
                   />
@@ -120,7 +164,7 @@ export function Header() {
                 >
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
                     <img
-                      src={usFlag}
+                      src={countryFlag}
                       alt="USA flag (real account)"
                       className="w-full h-full object-cover object-center"
                       loading="lazy"
