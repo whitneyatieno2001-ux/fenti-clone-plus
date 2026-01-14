@@ -38,13 +38,13 @@ export function CryptoCard({ crypto, onClick, variant = 'default' }: CryptoCardP
             {crypto.icon}
           </div>
           <div>
-            {/* Dark black text for symbols */}
-            <p className="font-semibold text-gray-900 dark:text-foreground">{crypto.symbol}</p>
+            {/* White text for better visibility */}
+            <p className="font-semibold text-foreground">{crypto.symbol}</p>
             <p className="text-sm text-muted-foreground">{crypto.name}</p>
           </div>
         </div>
         <div className="text-right">
-          <p className="font-semibold text-gray-900 dark:text-foreground">{formatPrice(crypto.price)}</p>
+          <p className="font-semibold text-foreground">{formatPrice(crypto.price)}</p>
           <p className={cn(
             "text-sm font-medium",
             isPositive ? "text-success" : "text-destructive"
@@ -82,10 +82,10 @@ export function CryptoCard({ crypto, onClick, variant = 'default' }: CryptoCardP
         </span>
       </div>
       <div>
-        {/* Dark black text */}
-        <p className="font-bold text-gray-900 dark:text-foreground">{crypto.symbol}</p>
+        {/* White text for better visibility */}
+        <p className="font-bold text-foreground">{crypto.symbol}</p>
         <p className="text-sm text-muted-foreground mb-2">{crypto.name}</p>
-        <p className="font-bold text-lg text-gray-900 dark:text-foreground">{formatPrice(crypto.price)}</p>
+        <p className="font-bold text-lg text-foreground">{formatPrice(crypto.price)}</p>
       </div>
     </div>
   );
