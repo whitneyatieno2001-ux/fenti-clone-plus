@@ -32,32 +32,7 @@ export function Header() {
   const location = useLocation();
   const { accountType, setAccountType, demoBalance, realBalance, currentBalance, user } = useAccount();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [userPhone, setUserPhone] = useState<string | null>(null);
-  const [countryFlag, setCountryFlag] = useState<string>(usFlag);
-
-  // Fetch user's phone number to determine country flag
-  useEffect(() => {
-    const fetchUserPhone = async () => {
-      if (!user) return;
-      
-      try {
-        const { data } = await supabase
-          .from('profiles')
-          .select('phone_number')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        if (data?.phone_number) {
-          setUserPhone(data.phone_number);
-          setCountryFlag(getCountryFlagFromPhone(data.phone_number));
-        }
-      } catch (err) {
-        console.error('Error fetching user phone:', err);
-      }
-    };
-    
-    fetchUserPhone();
-  }, [user]);
+  const countryFlag = usFlag;
 
   const getTitle = () => {
     switch (location.pathname) {
