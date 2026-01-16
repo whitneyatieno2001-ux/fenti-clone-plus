@@ -17,8 +17,8 @@ type PaymentCategory = 'select' | 'crypto' | 'mobile' | 'card';
 type PaymentMethod = 'binance' | 'mpesa' | 'airtel' | 'paypal' | 'card' | null;
 type WithdrawCategory = 'select' | 'crypto' | 'mobile' | 'card';
 type WithdrawMethod = 'binance' | 'mpesa' | 'airtel' | 'card' | null;
+type MpesaStatus = 'idle' | 'processing' | 'waiting' | 'success' | 'failed';
 
-const PAYHERO_DEPOSIT_LINK = 'https://short.payhero.co.ke/s/L9sqoCZ7EW2riRENtemoSK';
 const quickAmounts = [5, 10, 25, 50];
 
 export function TransactionModal({ isOpen, onClose, type }: TransactionModalProps) {
@@ -35,7 +35,10 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [cryptoGenerated, setCryptoGenerated] = useState(false);
   const [cryptoTimer, setCryptoTimer] = useState(900); // 15 minutes
   const [paymentId, setPaymentId] = useState('');
-  const { withdraw, currentBalance, accountType, isLoggedIn, user } = useAccount();
+  const [mpesaStatus, setMpesaStatus] = useState<MpesaStatus>('idle');
+  const [mpesaAmount, setMpesaAmount] = useState('');
+  const [mpesaPhone, setMpesaPhone] = useState('');
+  const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit } = useAccount();
   const { toast } = useToast();
 
   // Reset state when modal closes
@@ -50,6 +53,9 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       setCryptoGenerated(false);
       setCryptoTimer(900);
       setPaymentId('');
+      setMpesaStatus('idle');
+      setMpesaAmount('');
+      setMpesaPhone('');
     }
   }, [isOpen]);
 
@@ -169,16 +175,6 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       return;
     }
 
-    if (paymentMethod === 'mpesa') {
-      window.open(PAYHERO_DEPOSIT_LINK, '_blank');
-      toast({
-        title: "Complete Payment",
-        description: "Complete your M-Pesa payment on the PayHero page",
-      });
-      onClose();
-      return;
-    }
-
     if (paymentMethod === 'airtel') {
       toast({
         title: "Coming Soon",
@@ -202,6 +198,76 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       });
       return;
     }
+  };
+
+  const handleMpesaDeposit = async () => {
+    if (!isLoggedIn) {
+      toast({
+        title: "Login Required",
+        description: "Please login to make deposits",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const numAmount = parseFloat(mpesaAmount);
+    if (isNaN(numAmount) || numAmount < 1) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid amount (minimum KES 1)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!mpesaPhone || mpesaPhone.length < 9) {
+      toast({
+        title: "Invalid Phone Number",
+        description: "Please enter a valid M-Pesa phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setMpesaStatus('processing');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('mpesa-payment', {
+        body: {
+          action: 'deposit',
+          amount: numAmount,
+          phoneNumber: mpesaPhone,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setMpesaStatus('waiting');
+        setPaymentId(data.checkoutRequestId || Math.floor(1000000000 + Math.random() * 9000000000).toString());
+        toast({
+          title: "STK Push Sent!",
+          description: "Check your phone and enter your M-Pesa PIN to complete payment",
+        });
+      } else {
+        throw new Error(data.error || 'Failed to initiate payment');
+      }
+    } catch (error: any) {
+      console.error('M-Pesa error:', error);
+      setMpesaStatus('failed');
+      toast({
+        title: "Payment Failed",
+        description: error.message || "Failed to initiate M-Pesa payment",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetMpesaPayment = () => {
+    setMpesaStatus('idle');
+    setMpesaAmount('');
+    setMpesaPhone('');
+    setPaymentId('');
   };
 
   const handleWithdraw = async () => {
@@ -593,32 +659,162 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               </div>
             )}
 
-            {/* M-Pesa Selected */}
-            {paymentMethod === 'mpesa' && (
+            {/* M-Pesa Selected - Idle State */}
+            {paymentMethod === 'mpesa' && mpesaStatus === 'idle' && (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
                   <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
                     <Smartphone className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="font-semibold text-foreground">M-Pesa via PayHero</p>
-                    <p className="text-xs text-muted-foreground">Secure Payment Gateway</p>
+                    <p className="font-semibold text-foreground">M-Pesa Deposit</p>
+                    <p className="text-xs text-muted-foreground">Enter details to receive STK push</p>
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Amount (KES)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">KES</span>
+                    <Input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="1000"
+                      value={mpesaAmount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*$/.test(val)) {
+                          setMpesaAmount(val);
+                        }
+                      }}
+                      className="pl-12 h-12 bg-secondary/50 border-border text-foreground"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  {[100, 500, 1000, 2000].map((amt) => (
+                    <button
+                      key={amt}
+                      onClick={() => setMpesaAmount(amt.toString())}
+                      className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
+                    >
+                      {amt}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">M-Pesa Phone Number</label>
+                  <div className="relative">
+                    <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="tel"
+                      inputMode="tel"
+                      placeholder="0712345678"
+                      value={mpesaPhone}
+                      onChange={(e) => setMpesaPhone(e.target.value)}
+                      className="pl-10 h-12 bg-secondary/50 border-border text-foreground"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Enter Safaricom number (e.g., 0712345678)</p>
+                </div>
+
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                  <AlertCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5" />
                   <p className="text-xs text-green-400">
-                    You will be redirected to PayHero to complete your M-Pesa payment securely.
+                    You'll receive an STK push on your phone. Enter your M-Pesa PIN to complete payment.
                   </p>
                 </div>
 
                 <Button
-                  onClick={handleDeposit}
+                  onClick={handleMpesaDeposit}
                   className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center gap-2"
                 >
-                  <ExternalLink className="h-5 w-5" />
-                  Pay with M-Pesa
+                  <Smartphone className="h-5 w-5" />
+                  Send STK Push
+                </Button>
+              </div>
+            )}
+
+            {/* M-Pesa Processing State */}
+            {paymentMethod === 'mpesa' && mpesaStatus === 'processing' && (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Loader2 className="h-12 w-12 text-green-500 animate-spin mb-4" />
+                  <p className="text-lg font-semibold text-foreground">Initiating Payment...</p>
+                  <p className="text-sm text-muted-foreground">Please wait while we send STK push to your phone</p>
+                </div>
+              </div>
+            )}
+
+            {/* M-Pesa Waiting State */}
+            {paymentMethod === 'mpesa' && mpesaStatus === 'waiting' && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-center space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-green-500/20 mx-auto flex items-center justify-center">
+                    <Smartphone className="h-8 w-8 text-green-500 animate-pulse" />
+                  </div>
+                  <p className="font-semibold text-foreground text-lg">Check Your Phone</p>
+                  <p className="text-sm text-muted-foreground">
+                    An M-Pesa prompt has been sent to <span className="font-semibold text-foreground">{mpesaPhone}</span>
+                  </p>
+                  <p className="text-sm text-green-400">Enter your M-Pesa PIN to complete payment</p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border space-y-2">
+                  <p className="text-sm font-medium text-primary">Payment Details</p>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Amount:</span>
+                    <span className="text-foreground font-semibold">KES {mpesaAmount}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Phone:</span>
+                    <span className="text-foreground">{mpesaPhone}</span>
+                  </div>
+                  {paymentId && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Reference:</span>
+                      <span className="text-foreground font-mono text-xs">{paymentId}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <Clock className="h-4 w-4 text-amber-500 mt-0.5" />
+                  <p className="text-xs text-amber-500">
+                    Waiting for confirmation. Your balance will update automatically once payment is received.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={resetMpesaPayment}
+                  variant="outline"
+                  className="w-full h-12 font-semibold"
+                >
+                  Try Again
+                </Button>
+              </div>
+            )}
+
+            {/* M-Pesa Failed State */}
+            {paymentMethod === 'mpesa' && mpesaStatus === 'failed' && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-center space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-destructive/20 mx-auto flex items-center justify-center">
+                    <AlertCircle className="h-8 w-8 text-destructive" />
+                  </div>
+                  <p className="font-semibold text-foreground text-lg">Payment Failed</p>
+                  <p className="text-sm text-muted-foreground">
+                    We couldn't initiate the M-Pesa payment. Please try again.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={resetMpesaPayment}
+                  className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                >
+                  Try Again
                 </Button>
               </div>
             )}
