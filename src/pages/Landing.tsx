@@ -17,6 +17,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import traderCharts from '@/assets/trader-charts.jpg';
+import cryptoWaveLogo from '@/assets/crypto-wave-logo.png';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -35,10 +36,12 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-glow">
-                <span className="text-primary-foreground font-bold text-lg">CW</span>
-              </div>
+            <div className="flex items-center gap-3">
+              <img 
+                src={cryptoWaveLogo} 
+                alt="Crypto Wave" 
+                className="w-12 h-12 rounded-xl shadow-lg"
+              />
               <span className="font-display font-bold text-xl text-foreground">Crypto Wave</span>
             </div>
 
@@ -302,10 +305,12 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold">CW</span>
-                </div>
+              <div className="flex items-center gap-3 mb-4">
+                <img 
+                  src={cryptoWaveLogo} 
+                  alt="Crypto Wave" 
+                  className="w-12 h-12 rounded-xl shadow-lg"
+                />
                 <span className="font-display font-bold text-lg text-foreground">Crypto Wave</span>
               </div>
               <p className="text-sm text-muted-foreground">
