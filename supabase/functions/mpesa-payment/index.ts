@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,139 +10,95 @@ interface MpesaRequest {
   action: 'deposit' | 'withdraw';
   amount: number;
   phoneNumber: string;
+  userId?: string;
 }
 
-// Get M-Pesa credentials from environment
-const CONSUMER_KEY = Deno.env.get("MPESA_CONSUMER_KEY");
-const CONSUMER_SECRET = Deno.env.get("MPESA_CONSUMER_SECRET");
-const PASSKEY = Deno.env.get("MPESA_PASSKEY");
-const SHORTCODE = Deno.env.get("MPESA_SHORTCODE");
-const CALLBACK_URL = Deno.env.get("MPESA_CALLBACK_URL");
-
-// M-Pesa API URLs - Using Sandbox for testing
-const AUTH_URL = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials";
-const STK_PUSH_URL = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest";
-
-async function getAccessToken(): Promise<string> {
-  console.log("Getting M-Pesa access token...");
-  console.log("Consumer Key exists:", !!CONSUMER_KEY);
-  console.log("Consumer Secret exists:", !!CONSUMER_SECRET);
-  
-  const auth = btoa(`${CONSUMER_KEY}:${CONSUMER_SECRET}`);
-  
-  const response = await fetch(AUTH_URL, {
-    method: "GET",
-    headers: {
-      "Authorization": `Basic ${auth}`,
-    },
-  });
-
-  const responseText = await response.text();
-  console.log("Auth response status:", response.status);
-  console.log("Auth response:", responseText);
-
-  if (!response.ok) {
-    throw new Error(`Failed to get access token: ${responseText}`);
-  }
-
-  const data = JSON.parse(responseText);
-  console.log("Access token obtained successfully");
-  return data.access_token;
-}
+// PayHero API configuration
+const PAYHERO_API_URL = "https://backend.payhero.co.ke/api/v2/payments";
+const PAYHERO_API_KEY = Deno.env.get("PAYHERO_API_KEY");
+const PAYHERO_CHANNEL_ID = Deno.env.get("PAYHERO_CHANNEL_ID");
 
 function formatPhoneNumber(phone: string): string {
   // Remove any spaces, dashes, or plus signs
   let cleaned = phone.replace(/[\s\-\+]/g, "");
   
-  // If starts with 0, replace with 254
-  if (cleaned.startsWith("0")) {
-    cleaned = "254" + cleaned.substring(1);
+  // If starts with 254, convert to 07xx format for PayHero
+  if (cleaned.startsWith("254")) {
+    cleaned = "0" + cleaned.substring(3);
   }
   
-  // If doesn't start with 254, add it
-  if (!cleaned.startsWith("254")) {
-    cleaned = "254" + cleaned;
+  // If doesn't start with 0, add it
+  if (!cleaned.startsWith("0")) {
+    cleaned = "0" + cleaned;
   }
   
   console.log("Formatted phone number:", cleaned);
   return cleaned;
 }
 
-function getTimestamp(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  const seconds = String(now.getSeconds()).padStart(2, "0");
+async function initiatePayHeroSTKPush(amount: number, phoneNumber: string, userId?: string) {
+  console.log("Initiating PayHero STK Push...");
+  console.log("Amount:", amount);
+  console.log("Phone:", phoneNumber);
   
-  const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
-  console.log("Generated timestamp:", timestamp);
-  return timestamp;
-}
-
-async function initiateSTKPush(amount: number, phoneNumber: string, accessToken: string) {
-  const timestamp = getTimestamp();
-  const password = btoa(`${SHORTCODE}${PASSKEY}${timestamp}`);
   const formattedPhone = formatPhoneNumber(phoneNumber);
   
-  // Use a default callback URL if not set
-  const callbackUrl = CALLBACK_URL || "https://webhook.site/your-unique-url";
+  // Get the Supabase URL for callback
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const callbackUrl = `${supabaseUrl}/functions/v1/payhero-webhook`;
+  
+  // Generate external reference for tracking
+  const externalReference = `DEP-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
   
   const requestBody = {
-    BusinessShortCode: SHORTCODE,
-    Password: password,
-    Timestamp: timestamp,
-    TransactionType: "CustomerPayBillOnline",
-    Amount: Math.ceil(amount),
-    PartyA: formattedPhone,
-    PartyB: SHORTCODE,
-    PhoneNumber: formattedPhone,
-    CallBackURL: callbackUrl,
-    AccountReference: "TradingApp",
-    TransactionDesc: "Deposit to trading account",
+    amount: Math.ceil(amount),
+    phone_number: formattedPhone,
+    channel_id: parseInt(PAYHERO_CHANNEL_ID || "0"),
+    provider: "m-pesa",
+    external_reference: externalReference,
+    callback_url: callbackUrl,
   };
 
-  console.log("STK Push request body:", JSON.stringify(requestBody, null, 2));
+  console.log("PayHero request body:", JSON.stringify(requestBody, null, 2));
   console.log("Using callback URL:", callbackUrl);
 
-  const response = await fetch(STK_PUSH_URL, {
+  const response = await fetch(PAYHERO_API_URL, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${accessToken}`,
+      "Authorization": `Basic ${PAYHERO_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(requestBody),
   });
 
   const responseText = await response.text();
-  console.log("STK Push response status:", response.status);
-  console.log("STK Push response:", responseText);
+  console.log("PayHero response status:", response.status);
+  console.log("PayHero response:", responseText);
 
   let data;
   try {
     data = JSON.parse(responseText);
   } catch (e) {
-    throw new Error(`Invalid response from M-Pesa: ${responseText}`);
+    throw new Error(`Invalid response from PayHero: ${responseText}`);
   }
 
-  if (data.ResponseCode === "0") {
+  // PayHero returns success if the STK push was initiated
+  if (response.ok && (data.success || data.status === "QUEUED" || data.status === "SUCCESS" || data.CheckoutRequestID)) {
     return {
       success: true,
       message: "STK Push sent! Check your phone to enter your M-Pesa PIN.",
-      checkoutRequestId: data.CheckoutRequestID,
-      merchantRequestId: data.MerchantRequestID,
+      checkoutRequestId: data.CheckoutRequestID || data.reference || externalReference,
+      externalReference: externalReference,
     };
   } else {
-    const errorMessage = data.ResponseDescription || data.errorMessage || data.errorCode || "STK Push failed";
-    console.error("STK Push failed:", errorMessage);
+    const errorMessage = data.message || data.error || data.errorMessage || "STK Push failed";
+    console.error("PayHero STK Push failed:", errorMessage);
     throw new Error(errorMessage);
   }
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log("M-Pesa payment function called");
+  console.log("PayHero M-Pesa payment function called");
   console.log("Request method:", req.method);
   
   // Handle CORS preflight requests
@@ -152,26 +109,21 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     // Log environment variable status (not values for security)
     console.log("Environment check:");
-    console.log("- CONSUMER_KEY set:", !!CONSUMER_KEY);
-    console.log("- CONSUMER_SECRET set:", !!CONSUMER_SECRET);
-    console.log("- PASSKEY set:", !!PASSKEY);
-    console.log("- SHORTCODE set:", !!SHORTCODE);
-    console.log("- CALLBACK_URL set:", !!CALLBACK_URL);
+    console.log("- PAYHERO_API_KEY set:", !!PAYHERO_API_KEY);
+    console.log("- PAYHERO_CHANNEL_ID set:", !!PAYHERO_CHANNEL_ID);
     
     // Validate environment variables
-    if (!CONSUMER_KEY || !CONSUMER_SECRET || !PASSKEY || !SHORTCODE) {
+    if (!PAYHERO_API_KEY || !PAYHERO_CHANNEL_ID) {
       const missing = [];
-      if (!CONSUMER_KEY) missing.push("MPESA_CONSUMER_KEY");
-      if (!CONSUMER_SECRET) missing.push("MPESA_CONSUMER_SECRET");
-      if (!PASSKEY) missing.push("MPESA_PASSKEY");
-      if (!SHORTCODE) missing.push("MPESA_SHORTCODE");
-      throw new Error(`Missing M-Pesa credentials: ${missing.join(", ")}`);
+      if (!PAYHERO_API_KEY) missing.push("PAYHERO_API_KEY");
+      if (!PAYHERO_CHANNEL_ID) missing.push("PAYHERO_CHANNEL_ID");
+      throw new Error(`Missing PayHero credentials: ${missing.join(", ")}`);
     }
 
     const body = await req.json();
     console.log("Request body:", JSON.stringify(body, null, 2));
     
-    const { action, amount, phoneNumber }: MpesaRequest = body;
+    const { action, amount, phoneNumber, userId }: MpesaRequest = body;
 
     if (!action || !amount || !phoneNumber) {
       throw new Error("Missing required fields: action, amount, phoneNumber");
@@ -183,15 +135,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Processing ${action} request for KES ${amount} to ${phoneNumber}`);
 
-    // Get access token
-    const accessToken = await getAccessToken();
-    console.log("Access token obtained, initiating STK Push...");
-
     let result;
     if (action === "deposit") {
-      result = await initiateSTKPush(amount, phoneNumber, accessToken);
+      result = await initiatePayHeroSTKPush(amount, phoneNumber, userId);
     } else if (action === "withdraw") {
-      // For withdrawals, we would use B2C API but that requires additional setup
+      // For withdrawals, PayHero B2C would need to be implemented
       // For now, return a message indicating this
       result = {
         success: true,
@@ -208,7 +156,7 @@ const handler = async (req: Request): Promise<Response> => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("M-Pesa error:", error.message);
+    console.error("PayHero M-Pesa error:", error.message);
     console.error("Error stack:", error.stack);
     
     return new Response(
