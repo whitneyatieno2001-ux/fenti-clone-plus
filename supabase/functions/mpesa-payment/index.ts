@@ -62,10 +62,15 @@ async function initiatePayHeroSTKPush(amount: number, phoneNumber: string, userI
   console.log("PayHero request body:", JSON.stringify(requestBody, null, 2));
   console.log("Using callback URL:", callbackUrl);
 
+  const authTokenRaw = (PAYHERO_API_KEY || "").trim();
+  const authorizationHeader = authTokenRaw.toLowerCase().startsWith("basic ")
+    ? authTokenRaw
+    : `Basic ${authTokenRaw}`;
+
   const response = await fetch(PAYHERO_API_URL, {
     method: "POST",
     headers: {
-      "Authorization": `Basic ${PAYHERO_API_KEY}`,
+      "Authorization": authorizationHeader,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(requestBody),
