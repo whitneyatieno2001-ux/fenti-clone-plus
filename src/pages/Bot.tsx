@@ -169,9 +169,14 @@ export default function BotPage() {
   }, []);
   
   // Check if a bot is unlocked (free or purchased)
+  // Bot 1 (Arbitrage Hunter) and Bot 2 (Speed Scalper) are paid bots
   const isBotUnlocked = useCallback((bot: TradingBot) => {
-    if (bot.price === 0) return true; // Free bot
-    return purchasedBots.has(bot.id);
+    if (bot.price === 0) return true; // Free bot (Signal Master)
+    // Arbitrage Hunter (id: 1) and Speed Scalper (id: 2) require purchase
+    if (bot.id === '1' || bot.id === '2') {
+      return purchasedBots.has(bot.id);
+    }
+    return true;
   }, [purchasedBots]);
   
   // Open purchase dialog

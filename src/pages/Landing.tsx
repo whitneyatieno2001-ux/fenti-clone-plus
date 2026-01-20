@@ -16,7 +16,7 @@ import {
   Award,
   ArrowRight
 } from 'lucide-react';
-import traderCharts from '@/assets/trader-charts.jpg';
+import professionalTrader from '@/assets/professional-trader.jpg';
 import cryptoWaveLogo from '@/assets/crypto-wave-logo.png';
 
 export default function Landing() {
@@ -40,7 +40,8 @@ export default function Landing() {
               <img 
                 src={cryptoWaveLogo} 
                 alt="Crypto Wave" 
-                className="w-12 h-12 rounded-xl shadow-lg"
+                className="w-12 h-12 rounded-xl"
+                style={{ mixBlendMode: 'multiply' }}
               />
               <span className="font-display font-bold text-xl text-foreground">Crypto Wave</span>
             </div>
@@ -132,9 +133,16 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Candlestick chart visual */}
+            {/* Professional trader image */}
             <div className="relative animate-slide-up hidden lg:block">
-              <CandlestickVisual />
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                <img 
+                  src={professionalTrader} 
+                  alt="Professional Trader" 
+                  className="w-full h-auto object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+              </div>
               {/* Floating profit indicator */}
               <div className="absolute -top-4 -right-4 bg-success text-success-foreground px-4 py-2 rounded-lg shadow-lg animate-float">
                 <p className="text-sm font-semibold">+$1,234.50</p>
@@ -219,9 +227,13 @@ export default function Landing() {
             ].map((feature, index) => (
               <div 
                 key={index}
-                className="group p-6 bg-card rounded-xl border border-border hover:border-primary/50 transition-all duration-300"
+                className="group p-6 bg-card rounded-xl border border-border hover:border-primary/50 transition-all duration-300 opacity-0 animate-fade-in"
+                style={{ 
+                  animationDelay: `${index * 150}ms`,
+                  animationFillMode: 'forwards'
+                }}
               >
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors group-hover:scale-110 transform duration-300">
                   <feature.icon className="w-6 h-6 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
@@ -309,7 +321,8 @@ export default function Landing() {
                 <img 
                   src={cryptoWaveLogo} 
                   alt="Crypto Wave" 
-                  className="w-12 h-12 rounded-xl shadow-lg"
+                  className="w-12 h-12 rounded-xl"
+                  style={{ mixBlendMode: 'multiply' }}
                 />
                 <span className="font-display font-bold text-lg text-foreground">Crypto Wave</span>
               </div>
