@@ -17,7 +17,8 @@ import {
   ArrowRight
 } from 'lucide-react';
 import professionalTrader from '@/assets/professional-trader.jpg';
-import cryptoWaveLogo from '@/assets/crypto-wave-logo-transparent.png';
+import cryptoWaveLogo from '@/assets/crypto-wave-logo.png';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -36,14 +37,13 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <img 
                 src={cryptoWaveLogo} 
                 alt="Crypto Wave" 
-                className="w-12 h-12 rounded-xl"
-                style={{ mixBlendMode: 'multiply' }}
+                className="w-10 h-10 rounded-lg object-contain"
               />
-              <span className="font-display font-bold text-xl text-foreground">Crypto Wave</span>
+              <span className="font-display font-bold text-xl text-foreground hidden sm:block">CryptoWave</span>
             </div>
 
             {/* Desktop Nav */}
@@ -54,11 +54,12 @@ export default function Landing() {
             </div>
 
             {/* Auth Buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
               <Button 
                 variant="ghost" 
                 onClick={() => navigate('/auth')}
-                className="text-foreground hover:text-primary"
+                className="text-foreground hover:text-primary hidden sm:flex"
               >
                 Log in
               </Button>
@@ -134,20 +135,20 @@ export default function Landing() {
             </div>
 
             {/* Professional trader image */}
-            <div className="relative animate-slide-up hidden lg:block">
+            <div className="relative animate-slide-up">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img 
                   src={professionalTrader} 
                   alt="Professional Trader" 
-                  className="w-full h-auto object-cover"
+                  className="w-full h-auto object-cover max-h-[500px]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
               </div>
               {/* Floating profit indicator */}
-              <div className="absolute -top-4 -right-4 bg-success text-success-foreground px-4 py-2 rounded-lg shadow-lg animate-float">
+              <div className="absolute -top-4 -right-4 bg-success text-success-foreground px-4 py-2 rounded-lg shadow-lg animate-float hidden sm:block">
                 <p className="text-sm font-semibold">+$1,234.50</p>
               </div>
-              <div className="absolute -bottom-4 -left-4 bg-card border border-border px-4 py-3 rounded-lg shadow-lg">
+              <div className="absolute -bottom-4 -left-4 bg-card border border-border px-4 py-3 rounded-lg shadow-lg hidden sm:block">
                 <p className="text-xs text-muted-foreground">Today&apos;s Profit</p>
                 <p className="text-lg font-bold text-success">+12.5%</p>
               </div>
@@ -317,14 +318,13 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-2 mb-4">
                 <img 
                   src={cryptoWaveLogo} 
                   alt="Crypto Wave" 
-                  className="w-12 h-12 rounded-xl"
-                  style={{ mixBlendMode: 'multiply' }}
+                  className="w-10 h-10 rounded-lg object-contain"
                 />
-                <span className="font-display font-bold text-lg text-foreground">Crypto Wave</span>
+                <span className="font-display font-bold text-lg text-foreground">CryptoWave</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 Your trusted partner for cryptocurrency trading. Trade smarter, not harder.

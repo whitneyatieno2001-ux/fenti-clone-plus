@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AccountProvider } from "./contexts/AccountContext";
+import { ThemeProvider } from "./components/ThemeProvider";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Markets from "./pages/Markets";
@@ -20,28 +21,30 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AccountProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/markets" element={<Markets />} />
-            <Route path="/trade" element={<Trade />} />
-            <Route path="/trade/:assetId" element={<AssetTrade />} />
-            <Route path="/futures" element={<Futures />} />
-            <Route path="/bot" element={<Bot />} />
-            <Route path="/bot/:botId" element={<BotTrade />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/auth" element={<Auth />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AccountProvider>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <AccountProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/markets" element={<Markets />} />
+              <Route path="/trade" element={<Trade />} />
+              <Route path="/trade/:assetId" element={<AssetTrade />} />
+              <Route path="/futures" element={<Futures />} />
+              <Route path="/bot" element={<Bot />} />
+              <Route path="/bot/:botId" element={<BotTrade />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/auth" element={<Auth />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AccountProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
