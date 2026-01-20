@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import usFlag from '@/assets/us-flag.png';
 import keFlag from '@/assets/ke-flag.png';
 import zaFlag from '@/assets/za-flag.png';
-import cryptoWaveLogo from '@/assets/crypto-wave-logo.png';
+import cryptoWaveLogo from '@/assets/crypto-wave-logo-transparent.png';
 
 // Country phone prefixes to flag mapping
 const getCountryFlagFromPhone = (phoneNumber: string | null): string => {
