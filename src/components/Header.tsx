@@ -8,7 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import usFlag from '@/assets/us-flag.png';
 import keFlag from '@/assets/ke-flag.png';
 import zaFlag from '@/assets/za-flag.png';
-import cryptoWaveLogo from '@/assets/crypto-wave-logo-transparent.png';
+import cryptoWaveLogo from '@/assets/crypto-wave-logo.png';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 // Country phone prefixes to flag mapping
 const getCountryFlagFromPhone = (phoneNumber: string | null): string => {
@@ -175,12 +176,15 @@ export function Header() {
           <h1 className="text-lg font-bold font-display text-foreground">{getTitle()}</h1>
         </div>
 
-        {/* Right - Profile */}
-        <Link to="/profile">
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <User className="h-5 w-5" />
-          </Button>
-        </Link>
+        {/* Right - Theme Toggle + Profile */}
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Link to="/profile">
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <User className="h-5 w-5" />
+            </Button>
+          </Link>
+        </div>
       </div>
     </header>
   );

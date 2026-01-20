@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
-import cryptoWaveLogo from '@/assets/crypto-wave-logo-transparent.png';
+import cryptoWaveLogo from '@/assets/crypto-wave-logo.png';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
