@@ -17,7 +17,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import professionalTrader from '@/assets/professional-trader.jpg';
-import cryptoWaveLogo from '@/assets/crypto-wave-logo.png';
+import cryptoWaveLogo from '@/assets/crypto-wave-logo-transparent.png';
 
 export default function Landing() {
   const navigate = useNavigate();
