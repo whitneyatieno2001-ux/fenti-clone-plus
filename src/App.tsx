@@ -16,6 +16,13 @@ import BotTrade from "./pages/BotTrade";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import TransactionHistory from "./pages/TransactionHistory";
+import PaymentMethods from "./pages/PaymentMethods";
+import Security from "./pages/Security";
+import Notifications from "./pages/Notifications";
+import Privacy from "./pages/Privacy";
+import HelpSupport from "./pages/HelpSupport";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +45,13 @@ const App = () => (
               <Route path="/bot/:botId" element={<BotTrade />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/history" element={<TransactionHistory />} />
+              <Route path="/payments" element={<PaymentMethods />} />
+              <Route path="/security" element={<Security />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/support" element={<HelpSupport />} />
+              <Route path="/settings" element={<Settings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
