@@ -4,19 +4,12 @@ import { BottomNav } from '@/components/BottomNav';
 import { useAccount } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
-import { CandlestickChart } from '@/components/CandlestickChart';
+import { EnhancedChart } from '@/components/EnhancedChart';
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Trophy, BarChart3 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-const tradingPairs = [
-  { id: 'eurusd', symbol: 'EUR/USD', name: 'Euro / US Dollar', icon: '🇪🇺🇺🇸', type: 'forex' },
-  { id: 'gbpusd', symbol: 'GBP/USD', name: 'Pound / US Dollar', icon: '🇬🇧🇺🇸', type: 'forex' },
-  { id: 'usdjpy', symbol: 'USD/JPY', name: 'US Dollar / Yen', icon: '🇺🇸🇯🇵', type: 'forex' },
-  { id: 'bitcoin', symbol: 'BTC/USD', name: 'Bitcoin / US Dollar', icon: '₿', type: 'crypto' },
-  { id: 'ethereum', symbol: 'ETH/USD', name: 'Ethereum / US Dollar', icon: 'Ξ', type: 'crypto' },
-  { id: 'solana', symbol: 'SOL/USD', name: 'Solana / US Dollar', icon: '◎', type: 'crypto' },
-];
+import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Trophy, BarChart3, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { tradingPairs, getMarketCategories, getPairsByCategory, type TradingPair } from '@/data/tradingPairs';
+import { Input } from '@/components/ui/input';
 
 const durations = [
   { label: '00:05', seconds: 5 },
@@ -28,8 +21,11 @@ const durations = [
 ];
 
 export default function ManualTrade() {
-  const [selectedPair, setSelectedPair] = useState(tradingPairs[0]);
+  const navigate = useNavigate();
+  const [selectedPair, setSelectedPair] = useState<TradingPair>(tradingPairs[0]);
   const [showPairSelector, setShowPairSelector] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [pairSearch, setPairSearch] = useState('');
   const [investment, setInvestment] = useState('10');
   const [durationIndex, setDurationIndex] = useState(0);
   const [isTrading, setIsTrading] = useState(false);
@@ -42,19 +38,24 @@ export default function ManualTrade() {
   const { toast } = useToast();
   const { getCryptoWithPrice } = useCryptoPrices();
 
-  // Get current price - simulate forex prices for forex pairs
+  const categories = getMarketCategories();
+  
+  // Filter pairs by category and search
+  const filteredPairs = getPairsByCategory(selectedCategory).filter(pair =>
+    pair.symbol.toLowerCase().includes(pairSearch.toLowerCase()) ||
+    pair.name.toLowerCase().includes(pairSearch.toLowerCase())
+  );
+
+  // Get current price - simulate prices for all pairs
   const getCurrentPrice = useCallback(() => {
     if (selectedPair.type === 'crypto') {
       const crypto = getCryptoWithPrice({ id: selectedPair.id, symbol: selectedPair.symbol.split('/')[0] } as any);
       return crypto.price;
     }
-    // Simulate forex prices
-    switch (selectedPair.id) {
-      case 'eurusd': return 1.08620 + (Math.random() - 0.5) * 0.001;
-      case 'gbpusd': return 1.26450 + (Math.random() - 0.5) * 0.001;
-      case 'usdjpy': return 149.850 + (Math.random() - 0.5) * 0.1;
-      default: return 1.0;
-    }
+    // Use base price with small fluctuations for other pairs
+    const basePrice = selectedPair.basePrice || 1.0;
+    const volatility = basePrice * 0.0001;
+    return basePrice + (Math.random() - 0.5) * 2 * volatility;
   }, [selectedPair, getCryptoWithPrice]);
 
   const [currentPrice, setCurrentPrice] = useState(getCurrentPrice());
@@ -152,12 +153,24 @@ export default function ManualTrade() {
       return;
     }
 
-    // Start trade
+    // Start trade and navigate to positions page
+    const tradeEntryPrice = getCurrentPrice();
     setIsTrading(true);
     setTradeDirection(direction);
-    setEntryPrice(getCurrentPrice());
+    setEntryPrice(tradeEntryPrice);
     setTradeEndTime(Date.now() + durations[durationIndex].seconds * 1000);
     setCountdown(durations[durationIndex].seconds);
+
+    // Navigate to active positions page
+    navigate('/positions', {
+      state: {
+        symbol: selectedPair.symbol,
+        direction,
+        investment: investmentAmount,
+        entryPrice: tradeEntryPrice,
+        duration: durations[durationIndex].seconds,
+      }
+    });
 
     toast({
       title: `${direction.toUpperCase()} Order Placed!`,
@@ -216,7 +229,7 @@ export default function ManualTrade() {
           </div>
         </div>
 
-        {/* Pair Selector */}
+        {/* Pair Selector with Categories */}
         <div className="relative">
           <button
             onClick={() => setShowPairSelector(!showPairSelector)}
@@ -225,7 +238,7 @@ export default function ManualTrade() {
             <span className="text-lg">{selectedPair.icon}</span>
             <div className="text-left">
               <p className="font-semibold text-foreground">{selectedPair.symbol}</p>
-              <p className="text-xs text-muted-foreground">(OTC)</p>
+              <p className="text-xs text-muted-foreground capitalize">{selectedPair.type}</p>
             </div>
             <ChevronDown className={cn("h-4 w-4 ml-auto transition-transform", showPairSelector && "rotate-180")} />
           </button>
@@ -233,26 +246,62 @@ export default function ManualTrade() {
           {showPairSelector && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowPairSelector(false)} />
-              <div className="absolute left-0 top-full mt-2 z-50 bg-card rounded-xl shadow-xl border border-border overflow-hidden w-64 max-h-64 overflow-y-auto">
-                {tradingPairs.map((pair) => (
-                  <button
-                    key={pair.id}
-                    onClick={() => {
-                      setSelectedPair(pair);
-                      setShowPairSelector(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors",
-                      selectedPair.id === pair.id && "bg-primary/10"
-                    )}
-                  >
-                    <span className="text-lg">{pair.icon}</span>
-                    <div className="text-left">
-                      <p className="font-medium text-foreground">{pair.symbol}</p>
-                      <p className="text-xs text-muted-foreground">{pair.name}</p>
-                    </div>
-                  </button>
-                ))}
+              <div className="absolute left-0 top-full mt-2 z-50 bg-card rounded-xl shadow-xl border border-border overflow-hidden w-80 max-h-96">
+                {/* Search */}
+                <div className="p-2 border-b border-border">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search markets..."
+                      value={pairSearch}
+                      onChange={(e) => setPairSearch(e.target.value)}
+                      className="pl-8 h-8 text-sm"
+                    />
+                  </div>
+                </div>
+                
+                {/* Categories */}
+                <div className="flex gap-1 p-2 border-b border-border overflow-x-auto">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={cn(
+                        "px-2 py-1 text-xs font-medium rounded whitespace-nowrap transition-colors",
+                        selectedCategory === cat.id
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-muted-foreground"
+                      )}
+                    >
+                      {cat.icon} {cat.name}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Pairs List */}
+                <div className="overflow-y-auto max-h-60">
+                  {filteredPairs.map((pair) => (
+                    <button
+                      key={pair.id}
+                      onClick={() => {
+                        setSelectedPair(pair);
+                        setShowPairSelector(false);
+                        setPairSearch('');
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors",
+                        selectedPair.id === pair.id && "bg-primary/10"
+                      )}
+                    >
+                      <span className="text-lg">{pair.icon}</span>
+                      <div className="text-left flex-1">
+                        <p className="font-medium text-foreground">{pair.symbol}</p>
+                        <p className="text-xs text-muted-foreground">{pair.name}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground capitalize">{pair.type}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           )}
@@ -263,9 +312,9 @@ export default function ManualTrade() {
           <span className="text-success font-mono font-bold text-lg">{formatPrice(currentPrice)}</span>
         </div>
 
-        {/* Candlestick Chart */}
+        {/* Enhanced Chart with zoom, chart types, indicators */}
         <div className="rounded-xl overflow-hidden border border-border">
-          <CandlestickChart 
+          <EnhancedChart 
             symbol={selectedPair.symbol.split('/')[0]} 
             currentPrice={currentPrice} 
           />
