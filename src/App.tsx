@@ -39,7 +39,8 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/markets" element={<Markets />} />
-              <Route path="/trade" element={<Trade />} />
+              <Route path="/trade" element={<ManualTrade />} />
+              <Route path="/spot" element={<Trade />} />
               <Route path="/trade/:assetId" element={<AssetTrade />} />
               <Route path="/futures" element={<Futures />} />
               <Route path="/bot" element={<Bot />} />
