@@ -166,15 +166,8 @@ export function Header() {
           )}
         </div>
 
-        {/* Center - Logo and Title */}
-        <div className="flex items-center gap-2">
-          <img 
-            src={cryptoWaveLogo} 
-            alt="Crypto Wave" 
-            className="w-8 h-8 rounded-lg"
-          />
-          <h1 className="text-lg font-bold font-display text-foreground">{getTitle()}</h1>
-        </div>
+        {/* Center - Empty space for balance */}
+        <div className="flex-1" />
 
         {/* Right - Theme Toggle + Profile */}
         <div className="flex items-center gap-1">
