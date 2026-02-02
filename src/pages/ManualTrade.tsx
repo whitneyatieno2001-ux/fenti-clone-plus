@@ -4,19 +4,12 @@ import { BottomNav } from '@/components/BottomNav';
 import { useAccount } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
-import { CandlestickChart } from '@/components/CandlestickChart';
+import { EnhancedChart } from '@/components/EnhancedChart';
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Trophy, BarChart3 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-const tradingPairs = [
-  { id: 'eurusd', symbol: 'EUR/USD', name: 'Euro / US Dollar', icon: '🇪🇺🇺🇸', type: 'forex' },
-  { id: 'gbpusd', symbol: 'GBP/USD', name: 'Pound / US Dollar', icon: '🇬🇧🇺🇸', type: 'forex' },
-  { id: 'usdjpy', symbol: 'USD/JPY', name: 'US Dollar / Yen', icon: '🇺🇸🇯🇵', type: 'forex' },
-  { id: 'bitcoin', symbol: 'BTC/USD', name: 'Bitcoin / US Dollar', icon: '₿', type: 'crypto' },
-  { id: 'ethereum', symbol: 'ETH/USD', name: 'Ethereum / US Dollar', icon: 'Ξ', type: 'crypto' },
-  { id: 'solana', symbol: 'SOL/USD', name: 'Solana / US Dollar', icon: '◎', type: 'crypto' },
-];
+import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Trophy, BarChart3, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { tradingPairs, getMarketCategories, getPairsByCategory, type TradingPair } from '@/data/tradingPairs';
+import { Input } from '@/components/ui/input';
 
 const durations = [
   { label: '00:05', seconds: 5 },
