@@ -153,12 +153,24 @@ export default function ManualTrade() {
       return;
     }
 
-    // Start trade
+    // Start trade and navigate to positions page
+    const tradeEntryPrice = getCurrentPrice();
     setIsTrading(true);
     setTradeDirection(direction);
-    setEntryPrice(getCurrentPrice());
+    setEntryPrice(tradeEntryPrice);
     setTradeEndTime(Date.now() + durations[durationIndex].seconds * 1000);
     setCountdown(durations[durationIndex].seconds);
+
+    // Navigate to active positions page
+    navigate('/positions', {
+      state: {
+        symbol: selectedPair.symbol,
+        direction,
+        investment: investmentAmount,
+        entryPrice: tradeEntryPrice,
+        duration: durations[durationIndex].seconds,
+      }
+    });
 
     toast({
       title: `${direction.toUpperCase()} Order Placed!`,
