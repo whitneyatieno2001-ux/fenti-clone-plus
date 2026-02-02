@@ -21,8 +21,11 @@ const durations = [
 ];
 
 export default function ManualTrade() {
-  const [selectedPair, setSelectedPair] = useState(tradingPairs[0]);
+  const navigate = useNavigate();
+  const [selectedPair, setSelectedPair] = useState<TradingPair>(tradingPairs[0]);
   const [showPairSelector, setShowPairSelector] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [pairSearch, setPairSearch] = useState('');
   const [investment, setInvestment] = useState('10');
   const [durationIndex, setDurationIndex] = useState(0);
   const [isTrading, setIsTrading] = useState(false);
@@ -34,6 +37,14 @@ export default function ManualTrade() {
   const { currentBalance, accountType, updateBalance, isLoggedIn } = useAccount();
   const { toast } = useToast();
   const { getCryptoWithPrice } = useCryptoPrices();
+
+  const categories = getMarketCategories();
+  
+  // Filter pairs by category and search
+  const filteredPairs = getPairsByCategory(selectedCategory).filter(pair =>
+    pair.symbol.toLowerCase().includes(pairSearch.toLowerCase()) ||
+    pair.name.toLowerCase().includes(pairSearch.toLowerCase())
+  );
 
   // Get current price - simulate forex prices for forex pairs
   const getCurrentPrice = useCallback(() => {
