@@ -929,8 +929,8 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
             </p>
           </div>
 
-          {/* Category Selection */}
-          {withdrawCategory === 'select' && (
+          {/* Category Selection - Only show if Real account */}
+          {withdrawCategory === 'select' && accountType === 'real' && (
             <div className="space-y-3">
               <p className="text-sm font-medium text-muted-foreground">Select Withdrawal Method</p>
 
