@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAccount } from '@/contexts/AccountContext';
 import { Button } from '@/components/ui/button';
 import { User, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
 import usFlag from '@/assets/us-flag.png';
 import keFlag from '@/assets/ke-flag.png';
 import zaFlag from '@/assets/za-flag.png';
-import cryptoWaveLogo from '@/assets/crypto-wave-logo.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 // Country phone prefixes to flag mapping
@@ -166,15 +164,8 @@ export function Header() {
           )}
         </div>
 
-        {/* Center - Logo and Title */}
-        <div className="flex items-center gap-2">
-          <img 
-            src={cryptoWaveLogo} 
-            alt="Crypto Wave" 
-            className="w-8 h-8 rounded-lg"
-          />
-          <h1 className="text-lg font-bold font-display text-foreground">{getTitle()}</h1>
-        </div>
+        {/* Center - Empty space for balance */}
+        <div className="flex-1" />
 
         {/* Right - Theme Toggle + Profile */}
         <div className="flex items-center gap-1">
