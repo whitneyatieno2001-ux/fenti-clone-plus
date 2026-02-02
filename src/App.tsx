@@ -43,6 +43,7 @@ const App = () => (
               <Route path="/trade" element={<ManualTrade />} />
               <Route path="/spot" element={<Trade />} />
               <Route path="/trade/:assetId" element={<AssetTrade />} />
+              <Route path="/positions" element={<ActivePositions />} />
               <Route path="/futures" element={<Futures />} />
               <Route path="/bot" element={<Bot />} />
               <Route path="/bot/:botId" element={<BotTrade />} />
