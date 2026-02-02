@@ -11,6 +11,7 @@ import Markets from "./pages/Markets";
 import Trade from "./pages/Trade";
 import ManualTrade from "./pages/ManualTrade";
 import AssetTrade from "./pages/AssetTrade";
+import ActivePositions from "./pages/ActivePositions";
 import Futures from "./pages/Futures";
 import Bot from "./pages/Bot";
 import BotTrade from "./pages/BotTrade";
