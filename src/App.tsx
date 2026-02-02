@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Markets from "./pages/Markets";
 import Trade from "./pages/Trade";
+import ManualTrade from "./pages/ManualTrade";
 import AssetTrade from "./pages/AssetTrade";
 import Futures from "./pages/Futures";
 import Bot from "./pages/Bot";
