@@ -46,19 +46,16 @@ export default function ManualTrade() {
     pair.name.toLowerCase().includes(pairSearch.toLowerCase())
   );
 
-  // Get current price - simulate forex prices for forex pairs
+  // Get current price - simulate prices for all pairs
   const getCurrentPrice = useCallback(() => {
     if (selectedPair.type === 'crypto') {
       const crypto = getCryptoWithPrice({ id: selectedPair.id, symbol: selectedPair.symbol.split('/')[0] } as any);
       return crypto.price;
     }
-    // Simulate forex prices
-    switch (selectedPair.id) {
-      case 'eurusd': return 1.08620 + (Math.random() - 0.5) * 0.001;
-      case 'gbpusd': return 1.26450 + (Math.random() - 0.5) * 0.001;
-      case 'usdjpy': return 149.850 + (Math.random() - 0.5) * 0.1;
-      default: return 1.0;
-    }
+    // Use base price with small fluctuations for other pairs
+    const basePrice = selectedPair.basePrice || 1.0;
+    const volatility = basePrice * 0.0001;
+    return basePrice + (Math.random() - 0.5) * 2 * volatility;
   }, [selectedPair, getCryptoWithPrice]);
 
   const [currentPrice, setCurrentPrice] = useState(getCurrentPrice());
