@@ -906,6 +906,21 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Demo Account Warning */}
+          {accountType === 'demo' && (
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-amber-500">Demo Account</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Withdrawals are only available from your Real account. Please switch to your Real account to withdraw funds.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Current Balance */}
           <div className="p-4 rounded-xl bg-secondary/50">
             <p className="text-sm text-muted-foreground">Current Balance ({accountType})</p>
