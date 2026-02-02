@@ -229,7 +229,7 @@ export default function ManualTrade() {
           </div>
         </div>
 
-        {/* Pair Selector */}
+        {/* Pair Selector with Categories */}
         <div className="relative">
           <button
             onClick={() => setShowPairSelector(!showPairSelector)}
@@ -238,7 +238,7 @@ export default function ManualTrade() {
             <span className="text-lg">{selectedPair.icon}</span>
             <div className="text-left">
               <p className="font-semibold text-foreground">{selectedPair.symbol}</p>
-              <p className="text-xs text-muted-foreground">(OTC)</p>
+              <p className="text-xs text-muted-foreground capitalize">{selectedPair.type}</p>
             </div>
             <ChevronDown className={cn("h-4 w-4 ml-auto transition-transform", showPairSelector && "rotate-180")} />
           </button>
@@ -246,26 +246,62 @@ export default function ManualTrade() {
           {showPairSelector && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowPairSelector(false)} />
-              <div className="absolute left-0 top-full mt-2 z-50 bg-card rounded-xl shadow-xl border border-border overflow-hidden w-64 max-h-64 overflow-y-auto">
-                {tradingPairs.map((pair) => (
-                  <button
-                    key={pair.id}
-                    onClick={() => {
-                      setSelectedPair(pair);
-                      setShowPairSelector(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors",
-                      selectedPair.id === pair.id && "bg-primary/10"
-                    )}
-                  >
-                    <span className="text-lg">{pair.icon}</span>
-                    <div className="text-left">
-                      <p className="font-medium text-foreground">{pair.symbol}</p>
-                      <p className="text-xs text-muted-foreground">{pair.name}</p>
-                    </div>
-                  </button>
-                ))}
+              <div className="absolute left-0 top-full mt-2 z-50 bg-card rounded-xl shadow-xl border border-border overflow-hidden w-80 max-h-96">
+                {/* Search */}
+                <div className="p-2 border-b border-border">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search markets..."
+                      value={pairSearch}
+                      onChange={(e) => setPairSearch(e.target.value)}
+                      className="pl-8 h-8 text-sm"
+                    />
+                  </div>
+                </div>
+                
+                {/* Categories */}
+                <div className="flex gap-1 p-2 border-b border-border overflow-x-auto">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={cn(
+                        "px-2 py-1 text-xs font-medium rounded whitespace-nowrap transition-colors",
+                        selectedCategory === cat.id
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-muted-foreground"
+                      )}
+                    >
+                      {cat.icon} {cat.name}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Pairs List */}
+                <div className="overflow-y-auto max-h-60">
+                  {filteredPairs.map((pair) => (
+                    <button
+                      key={pair.id}
+                      onClick={() => {
+                        setSelectedPair(pair);
+                        setShowPairSelector(false);
+                        setPairSearch('');
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors",
+                        selectedPair.id === pair.id && "bg-primary/10"
+                      )}
+                    >
+                      <span className="text-lg">{pair.icon}</span>
+                      <div className="text-left flex-1">
+                        <p className="font-medium text-foreground">{pair.symbol}</p>
+                        <p className="text-xs text-muted-foreground">{pair.name}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground capitalize">{pair.type}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </>
           )}
@@ -276,9 +312,9 @@ export default function ManualTrade() {
           <span className="text-success font-mono font-bold text-lg">{formatPrice(currentPrice)}</span>
         </div>
 
-        {/* Candlestick Chart */}
+        {/* Enhanced Chart with zoom, chart types, indicators */}
         <div className="rounded-xl overflow-hidden border border-border">
-          <CandlestickChart 
+          <EnhancedChart 
             symbol={selectedPair.symbol.split('/')[0]} 
             currentPrice={currentPrice} 
           />
