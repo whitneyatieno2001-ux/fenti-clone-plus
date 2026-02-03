@@ -7,7 +7,7 @@ const navItems = [
   { icon: TrendingUp, label: 'Markets', path: '/markets' },
   { icon: BarChart3, label: 'Trade', path: '/trade' },
   { icon: Clock, label: 'Futures', path: '/futures' },
-  { icon: Bot, label: 'Bot', path: '/bot' },
+  { icon: Bot, label: 'Bot', path: '/bot-select' },
 ];
 
 export function BottomNav() {

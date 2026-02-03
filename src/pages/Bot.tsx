@@ -24,6 +24,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTradingSound } from '@/hooks/useTradingSound';
 import { BotPurchaseModal } from '@/components/BotPurchaseModal';
 
+// Import bot images
+import botArbitrageImage from '@/assets/bot-arbitrage.jpg';
+import botScalperImage from '@/assets/bot-scalper.jpg';
+import botSignalImage from '@/assets/bot-signal.jpg';
+
 interface TradeLogEntry {
   id: string;
   time: Date;
@@ -52,6 +57,7 @@ interface TradingBot {
   lastTradeResult?: { profit: number; isWin: boolean };
   winRate: number;
   price: number;
+  image: string;
 }
 
 const defaultBots: TradingBot[] = [
@@ -71,6 +77,7 @@ const defaultBots: TradingBot[] = [
     currentAction: 'SCANNING',
     winRate: 60,
     price: 100,
+    image: botArbitrageImage,
   },
   {
     id: '2',
@@ -88,6 +95,7 @@ const defaultBots: TradingBot[] = [
     currentAction: 'SCANNING',
     winRate: 80,
     price: 150,
+    image: botScalperImage,
   },
   {
     id: '3',
@@ -105,6 +113,7 @@ const defaultBots: TradingBot[] = [
     currentAction: 'HOLD',
     winRate: 40,
     price: 0, // FREE bot
+    image: botSignalImage,
   },
 ];
 
@@ -581,10 +590,10 @@ export default function BotPage() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center",
-                    bot.status === 'active' ? "bg-primary/20" : "bg-muted"
+                    "w-14 h-14 rounded-xl overflow-hidden",
+                    bot.status === 'active' && "ring-2 ring-primary"
                   )}>
-                    <span className="text-2xl">{getBotStrategyInfo(bot.strategy).icon}</span>
+                    <img src={bot.image} alt={bot.name} className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">

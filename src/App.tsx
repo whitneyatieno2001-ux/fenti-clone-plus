@@ -14,6 +14,8 @@ import AssetTrade from "./pages/AssetTrade";
 import ActivePositions from "./pages/ActivePositions";
 import Futures from "./pages/Futures";
 import Bot from "./pages/Bot";
+import BotSelection from "./pages/BotSelection";
+import ForexBot from "./pages/ForexBot";
 import BotTrade from "./pages/BotTrade";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
@@ -45,7 +47,9 @@ const App = () => (
               <Route path="/trade/:assetId" element={<AssetTrade />} />
               <Route path="/positions" element={<ActivePositions />} />
               <Route path="/futures" element={<Futures />} />
+              <Route path="/bot-select" element={<BotSelection />} />
               <Route path="/bot" element={<Bot />} />
+              <Route path="/forex-bot" element={<ForexBot />} />
               <Route path="/bot/:botId" element={<BotTrade />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/auth" element={<Auth />} />

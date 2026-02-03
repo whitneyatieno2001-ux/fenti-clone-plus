@@ -4,12 +4,13 @@ import { BottomNav } from '@/components/BottomNav';
 import { useAccount } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
-import { EnhancedChart } from '@/components/EnhancedChart';
+import { TradingViewWidget } from '@/components/TradingViewWidget';
 import { cn } from '@/lib/utils';
 import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, Trophy, BarChart3, Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { tradingPairs, getMarketCategories, getPairsByCategory, type TradingPair } from '@/data/tradingPairs';
 import { Input } from '@/components/ui/input';
+import { useTheme } from 'next-themes';
 
 const durations = [
   { label: '00:05', seconds: 5 },
@@ -22,17 +23,14 @@ const durations = [
 
 export default function ManualTrade() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [selectedPair, setSelectedPair] = useState<TradingPair>(tradingPairs[0]);
   const [showPairSelector, setShowPairSelector] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [pairSearch, setPairSearch] = useState('');
   const [investment, setInvestment] = useState('10');
   const [durationIndex, setDurationIndex] = useState(0);
-  const [isTrading, setIsTrading] = useState(false);
-  const [tradeDirection, setTradeDirection] = useState<'buy' | 'sell' | null>(null);
-  const [tradeEndTime, setTradeEndTime] = useState<number | null>(null);
-  const [entryPrice, setEntryPrice] = useState<number | null>(null);
-  const [countdown, setCountdown] = useState<number>(0);
+  const [lotSize, setLotSize] = useState('0.5');
   
   const { currentBalance, accountType, updateBalance, isLoggedIn } = useAccount();
   const { toast } = useToast();
@@ -68,67 +66,6 @@ export default function ManualTrade() {
     return () => clearInterval(interval);
   }, [getCurrentPrice]);
 
-  // Countdown timer for active trade
-  useEffect(() => {
-    if (!isTrading || !tradeEndTime) return;
-
-    const interval = setInterval(() => {
-      const remaining = Math.max(0, Math.ceil((tradeEndTime - Date.now()) / 1000));
-      setCountdown(remaining);
-
-      if (remaining <= 0) {
-        // Trade completed - determine result
-        completeTrade();
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [isTrading, tradeEndTime]);
-
-  const completeTrade = async () => {
-    if (!entryPrice || !tradeDirection) return;
-
-    const exitPrice = getCurrentPrice();
-    const priceChange = exitPrice - entryPrice;
-    const investmentAmount = parseFloat(investment);
-    
-    // Determine win/loss based on direction and price movement
-    let won = false;
-    if (tradeDirection === 'buy') {
-      won = priceChange > 0;
-    } else {
-      won = priceChange < 0;
-    }
-
-    // Apply some randomness for realistic trading (82% payout shown in UI)
-    const payout = 0.82;
-    const profitLoss = won ? investmentAmount * payout : -investmentAmount;
-    
-    // Ensure minimum profit/loss of $0.15-$0.25
-    const minAmount = 0.15 + Math.random() * 0.10;
-    const adjustedProfitLoss = won 
-      ? Math.max(profitLoss, minAmount) 
-      : Math.min(profitLoss, -minAmount);
-
-    // Update balance
-    await updateBalance(accountType, adjustedProfitLoss, 'add');
-
-    toast({
-      title: won ? "Trade Won! 🎉" : "Trade Lost",
-      description: won 
-        ? `+$${adjustedProfitLoss.toFixed(2)} profit!`
-        : `-$${Math.abs(adjustedProfitLoss).toFixed(2)} loss`,
-      variant: won ? "default" : "destructive",
-    });
-
-    // Reset trade state
-    setIsTrading(false);
-    setTradeDirection(null);
-    setTradeEndTime(null);
-    setEntryPrice(null);
-    setCountdown(0);
-  };
-
   const handleTrade = async (direction: 'buy' | 'sell') => {
     if (!isLoggedIn) {
       toast({ title: "Login Required", description: "Please login to trade", variant: "destructive" });
@@ -153,40 +90,21 @@ export default function ManualTrade() {
       return;
     }
 
-    // Start trade and navigate to positions page
-    const tradeEntryPrice = getCurrentPrice();
-    setIsTrading(true);
-    setTradeDirection(direction);
-    setEntryPrice(tradeEntryPrice);
-    setTradeEndTime(Date.now() + durations[durationIndex].seconds * 1000);
-    setCountdown(durations[durationIndex].seconds);
-
     // Navigate to active positions page
     navigate('/positions', {
       state: {
         symbol: selectedPair.symbol,
         direction,
         investment: investmentAmount,
-        entryPrice: tradeEntryPrice,
+        entryPrice: getCurrentPrice(),
         duration: durations[durationIndex].seconds,
       }
     });
 
     toast({
       title: `${direction.toUpperCase()} Order Placed!`,
-      description: `$${investmentAmount} on ${selectedPair.symbol} for ${durations[durationIndex].label}`,
+      description: `$${investmentAmount} on ${selectedPair.symbol}`,
     });
-  };
-
-  const adjustInvestment = (delta: number) => {
-    const current = parseFloat(investment) || 0;
-    const newValue = Math.max(1, current + delta);
-    setInvestment(newValue.toString());
-  };
-
-  const adjustDuration = (delta: number) => {
-    const newIndex = Math.max(0, Math.min(durations.length - 1, durationIndex + delta));
-    setDurationIndex(newIndex);
   };
 
   const formatPrice = (price: number) => {
@@ -196,243 +114,232 @@ export default function ManualTrade() {
     return price >= 1 ? price.toFixed(2) : price.toFixed(4);
   };
 
+  const spread = 0.5;
+  const sellPrice = currentPrice - (currentPrice * 0.0001);
+  const buyPrice = currentPrice + (currentPrice * 0.0001);
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <Header />
       
-      <main className="px-4 py-2 space-y-3">
-        {/* Top Bar - Balance + Pair Selector */}
-        <div className="flex items-center justify-between">
-          {/* Balance Display */}
-          <div className={cn(
-            "px-4 py-2 rounded-xl flex items-center gap-2",
-            accountType === 'demo' ? "bg-primary text-primary-foreground" : "bg-success text-success-foreground"
-          )}>
-            <span className="font-bold text-lg">
-              {accountType === 'demo' ? 'D' : '$'}
-            </span>
-            <span className="font-bold">
-              {currentBalance.toFixed(0)} $
-            </span>
-            <ChevronDown className="h-4 w-4" />
-          </div>
-
-          {/* Tabs */}
-          <div className="flex items-center gap-2">
-            <Link to="/bot" className="p-2 rounded-lg bg-card border border-border">
-              <Trophy className="h-5 w-5 text-primary" />
-            </Link>
-            <div className="px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Manual Trading</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Pair Selector with Categories */}
-        <div className="relative">
+      <main className="space-y-0">
+        {/* Top Trading Bar - MetaTrader Style */}
+        <div className="flex items-center justify-between px-2 py-2 bg-card border-b border-border">
+          <button onClick={() => navigate(-1)} className="p-2">
+            <Menu className="h-5 w-5 text-foreground" />
+          </button>
+          
+          {/* Pair Selector */}
           <button
             onClick={() => setShowPairSelector(!showPairSelector)}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border w-full max-w-xs"
+            className="flex items-center gap-2"
           >
-            <span className="text-lg">{selectedPair.icon}</span>
-            <div className="text-left">
-              <p className="font-semibold text-foreground">{selectedPair.symbol}</p>
-              <p className="text-xs text-muted-foreground capitalize">{selectedPair.type}</p>
-            </div>
-            <ChevronDown className={cn("h-4 w-4 ml-auto transition-transform", showPairSelector && "rotate-180")} />
+            <span className="text-sm text-muted-foreground">{selectedPair.symbol} • H4</span>
           </button>
 
-          {showPairSelector && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowPairSelector(false)} />
-              <div className="absolute left-0 top-full mt-2 z-50 bg-card rounded-xl shadow-xl border border-border overflow-hidden w-80 max-h-96">
-                {/* Search */}
-                <div className="p-2 border-b border-border">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search markets..."
-                      value={pairSearch}
-                      onChange={(e) => setPairSearch(e.target.value)}
-                      className="pl-8 h-8 text-sm"
-                    />
-                  </div>
-                </div>
-                
-                {/* Categories */}
-                <div className="flex gap-1 p-2 border-b border-border overflow-x-auto">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={cn(
-                        "px-2 py-1 text-xs font-medium rounded whitespace-nowrap transition-colors",
-                        selectedCategory === cat.id
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-muted-foreground"
-                      )}
-                    >
-                      {cat.icon} {cat.name}
-                    </button>
-                  ))}
-                </div>
-                
-                {/* Pairs List */}
-                <div className="overflow-y-auto max-h-60">
-                  {filteredPairs.map((pair) => (
-                    <button
-                      key={pair.id}
-                      onClick={() => {
-                        setSelectedPair(pair);
-                        setShowPairSelector(false);
-                        setPairSearch('');
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors",
-                        selectedPair.id === pair.id && "bg-primary/10"
-                      )}
-                    >
-                      <span className="text-lg">{pair.icon}</span>
-                      <div className="text-left flex-1">
-                        <p className="font-medium text-foreground">{pair.symbol}</p>
-                        <p className="text-xs text-muted-foreground">{pair.name}</p>
-                      </div>
-                      <span className="text-xs text-muted-foreground capitalize">{pair.type}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+          <div className="flex items-center gap-2">
+            <Link to="/bot" className="p-2">
+              <Trophy className="h-5 w-5 text-primary" />
+            </Link>
+          </div>
         </div>
 
-        {/* Current Price Display */}
-        <div className="px-4 py-2 rounded-lg bg-success/10 border border-success/20 inline-block">
-          <span className="text-success font-mono font-bold text-lg">{formatPrice(currentPrice)}</span>
+        {/* Price Display Bar */}
+        <div className="flex items-center justify-between px-2 py-2 bg-card border-b border-border">
+          {/* SELL Price */}
+          <div className="bg-destructive px-4 py-2 rounded">
+            <div className="text-xs text-destructive-foreground/70">SELL</div>
+            <div className="text-lg font-bold text-white">{formatPrice(sellPrice)}</div>
+          </div>
+
+          {/* Spread / Lot Size */}
+          <div className="flex items-center gap-2">
+            <button className="px-2 py-1 text-sm bg-secondary rounded">
+              <ChevronDown className="h-3 w-3 inline" />
+            </button>
+            <span className="text-lg font-bold text-foreground">{lotSize}</span>
+            <button className="px-2 py-1 text-sm bg-secondary rounded">
+              <ChevronDown className="h-3 w-3 inline" />
+            </button>
+          </div>
+
+          {/* BUY Price */}
+          <div className="bg-success px-4 py-2 rounded">
+            <div className="text-xs text-success-foreground/70">BUY</div>
+            <div className="text-lg font-bold text-white">{formatPrice(buyPrice)}</div>
+          </div>
         </div>
 
-        {/* Enhanced Chart with zoom, chart types, indicators */}
-        <div className="rounded-xl overflow-hidden border border-border">
-          <EnhancedChart 
-            symbol={selectedPair.symbol.split('/')[0]} 
-            currentPrice={currentPrice} 
+        {/* Pair Info */}
+        <div className="px-3 py-1 bg-card border-b border-border">
+          <div className="text-xs text-muted-foreground">
+            {selectedPair.symbol} • {selectedPair.name}
+          </div>
+        </div>
+
+        {/* TradingView Chart */}
+        <div className="relative">
+          <TradingViewWidget 
+            symbol={selectedPair.symbol}
+            theme={theme === 'dark' ? 'dark' : 'light'}
+            height={350}
           />
         </div>
 
-        {/* Trade Active Indicator */}
-        {isTrading && (
-          <div className={cn(
-            "p-4 rounded-xl border-2 animate-pulse",
-            tradeDirection === 'buy' ? "bg-success/10 border-success" : "bg-destructive/10 border-destructive"
-          )}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-foreground">
-                  {tradeDirection?.toUpperCase()} Active
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Entry: {entryPrice && formatPrice(entryPrice)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-foreground">{countdown}s</p>
-                <p className="text-xs text-muted-foreground">remaining</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Investment & Duration Controls */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Investment */}
-          <div className="bg-card rounded-xl border border-border p-3">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => adjustInvestment(-1)}
-                disabled={isTrading}
-                className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 disabled:opacity-50"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <div className="text-center">
-                <p className="text-xl font-bold text-foreground">${investment}</p>
-                <p className="text-xs text-muted-foreground">investment</p>
+        <div className="px-4 py-3 bg-card border-t border-border space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            {/* Investment */}
+            <div className="bg-secondary rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    const current = parseFloat(investment) || 0;
+                    setInvestment(Math.max(1, current - 1).toString());
+                  }}
+                  className="p-2 rounded-lg bg-background hover:bg-background/80"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-foreground">${investment}</p>
+                  <p className="text-xs text-muted-foreground">investment</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const current = parseFloat(investment) || 0;
+                    setInvestment((current + 1).toString());
+                  }}
+                  className="p-2 rounded-lg bg-background hover:bg-background/80"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                onClick={() => adjustInvestment(1)}
-                disabled={isTrading}
-                className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 disabled:opacity-50"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
+            </div>
+
+            {/* Duration */}
+            <div className="bg-secondary rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setDurationIndex(Math.max(0, durationIndex - 1))}
+                  className="p-2 rounded-lg bg-background hover:bg-background/80"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-foreground">{durations[durationIndex].label}</p>
+                  <p className="text-xs text-muted-foreground">duration</p>
+                </div>
+                <button
+                  onClick={() => setDurationIndex(Math.min(durations.length - 1, durationIndex + 1))}
+                  className="p-2 rounded-lg bg-background hover:bg-background/80"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Duration */}
-          <div className="bg-card rounded-xl border border-border p-3">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => adjustDuration(-1)}
-                disabled={isTrading}
-                className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 disabled:opacity-50"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <div className="text-center">
-                <p className="text-xl font-bold text-foreground">{durations[durationIndex].label}</p>
-                <p className="text-xs text-muted-foreground">duration</p>
+          {/* BUY/SELL Buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => handleTrade('sell')}
+              className="py-4 rounded-xl font-bold text-lg text-white bg-destructive hover:bg-destructive/90 active:scale-[0.98] transition-all"
+            >
+              <div className="flex flex-col items-center">
+                <span>SELL</span>
+                <span className="text-sm font-normal opacity-80">90%</span>
               </div>
-              <button
-                onClick={() => adjustDuration(1)}
-                disabled={isTrading}
-                className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 disabled:opacity-50"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
+            </button>
+            
+            <button
+              onClick={() => handleTrade('buy')}
+              className="py-4 rounded-xl font-bold text-lg text-white bg-success hover:bg-success/90 active:scale-[0.98] transition-all"
+            >
+              <div className="flex flex-col items-center">
+                <span>BUY</span>
+                <span className="text-sm font-normal opacity-80">90%</span>
+              </div>
+            </button>
           </div>
         </div>
 
-        {/* BUY/SELL Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => handleTrade('sell')}
-            disabled={isTrading}
-            className={cn(
-              "py-4 rounded-xl font-bold text-lg text-white transition-all",
-              isTrading ? "bg-destructive/50 cursor-not-allowed" : "bg-destructive hover:bg-destructive/90 active:scale-[0.98]"
-            )}
-          >
-            <div className="flex flex-col items-center">
-              <span>SELL</span>
-              <span className="text-sm font-normal opacity-80">82%</span>
+        {/* Pair Selector Modal */}
+        {showPairSelector && (
+          <>
+            <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowPairSelector(false)} />
+            <div className="fixed inset-x-4 top-20 z-50 bg-card rounded-xl shadow-xl border border-border overflow-hidden max-h-[70vh]">
+              {/* Search */}
+              <div className="p-3 border-b border-border">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search markets..."
+                    value={pairSearch}
+                    onChange={(e) => setPairSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+              
+              {/* Categories */}
+              <div className="flex gap-1 p-2 border-b border-border overflow-x-auto">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors",
+                      selectedCategory === cat.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-muted-foreground"
+                    )}
+                  >
+                    {cat.icon} {cat.name}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Pairs List */}
+              <div className="overflow-y-auto max-h-[50vh]">
+                {filteredPairs.map((pair) => (
+                  <button
+                    key={pair.id}
+                    onClick={() => {
+                      setSelectedPair(pair);
+                      setShowPairSelector(false);
+                      setPairSearch('');
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors",
+                      selectedPair.id === pair.id && "bg-primary/10"
+                    )}
+                  >
+                    <span className="text-xl">{pair.icon}</span>
+                    <div className="text-left flex-1">
+                      <p className="font-medium text-foreground">{pair.symbol}</p>
+                      <p className="text-xs text-muted-foreground">{pair.name}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground capitalize">{pair.type}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </button>
-          
-          <button
-            onClick={() => handleTrade('buy')}
-            disabled={isTrading}
-            className={cn(
-              "py-4 rounded-xl font-bold text-lg text-white transition-all",
-              isTrading ? "bg-success/50 cursor-not-allowed" : "bg-success hover:bg-success/90 active:scale-[0.98]"
-            )}
-          >
-            <div className="flex flex-col items-center">
-              <span>BUY</span>
-              <span className="text-sm font-normal opacity-80">82%</span>
-            </div>
-          </button>
-        </div>
-
-        {/* Time Display */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} {new Date().toLocaleTimeString()}</span>
-          <span>{new Date().toLocaleTimeString()}</span>
-        </div>
+          </>
+        )}
       </main>
 
       <BottomNav />
     </div>
+  );
+}
+
+function Menu(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <line x1="4" x2="20" y1="12" y2="12"/>
+      <line x1="4" x2="20" y1="6" y2="6"/>
+      <line x1="4" x2="20" y1="18" y2="18"/>
+    </svg>
   );
 }
