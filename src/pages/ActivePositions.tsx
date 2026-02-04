@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAccount } from '@/contexts/AccountContext';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Clock, X, Menu, ArrowUpDown, Plus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { getTradeOutcome } from '@/lib/tradeOutcome';
+import { tradingPairs } from '@/data/tradingPairs';
 
 interface Position {
   id: string;
@@ -12,63 +15,84 @@ interface Position {
   entryPrice: number;
   currentPrice: number;
   profitLoss: number;
-  openTime: number;
   investment: number;
 }
 
 export default function ActivePositions() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentBalance, accountType, updateBalance } = useAccount();
+  const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
+  const { toast } = useToast();
   
   const [positions, setPositions] = useState<Position[]>([]);
+  const [balance, setBalance] = useState(currentBalance);
   const [equity, setEquity] = useState(currentBalance);
+  const [margin, setMargin] = useState(0);
   const [freeMargin, setFreeMargin] = useState(currentBalance);
+  const [marginLevel, setMarginLevel] = useState(0);
 
-  // Get initial position from navigation state
+  // Add position from navigation state
   useEffect(() => {
-    const state = location.state as { 
-      symbol: string; 
-      direction: 'buy' | 'sell'; 
-      investment: number;
-      entryPrice: number;
-      duration: number;
-    } | null;
-
-    if (state) {
-      const newPosition: Position = {
-        id: Date.now().toString(),
-        symbol: state.symbol.replace('/', ''),
-        type: state.direction,
-        lotSize: 0.01,
-        entryPrice: state.entryPrice,
-        currentPrice: state.entryPrice,
-        profitLoss: 0,
-        openTime: Date.now(),
-        investment: state.investment,
-      };
-      setPositions(prev => [...prev, newPosition]);
+    if (location.state) {
+      const { symbol, direction, investment, entryPrice, lotSize = 0.1 } = location.state as any;
+      if (symbol && direction && investment && entryPrice) {
+        const newPosition: Position = {
+          id: Date.now().toString(),
+          symbol,
+          type: direction,
+          lotSize,
+          entryPrice,
+          currentPrice: entryPrice,
+          profitLoss: 0,
+          investment,
+        };
+        setPositions(prev => [...prev, newPosition]);
+        // Clear the state
+        window.history.replaceState({}, document.title);
+      }
     }
   }, [location.state]);
 
-  // Simulate real-time position updates
+  useEffect(() => {
+    setBalance(currentBalance);
+  }, [currentBalance]);
+
+  // Calculate account metrics
+  useEffect(() => {
+    const totalPL = positions.reduce((sum, pos) => sum + pos.profitLoss, 0);
+    const usedMargin = positions.reduce((sum, pos) => sum + (pos.lotSize * 1000), 0);
+    
+    setEquity(currentBalance + totalPL);
+    setMargin(usedMargin);
+    setFreeMargin(currentBalance + totalPL - usedMargin);
+    setMarginLevel(usedMargin > 0 ? ((currentBalance + totalPL) / usedMargin) * 100 : 0);
+  }, [positions, currentBalance]);
+
+  // Update positions P/L with win/loss bias
   useEffect(() => {
     if (positions.length === 0) return;
 
     const interval = setInterval(() => {
       setPositions(prev => prev.map(pos => {
-        // Simulate price movement - forex style
-        const volatility = 0.00005;
-        const change = (Math.random() - 0.5) * volatility * pos.entryPrice;
+        const pair = tradingPairs.find(p => p.symbol === pos.symbol);
+        const basePrice = pair?.basePrice || pos.entryPrice;
+
+        const outcome = getTradeOutcome({ accountType, userEmail });
+        const bias = outcome === 'win' ? 0.55 : 0.42;
+        
+        const volatility = basePrice * 0.0003;
+        const change = (Math.random() - bias) * volatility;
         const newPrice = pos.currentPrice + change;
         
-        // Calculate P/L based on direction (forex style)
         const priceDiff = pos.type === 'buy' 
           ? newPrice - pos.entryPrice 
           : pos.entryPrice - newPrice;
         
-        // Forex lot size calculation (100,000 units per standard lot)
-        const profitLoss = priceDiff * pos.lotSize * 100000;
+        // 90% payout logic
+        const percentChange = priceDiff / pos.entryPrice;
+        const profitLoss = percentChange > 0 
+          ? pos.investment * 0.90 * (percentChange * 100)
+          : -pos.investment * Math.abs(percentChange * 100);
 
         return {
           ...pos,
@@ -76,194 +100,182 @@ export default function ActivePositions() {
           profitLoss: parseFloat(profitLoss.toFixed(2)),
         };
       }));
-    }, 500);
+    }, 400);
 
     return () => clearInterval(interval);
-  }, [positions.length]);
-
-  // Update equity and margin based on positions
-  useEffect(() => {
-    const totalPL = positions.reduce((sum, pos) => sum + pos.profitLoss, 0);
-    setEquity(currentBalance + totalPL);
-    setFreeMargin(currentBalance + totalPL);
-  }, [positions, currentBalance]);
+  }, [positions.length, accountType, userEmail]);
 
   const closePosition = async (positionId: string) => {
     const position = positions.find(p => p.id === positionId);
     if (!position) return;
 
-    // Apply the profit/loss to balance
-    if (position.profitLoss !== 0) {
-      const operation = position.profitLoss > 0 ? 'add' : 'subtract';
-      await updateBalance(accountType, Math.abs(position.profitLoss), operation);
+    const totalReturn = position.investment + position.profitLoss;
+    if (totalReturn > 0) {
+      await updateBalance(accountType, totalReturn, 'add');
     }
 
-    // Return original investment
-    await updateBalance(accountType, position.investment, 'add');
+    if (user) {
+      try {
+        await supabase.from('transactions').insert({
+          user_id: user.id,
+          type: 'trade',
+          amount: Math.abs(position.profitLoss),
+          currency: 'USD',
+          status: 'completed',
+          description: `Closed ${position.type.toUpperCase()} ${position.symbol} P/L: ${position.profitLoss >= 0 ? '+' : ''}$${position.profitLoss.toFixed(2)}`,
+          account_type: accountType,
+          profit_loss: position.profitLoss,
+        });
+      } catch (err) {
+        console.error('Error logging close:', err);
+      }
+    }
 
     setPositions(prev => prev.filter(p => p.id !== positionId));
+    
+    toast({
+      title: position.profitLoss >= 0 ? "Profit Taken! 💰" : "Position Closed",
+      description: `${position.symbol} P/L: ${position.profitLoss >= 0 ? '+' : ''}$${position.profitLoss.toFixed(2)}`,
+    });
   };
 
   const formatPrice = (price: number, symbol: string) => {
+    if (symbol.includes('XAU') || symbol.includes('GOLD')) return price.toFixed(2);
     if (symbol.includes('JPY')) return price.toFixed(3);
-    if (symbol.includes('XAU') || symbol.includes('BTC') || symbol.includes('GOLD')) return price.toFixed(2);
     return price.toFixed(5);
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f0f0] pb-20">
-      {/* Header - Light MetaTrader Style */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/trade')} className="p-1">
-              <Menu className="h-5 w-5 text-gray-600" />
-            </button>
-            <div>
-              <span className="text-sm text-gray-500">Trade</span>
-              <p className="text-green-600 font-semibold text-lg">
-                {currentBalance.toFixed(2)} USD
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button className="p-2">
-              <svg className="h-5 w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <line x1="9" y1="3" x2="9" y2="21"/>
-                <line x1="15" y1="3" x2="15" y2="21"/>
-              </svg>
-            </button>
-            <button className="p-2">
-              <ArrowUpDown className="h-5 w-5 text-gray-600" />
-            </button>
-            <button 
-              onClick={() => navigate('/trade')}
-              className="p-2 bg-blue-600 rounded"
-            >
-              <Plus className="h-5 w-5 text-white" />
-            </button>
-          </div>
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Header */}
+      <div className="bg-[#1e3a5f] text-white px-4 py-3 flex items-center justify-between">
+        <span className="text-xl font-bold">{currentBalance.toFixed(2)} USD</span>
+        <button 
+          onClick={() => navigate('/trade')}
+          className="text-2xl"
+        >
+          +
+        </button>
+      </div>
+
+      {/* Account Summary */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="flex justify-between py-2 px-4 border-b border-gray-100">
+          <span className="text-gray-600">Balance:</span>
+          <span className="font-medium text-gray-900">{balance.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between py-2 px-4 border-b border-gray-100">
+          <span className="text-gray-600">Equity:</span>
+          <span className={cn("font-medium", equity >= balance ? "text-blue-600" : "text-red-600")}>
+            {equity.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex justify-between py-2 px-4 border-b border-gray-100">
+          <span className="text-gray-600">Margin:</span>
+          <span className="font-medium text-gray-900">{margin.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between py-2 px-4 border-b border-gray-100">
+          <span className="text-gray-600">Free margin:</span>
+          <span className="font-medium text-gray-900">{freeMargin.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between py-2 px-4 border-b border-gray-100">
+          <span className="text-gray-600">Margin level (%):</span>
+          <span className="font-medium text-gray-900">{marginLevel.toFixed(2)}</span>
         </div>
       </div>
 
-      <main className="px-4 py-3 space-y-3">
-        {/* Account Summary - Exact MetaTrader Style */}
-        <div className="bg-white rounded-lg overflow-hidden">
-          <div className="flex justify-between items-center py-3 px-4 border-b border-gray-100">
-            <span className="text-gray-700 font-medium">Balance:</span>
-            <span className="font-bold text-gray-900 text-xl">{currentBalance.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center py-3 px-4 border-b border-gray-100">
-            <span className="text-gray-700 font-medium">Equity:</span>
-            <span className={cn(
-              "font-bold text-xl",
-              equity >= currentBalance ? "text-blue-600" : "text-red-600"
-            )}>
-              {equity.toFixed(2)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center py-3 px-4">
-            <span className="text-gray-700 font-medium">Free margin:</span>
-            <span className="font-bold text-gray-900 text-xl">{freeMargin.toFixed(2)}</span>
-          </div>
+      {/* Positions Section */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="py-2 px-4 border-b border-gray-200 bg-gray-50">
+          <span className="font-bold text-gray-800">Positions</span>
         </div>
 
-        {/* Positions Section */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-bold text-gray-900">Positions</h2>
-            <button className="text-gray-400 text-lg">•••</button>
+        {positions.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <p>No open positions</p>
+            <p className="text-sm mt-1">Go to Trade to place orders</p>
           </div>
-
-          {positions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
-              <p>No open positions</p>
-              <button 
-                onClick={() => navigate('/trade')}
-                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-medium"
+        ) : (
+          <div>
+            {positions.map((position) => (
+              <div 
+                key={position.id}
+                onClick={() => closePosition(position.id)}
+                className="flex items-center justify-between py-2 px-4 border-b border-gray-100 active:bg-gray-50 cursor-pointer"
               >
-                Open a Trade
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {positions.map((position) => (
-                <div 
-                  key={position.id}
-                  className="bg-white rounded-lg px-4 py-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900">{position.symbol},</span>
-                        <span className="text-blue-600 font-medium">
-                          {position.type} {position.lotSize.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-500 mt-0.5 font-mono">
-                        {formatPrice(position.entryPrice, position.symbol)} → {formatPrice(position.currentPrice, position.symbol)}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={cn(
-                        "font-bold text-xl",
-                        position.profitLoss >= 0 ? "text-blue-600" : "text-red-600"
-                      )}>
-                        {position.profitLoss.toFixed(2)}
-                      </span>
-                      <button
-                        onClick={() => closePosition(position.id)}
-                        className="p-1.5 rounded-full bg-red-100 hover:bg-red-200 transition-colors"
-                      >
-                        <X className="h-4 w-4 text-red-600" />
-                      </button>
-                    </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-900">{position.symbol.replace('/', '')}.m,</span>
+                    <span className="text-blue-600 text-sm">
+                      {position.type} {position.lotSize.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500 font-mono">
+                    {formatPrice(position.entryPrice, position.symbol)} → {formatPrice(position.currentPrice, position.symbol)}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+                <span className={cn(
+                  "font-bold text-lg tabular-nums",
+                  position.profitLoss >= 0 ? "text-blue-600" : "text-red-600"
+                )}>
+                  {position.profitLoss.toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Bottom Navigation - MetaTrader Style */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 safe-area-inset-bottom">
+      {/* Bottom Navigation */}
+      <div className="bg-white border-t border-gray-200 px-2 py-3 safe-area-inset-bottom">
         <div className="flex items-center justify-around">
           <button 
             onClick={() => navigate('/markets')}
-            className="flex flex-col items-center gap-0.5 py-1 px-3"
+            className="flex flex-col items-center gap-0.5"
           >
-            <span className="text-gray-500 text-lg">↕</span>
+            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M7 17l-4-4 4-4M17 7l4 4-4 4M3 13h18"/>
+            </svg>
             <span className="text-xs text-gray-500">Quotes</span>
           </button>
           <button 
             onClick={() => navigate('/trade')}
-            className="flex flex-col items-center gap-0.5 py-1 px-3"
+            className="flex flex-col items-center gap-0.5"
           >
-            <span className="text-gray-500 text-lg">00</span>
-            <span className="text-xs text-gray-500 font-medium">Charts</span>
+            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            <span className="text-xs text-gray-500">Chart</span>
           </button>
-          <button className="flex flex-col items-center gap-0.5 py-1 px-3">
-            <span className="text-blue-600 text-lg">↗</span>
+          <button className="flex flex-col items-center gap-0.5">
+            <svg className="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3v18h18"/>
+              <path d="M7 16l4-8 4 4 4-8"/>
+            </svg>
             <span className="text-xs text-blue-600 font-bold">Trade</span>
           </button>
           <button 
             onClick={() => navigate('/history')}
-            className="flex flex-col items-center gap-0.5 py-1 px-3"
+            className="flex flex-col items-center gap-0.5"
           >
-            <Clock className="h-5 w-5 text-gray-500" />
+            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <path d="M3 10h18"/>
+            </svg>
             <span className="text-xs text-gray-500">History</span>
           </button>
-          <button className="flex flex-col items-center gap-0.5 py-1 px-3 relative">
-            <div className="relative">
-              <span className="text-gray-500 text-lg">💬</span>
-              <div className="absolute -top-1 -right-2 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                <span className="text-[10px] text-white font-bold">3</span>
-              </div>
-            </div>
-            <span className="text-xs text-gray-500">Messages</span>
+          <button 
+            onClick={() => navigate('/settings')}
+            className="flex flex-col items-center gap-0.5"
+          >
+            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/>
+            </svg>
+            <span className="text-xs text-gray-500">Settings</span>
           </button>
         </div>
       </div>

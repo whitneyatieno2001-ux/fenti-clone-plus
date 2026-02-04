@@ -3,10 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAccount } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { BarChart3, Clock, Menu, ArrowUpDown, Plus, Play, Pause, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { getTradeOutcome } from '@/lib/tradeOutcome';
 
 interface ForexPosition {
   id: string;
@@ -20,39 +18,45 @@ interface ForexPosition {
 }
 
 const FOREX_PAIRS = [
-  { symbol: 'XAUUSDm', name: 'Gold', basePrice: 2780 },
-  { symbol: 'EURUSDm', name: 'Euro/USD', basePrice: 1.0862 },
-  { symbol: 'GBPUSDm', name: 'GBP/USD', basePrice: 1.2645 },
-  { symbol: 'USDJPYm', name: 'USD/JPY', basePrice: 149.85 },
+  { symbol: 'EURUSDm', name: 'Euro/USD', basePrice: 1.0862, decimals: 5 },
+  { symbol: 'GBPUSDm', name: 'GBP/USD', basePrice: 1.2645, decimals: 5 },
+  { symbol: 'USDJPYm', name: 'USD/JPY', basePrice: 149.85, decimals: 3 },
+  { symbol: 'XAUUSDm', name: 'Gold', basePrice: 2780, decimals: 2 },
 ];
 
 export default function ForexBot() {
   const navigate = useNavigate();
-  const { currentBalance, accountType, updateBalance, user } = useAccount();
+  const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
   const { toast } = useToast();
   
   const [isRunning, setIsRunning] = useState(false);
   const [positions, setPositions] = useState<ForexPosition[]>([]);
+  const [balance, setBalance] = useState(currentBalance);
   const [equity, setEquity] = useState(currentBalance);
+  const [margin, setMargin] = useState(0);
   const [freeMargin, setFreeMargin] = useState(currentBalance);
-  const [lotSize, setLotSize] = useState('0.01');
-  const [targetProfit, setTargetProfit] = useState('0.50');
+  const [marginLevel, setMarginLevel] = useState(0);
   
   const tradingInterval = useRef<NodeJS.Timeout | null>(null);
   const positionsRef = useRef(positions);
   
   useEffect(() => {
     positionsRef.current = positions;
-  }, [positions]);
-
-  // Update equity based on positions
-  useEffect(() => {
-    const totalPL = positions.reduce((sum, pos) => sum + pos.profitLoss, 0);
-    setEquity(currentBalance + totalPL);
-    setFreeMargin(currentBalance + totalPL);
+    setBalance(currentBalance);
   }, [positions, currentBalance]);
 
-  // Real-time position updates
+  // Calculate account metrics
+  useEffect(() => {
+    const totalPL = positions.reduce((sum, pos) => sum + pos.profitLoss, 0);
+    const usedMargin = positions.reduce((sum, pos) => sum + (pos.lotSize * 1000), 0);
+    
+    setEquity(currentBalance + totalPL);
+    setMargin(usedMargin);
+    setFreeMargin(currentBalance + totalPL - usedMargin);
+    setMarginLevel(usedMargin > 0 ? ((currentBalance + totalPL) / usedMargin) * 100 : 0);
+  }, [positions, currentBalance]);
+
+  // Real-time position updates with win/loss bias
   useEffect(() => {
     if (positions.length === 0) return;
 
@@ -61,9 +65,12 @@ export default function ForexBot() {
         const pair = FOREX_PAIRS.find(p => p.symbol === pos.symbol);
         if (!pair) return pos;
 
-        // Simulate price movement
-        const volatility = pos.symbol.includes('XAU') ? 0.5 : 0.0002;
-        const change = (Math.random() - 0.48) * volatility; // Slight bullish bias
+        // Determine if this position should trend towards profit based on outcome logic
+        const outcome = getTradeOutcome({ accountType, userEmail });
+        const bias = outcome === 'win' ? 0.55 : 0.42; // Slight bias based on expected outcome
+        
+        const volatility = pos.symbol.includes('XAU') ? 0.8 : 0.0003;
+        const change = (Math.random() - bias) * volatility;
         const newPrice = pos.currentPrice + change;
         
         // Calculate P/L
@@ -71,7 +78,6 @@ export default function ForexBot() {
           ? newPrice - pos.entryPrice 
           : pos.entryPrice - newPrice;
         
-        // Forex lot calculation
         const multiplier = pos.symbol.includes('XAU') ? 100 : 100000;
         const profitLoss = priceDiff * pos.lotSize * multiplier;
 
@@ -81,39 +87,40 @@ export default function ForexBot() {
           profitLoss: parseFloat(profitLoss.toFixed(2)),
         };
       }));
-    }, 300);
+    }, 400);
 
     return () => clearInterval(interval);
-  }, [positions.length]);
+  }, [positions.length, accountType, userEmail]);
 
   // Auto-close profitable positions
   useEffect(() => {
-    const target = parseFloat(targetProfit) || 0.50;
-    
     positions.forEach(async (pos) => {
-      if (pos.profitLoss >= target) {
-        // Close this position with profit
+      // Close at profit thresholds based on lot size
+      const targetProfit = pos.lotSize * 40;
+      
+      if (pos.profitLoss >= targetProfit) {
         await closePosition(pos.id);
-        
         toast({
           title: "Profit Taken! 💰",
           description: `${pos.symbol} closed at +$${pos.profitLoss.toFixed(2)}`,
         });
       }
     });
-  }, [positions, targetProfit]);
+  }, [positions]);
 
   const openPosition = useCallback(async () => {
     if (currentBalance < 1) return;
     
     const pair = FOREX_PAIRS[Math.floor(Math.random() * FOREX_PAIRS.length)];
     const direction = Math.random() > 0.5 ? 'buy' : 'sell';
-    const lot = parseFloat(lotSize) || 0.01;
+    const lotSizes = [0.05, 0.10];
+    const lot = lotSizes[Math.floor(Math.random() * lotSizes.length)];
     
-    const basePrice = pair.basePrice + (Math.random() - 0.5) * (pair.symbol.includes('XAU') ? 20 : 0.01);
+    const priceVariation = pair.symbol.includes('XAU') ? 20 : 0.01;
+    const basePrice = pair.basePrice + (Math.random() - 0.5) * priceVariation;
     
     const newPosition: ForexPosition = {
-      id: Date.now().toString(),
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       symbol: pair.symbol,
       type: direction,
       lotSize: lot,
@@ -125,7 +132,6 @@ export default function ForexBot() {
     
     setPositions(prev => [...prev, newPosition]);
     
-    // Log to database
     if (user) {
       try {
         await supabase.from('transactions').insert({
@@ -134,7 +140,7 @@ export default function ForexBot() {
           amount: 0,
           currency: 'USD',
           status: 'completed',
-          description: `Forex EA: Opened ${direction.toUpperCase()} ${pair.symbol} @ ${basePrice.toFixed(pair.symbol.includes('XAU') ? 3 : 5)}`,
+          description: `Forex EA: Opened ${direction.toUpperCase()} ${pair.symbol} @ ${basePrice.toFixed(pair.decimals)}`,
           account_type: accountType,
           profit_loss: 0,
         });
@@ -142,19 +148,17 @@ export default function ForexBot() {
         console.error('Error logging position:', err);
       }
     }
-  }, [currentBalance, lotSize, user, accountType]);
+  }, [currentBalance, user, accountType]);
 
   const closePosition = async (positionId: string) => {
     const position = positionsRef.current.find(p => p.id === positionId);
     if (!position) return;
 
-    // Apply profit/loss to balance
     if (position.profitLoss !== 0) {
       const operation = position.profitLoss > 0 ? 'add' : 'subtract';
       await updateBalance(accountType, Math.abs(position.profitLoss), operation);
     }
 
-    // Log closed trade
     if (user) {
       try {
         await supabase.from('transactions').insert({
@@ -186,16 +190,13 @@ export default function ForexBot() {
     }
 
     setIsRunning(true);
-    
-    // Open initial positions
     openPosition();
     
-    // Open new positions periodically
     tradingInterval.current = setInterval(() => {
-      if (positionsRef.current.length < 10) {
+      if (positionsRef.current.length < 15) {
         openPosition();
       }
-    }, 3000 + Math.random() * 2000);
+    }, 2000 + Math.random() * 1500);
     
     toast({
       title: "Forex EA Started 🤖",
@@ -216,217 +217,149 @@ export default function ForexBot() {
   };
 
   const formatPrice = (price: number, symbol: string) => {
-    if (symbol.includes('XAU')) return price.toFixed(3);
-    if (symbol.includes('JPY')) return price.toFixed(3);
-    return price.toFixed(5);
+    const pair = FOREX_PAIRS.find(p => p.symbol === symbol);
+    return price.toFixed(pair?.decimals || 5);
   };
 
-  const totalProfit = positions.reduce((sum, pos) => sum + pos.profitLoss, 0);
-
   return (
-    <div className="min-h-screen bg-[#f5f5f5] dark:bg-background pb-20">
-      {/* Header - MetaTrader Style */}
-      <div className="bg-white dark:bg-card border-b border-gray-200 dark:border-border px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/bot-select')} className="p-1">
-              <Menu className="h-5 w-5 text-gray-700 dark:text-foreground" />
-            </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 dark:text-muted-foreground">Trade</span>
-              </div>
-              <span className={cn(
-                "text-lg font-bold",
-                accountType === 'demo' ? "text-blue-600" : "text-green-600"
-              )}>
-                {currentBalance.toFixed(2)} USD
-              </span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button className="p-2 rounded-lg bg-gray-100 dark:bg-secondary">
-              <BarChart3 className="h-5 w-5 text-gray-700 dark:text-foreground" />
-            </button>
-            <button className="p-2 rounded-lg bg-gray-100 dark:bg-secondary">
-              <ArrowUpDown className="h-5 w-5 text-gray-700 dark:text-foreground" />
-            </button>
-            <button 
-              onClick={() => navigate('/trade')}
-              className="p-2 rounded-lg bg-blue-600"
-            >
-              <Plus className="h-5 w-5 text-white" />
-            </button>
-          </div>
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Header - MT Style */}
+      <div className="bg-[#1e3a5f] text-white px-4 py-3 flex items-center justify-between">
+        <button 
+          onClick={isRunning ? stopBot : startBot}
+          className={cn(
+            "px-4 py-2 rounded text-sm font-bold",
+            isRunning ? "bg-red-500" : "bg-green-500"
+          )}
+        >
+          {isRunning ? 'Stop EA' : 'Start EA'}
+        </button>
+        <span className="text-xl font-bold">{currentBalance.toFixed(2)} USD</span>
+        <button 
+          onClick={() => navigate('/bot-select')}
+          className="text-2xl"
+        >
+          +
+        </button>
+      </div>
+
+      {/* Account Summary */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="flex justify-between py-2 px-4 border-b border-gray-100">
+          <span className="text-gray-600">Balance:</span>
+          <span className="font-medium text-gray-900">{balance.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between py-2 px-4 border-b border-gray-100">
+          <span className="text-gray-600">Equity:</span>
+          <span className={cn("font-medium", equity >= balance ? "text-blue-600" : "text-red-600")}>
+            {equity.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex justify-between py-2 px-4 border-b border-gray-100">
+          <span className="text-gray-600">Margin:</span>
+          <span className="font-medium text-gray-900">{margin.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between py-2 px-4 border-b border-gray-100">
+          <span className="text-gray-600">Free margin:</span>
+          <span className="font-medium text-gray-900">{freeMargin.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between py-2 px-4 border-b border-gray-100">
+          <span className="text-gray-600">Margin level (%):</span>
+          <span className="font-medium text-gray-900">{marginLevel.toFixed(2)}</span>
         </div>
       </div>
 
-      <main className="px-4 py-4 space-y-4">
-        {/* Account Summary */}
-        <div className="bg-white dark:bg-card rounded-lg border border-gray-200 dark:border-border">
-          <div className="flex justify-between items-center py-3 px-4 border-b border-gray-100 dark:border-border">
-            <span className="text-gray-600 dark:text-muted-foreground">Balance:</span>
-            <span className="font-bold text-gray-900 dark:text-foreground text-lg">{currentBalance.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between items-center py-3 px-4 border-b border-gray-100 dark:border-border">
-            <span className="text-gray-600 dark:text-muted-foreground">Equity:</span>
-            <span className={cn(
-              "font-bold text-lg",
-              equity >= currentBalance ? "text-green-600" : "text-red-600"
-            )}>
-              {equity.toFixed(2)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center py-3 px-4">
-            <span className="text-gray-600 dark:text-muted-foreground font-semibold">Free margin:</span>
-            <span className="font-bold text-gray-900 dark:text-foreground text-lg">{freeMargin.toFixed(2)}</span>
-          </div>
+      {/* Positions Section */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="py-2 px-4 border-b border-gray-200 bg-gray-50">
+          <span className="font-bold text-gray-800">Positions</span>
         </div>
 
-        {/* Bot Controls */}
-        <div className="bg-white dark:bg-card rounded-lg border border-gray-200 dark:border-border p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-gray-900 dark:text-foreground">Forex EA Settings</h3>
-            <Settings className="h-5 w-5 text-gray-400" />
+        {positions.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <p>No open positions</p>
+            <p className="text-sm mt-1">Start the EA to begin trading</p>
           </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-gray-500 dark:text-muted-foreground">Lot Size</label>
-              <Input
-                value={lotSize}
-                onChange={(e) => setLotSize(e.target.value)}
-                className="mt-1"
-                disabled={isRunning}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 dark:text-muted-foreground">Target Profit ($)</label>
-              <Input
-                value={targetProfit}
-                onChange={(e) => setTargetProfit(e.target.value)}
-                className="mt-1"
-                disabled={isRunning}
-              />
-            </div>
-          </div>
-
-          <Button
-            onClick={isRunning ? stopBot : startBot}
-            className={cn(
-              "w-full",
-              isRunning 
-                ? "bg-red-500 hover:bg-red-600" 
-                : "bg-green-500 hover:bg-green-600"
-            )}
-          >
-            {isRunning ? (
-              <>
-                <Pause className="h-4 w-4 mr-2" />
-                Stop EA
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4 mr-2" />
-                Start EA
-              </>
-            )}
-          </Button>
-
-          {isRunning && (
-            <div className="text-center">
-              <span className={cn(
-                "text-lg font-bold",
-                totalProfit >= 0 ? "text-blue-600" : "text-red-600"
-              )}>
-                Session P/L: {totalProfit >= 0 ? '+' : ''}{totalProfit.toFixed(2)} USD
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Positions Section */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-gray-900 dark:text-foreground">Positions</h2>
-            <button className="text-gray-400">•••</button>
-          </div>
-
-          {positions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-muted-foreground">
-              <p>No open positions</p>
-              <p className="text-sm mt-1">Start the EA to begin trading</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {positions.map((position) => (
-                <div 
-                  key={position.id}
-                  className="bg-white dark:bg-card rounded-lg border border-gray-200 dark:border-border p-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900 dark:text-foreground">{position.symbol}</span>
-                        <span className="text-blue-600 text-sm">
-                          {position.type} {position.lotSize.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-muted-foreground font-mono">
-                        {formatPrice(position.entryPrice, position.symbol)} → {formatPrice(position.currentPrice, position.symbol)}
-                      </div>
-                    </div>
-                    <span className={cn(
-                      "font-bold text-lg",
-                      position.profitLoss >= 0 ? "text-blue-600" : "text-red-600"
-                    )}>
-                      {position.profitLoss.toFixed(2)}
+        ) : (
+          <div>
+            {positions.map((position) => (
+              <div 
+                key={position.id}
+                className="flex items-center justify-between py-2 px-4 border-b border-gray-100"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-900">{position.symbol},</span>
+                    <span className="text-blue-600 text-sm">
+                      {position.type} {position.lotSize.toFixed(2)}
                     </span>
                   </div>
+                  <div className="text-sm text-gray-500 font-mono">
+                    {formatPrice(position.entryPrice, position.symbol)} → {formatPrice(position.currentPrice, position.symbol)}
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+                <span className={cn(
+                  "font-bold text-lg tabular-nums",
+                  position.profitLoss >= 0 ? "text-blue-600" : "text-red-600"
+                )}>
+                  {position.profitLoss.toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-card border-t border-gray-200 dark:border-border px-4 py-3">
+      {/* Bottom Navigation - MT Style */}
+      <div className="bg-white border-t border-gray-200 px-2 py-3 safe-area-inset-bottom">
         <div className="flex items-center justify-around">
           <button 
             onClick={() => navigate('/markets')}
-            className="flex flex-col items-center gap-1 text-gray-500"
+            className="flex flex-col items-center gap-0.5"
           >
-            <span className="text-lg">↕</span>
-            <span className="text-xs">Quotes</span>
+            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M7 17l-4-4 4-4M17 7l4 4-4 4M3 13h18"/>
+            </svg>
+            <span className="text-xs text-gray-500">Quotes</span>
           </button>
           <button 
             onClick={() => navigate('/trade')}
-            className="flex flex-col items-center gap-1 text-gray-500"
+            className="flex flex-col items-center gap-0.5"
           >
-            <span className="text-lg">📊</span>
-            <span className="text-xs">Charts</span>
+            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+              <rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            <span className="text-xs text-gray-500">Chart</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-blue-600">
-            <span className="text-lg">📈</span>
-            <span className="text-xs font-bold">Trade</span>
+          <button className="flex flex-col items-center gap-0.5">
+            <svg className="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 3v18h18"/>
+              <path d="M7 16l4-8 4 4 4-8"/>
+            </svg>
+            <span className="text-xs text-blue-600 font-bold">Trade</span>
           </button>
           <button 
             onClick={() => navigate('/history')}
-            className="flex flex-col items-center gap-1 text-gray-500"
+            className="flex flex-col items-center gap-0.5"
           >
-            <Clock className="h-5 w-5" />
-            <span className="text-xs">History</span>
+            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="16" rx="2"/>
+              <path d="M3 10h18"/>
+            </svg>
+            <span className="text-xs text-gray-500">History</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-gray-500 relative">
-            <div className="relative">
-              <span className="text-lg">💬</span>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                <span className="text-[10px] text-white font-bold">3</span>
-              </div>
-            </div>
-            <span className="text-xs">Messages</span>
+          <button 
+            onClick={() => navigate('/settings')}
+            className="flex flex-col items-center gap-0.5"
+          >
+            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-1.42 3.42 2 2 0 0 1-1.42-.59l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <span className="text-xs text-gray-500">Settings</span>
           </button>
         </div>
       </div>
