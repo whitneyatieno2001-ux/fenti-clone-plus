@@ -275,22 +275,25 @@ export const executeSignalTrade = (stakeAmount: number): TradeResult => {
     };
   }
   
-  // Win rate based on confidence
-  const baseWinRate = 0.55 + (analysis.overallSignal.confidence / 100) * 0.25;
+  // 40% base win rate for Signal Master (free bot)
+  const baseWinRate = 0.40;
   const isWin = Math.random() < baseWinRate;
   
-  let profitPercent: number;
+  // 80% payout: stake $10, win = $8 profit, loss = $10 stake
+  const PAYOUT_RATE = 0.80;
+  let netProfit: number;
+  
   if (isWin) {
-    // Signal trades aim for bigger profits (1.5% to 6%)
-    profitPercent = 0.015 + Math.random() * 0.045;
+    // Win: 80% of stake as profit
+    netProfit = stakeAmount * PAYOUT_RATE;
   } else {
-    // But losses can also be bigger (-1.5% to -5%)
-    profitPercent = -(0.015 + Math.random() * 0.035);
+    // Loss: lose entire stake
+    netProfit = -stakeAmount;
   }
   
-  const frictionCost = slippage + spread;
-  const netProfitPercent = profitPercent - frictionCost + getMarketNoise();
-  let netProfit = stakeAmount * netProfitPercent;
+  // Add small variance to make it feel realistic
+  const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
+  netProfit += variance;
   
   // Ensure minimum profit/loss of $0.25 to avoid $0.00 trades
   if (Math.abs(netProfit) < 0.25) {
@@ -299,10 +302,10 @@ export const executeSignalTrade = (stakeAmount: number): TradeResult => {
   
   return {
     isWin: netProfit > 0,
-    profitPercent: netProfitPercent * 100,
+    profitPercent: (netProfit / stakeAmount) * 100,
     slippage,
     spread,
-    netProfit
+    netProfit: parseFloat(netProfit.toFixed(2))
   };
 };
 
