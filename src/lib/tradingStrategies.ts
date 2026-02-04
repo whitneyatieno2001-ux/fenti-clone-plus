@@ -87,23 +87,25 @@ export const executeArbitrageTrade = (stakeAmount: number, basePrice: number): T
   const spread = calculateSpread();
   
   // Arbitrage success depends on timing and spread
-  // 65% base win rate, adjusted by opportunity quality
-  const adjustedWinRate = opportunity.profitable ? 0.70 : 0.45;
+  // 60% base win rate for crypto bots
+  const adjustedWinRate = opportunity.profitable ? 0.65 : 0.45;
   const isWin = Math.random() < adjustedWinRate;
   
-  let profitPercent: number;
+  // 80% payout: stake $10, win = $8 profit, loss = $10 stake
+  const PAYOUT_RATE = 0.80;
+  let netProfit: number;
+  
   if (isWin) {
-    // Arbitrage profits are small but consistent (0.5% to 2%)
-    profitPercent = 0.005 + Math.random() * 0.015;
+    // Win: 80% of stake as profit
+    netProfit = stakeAmount * PAYOUT_RATE;
   } else {
-    // Losses occur when spread closes before execution (-0.8% to -2.5%)
-    profitPercent = -(0.008 + Math.random() * 0.017);
+    // Loss: lose entire stake
+    netProfit = -stakeAmount;
   }
   
-  // Apply market friction
-  const frictionCost = slippage + spread;
-  const netProfitPercent = profitPercent - frictionCost + getMarketNoise();
-  let netProfit = stakeAmount * netProfitPercent;
+  // Add small variance to make it feel realistic
+  const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
+  netProfit += variance;
   
   // Ensure minimum profit/loss of $0.15 to avoid $0.00 trades
   if (Math.abs(netProfit) < 0.15) {
@@ -112,10 +114,10 @@ export const executeArbitrageTrade = (stakeAmount: number, basePrice: number): T
   
   return {
     isWin: netProfit > 0,
-    profitPercent: netProfitPercent * 100,
+    profitPercent: (netProfit / stakeAmount) * 100,
     slippage,
     spread,
-    netProfit
+    netProfit: parseFloat(netProfit.toFixed(2))
   };
 };
 
@@ -144,25 +146,28 @@ export const executeScalpingTrade = (stakeAmount: number): TradeResult => {
   const spread = calculateSpread();
   
   // Scalping struggles in sideways and high volatility markets
-  let baseWinRate = 0.58;
-  if (conditions.isSideways) baseWinRate -= 0.15;
-  if (conditions.volatility > 0.7) baseWinRate -= 0.10;
-  if (Math.abs(conditions.momentum) > 0.5) baseWinRate += 0.08;
+  // 80% base win rate for Speed Scalper bot
+  let baseWinRate = 0.80;
+  if (conditions.isSideways) baseWinRate -= 0.10;
+  if (conditions.volatility > 0.7) baseWinRate -= 0.05;
   
-  const isWin = Math.random() < Math.max(0.35, Math.min(0.72, baseWinRate));
+  const isWin = Math.random() < Math.max(0.60, Math.min(0.85, baseWinRate));
   
-  let profitPercent: number;
+  // 80% payout: stake $10, win = $8 profit, loss = $10 stake
+  const PAYOUT_RATE = 0.80;
+  let netProfit: number;
+  
   if (isWin) {
-    // Quick small profits (0.8% to 3%)
-    profitPercent = 0.008 + Math.random() * 0.022;
+    // Win: 80% of stake as profit
+    netProfit = stakeAmount * PAYOUT_RATE;
   } else {
-    // Losses can be larger due to tight stop-loss triggers (-1% to -4%)
-    profitPercent = -(0.01 + Math.random() * 0.03);
+    // Loss: lose entire stake
+    netProfit = -stakeAmount;
   }
   
-  const frictionCost = slippage + spread;
-  const netProfitPercent = profitPercent - frictionCost + getMarketNoise();
-  let netProfit = stakeAmount * netProfitPercent;
+  // Add small variance to make it feel realistic
+  const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
+  netProfit += variance;
   
   // Ensure minimum profit/loss of $0.20 to avoid $0.00 trades
   if (Math.abs(netProfit) < 0.20) {
@@ -171,10 +176,10 @@ export const executeScalpingTrade = (stakeAmount: number): TradeResult => {
   
   return {
     isWin: netProfit > 0,
-    profitPercent: netProfitPercent * 100,
+    profitPercent: (netProfit / stakeAmount) * 100,
     slippage,
     spread,
-    netProfit
+    netProfit: parseFloat(netProfit.toFixed(2))
   };
 };
 
@@ -270,22 +275,25 @@ export const executeSignalTrade = (stakeAmount: number): TradeResult => {
     };
   }
   
-  // Win rate based on confidence
-  const baseWinRate = 0.55 + (analysis.overallSignal.confidence / 100) * 0.25;
+  // 40% base win rate for Signal Master (free bot)
+  const baseWinRate = 0.40;
   const isWin = Math.random() < baseWinRate;
   
-  let profitPercent: number;
+  // 80% payout: stake $10, win = $8 profit, loss = $10 stake
+  const PAYOUT_RATE = 0.80;
+  let netProfit: number;
+  
   if (isWin) {
-    // Signal trades aim for bigger profits (1.5% to 6%)
-    profitPercent = 0.015 + Math.random() * 0.045;
+    // Win: 80% of stake as profit
+    netProfit = stakeAmount * PAYOUT_RATE;
   } else {
-    // But losses can also be bigger (-1.5% to -5%)
-    profitPercent = -(0.015 + Math.random() * 0.035);
+    // Loss: lose entire stake
+    netProfit = -stakeAmount;
   }
   
-  const frictionCost = slippage + spread;
-  const netProfitPercent = profitPercent - frictionCost + getMarketNoise();
-  let netProfit = stakeAmount * netProfitPercent;
+  // Add small variance to make it feel realistic
+  const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
+  netProfit += variance;
   
   // Ensure minimum profit/loss of $0.25 to avoid $0.00 trades
   if (Math.abs(netProfit) < 0.25) {
@@ -294,10 +302,10 @@ export const executeSignalTrade = (stakeAmount: number): TradeResult => {
   
   return {
     isWin: netProfit > 0,
-    profitPercent: netProfitPercent * 100,
+    profitPercent: (netProfit / stakeAmount) * 100,
     slippage,
     spread,
-    netProfit
+    netProfit: parseFloat(netProfit.toFixed(2))
   };
 };
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAccount } from '@/contexts/AccountContext';
 import { cn } from '@/lib/utils';
-import { BarChart3, Clock, Menu, ArrowUpDown, Plus, X } from 'lucide-react';
+import { Clock, X, Menu, ArrowUpDown, Plus } from 'lucide-react';
 
 interface Position {
   id: string;
@@ -111,37 +111,36 @@ export default function ActivePositions() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] dark:bg-background pb-20">
-      {/* Custom Header - MetaTrader Style */}
-      <div className="bg-white dark:bg-card border-b border-gray-200 dark:border-border px-4 py-3">
+    <div className="min-h-screen bg-[#f0f0f0] pb-20">
+      {/* Header - Light MetaTrader Style */}
+      <div className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate('/trade')} className="p-1">
-              <Menu className="h-5 w-5 text-gray-700 dark:text-foreground" />
+              <Menu className="h-5 w-5 text-gray-600" />
             </button>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 dark:text-muted-foreground">Trade</span>
-              </div>
-              <span className={cn(
-                "text-lg font-bold",
-                accountType === 'demo' ? "text-blue-600" : "text-green-600"
-              )}>
+              <span className="text-sm text-gray-500">Trade</span>
+              <p className="text-green-600 font-semibold text-lg">
                 {currentBalance.toFixed(2)} USD
-              </span>
+              </p>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            <button className="p-2 rounded-lg bg-gray-100 dark:bg-secondary">
-              <BarChart3 className="h-5 w-5 text-gray-700 dark:text-foreground" />
+            <button className="p-2">
+              <svg className="h-5 w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="9" y1="3" x2="9" y2="21"/>
+                <line x1="15" y1="3" x2="15" y2="21"/>
+              </svg>
             </button>
-            <button className="p-2 rounded-lg bg-gray-100 dark:bg-secondary">
-              <ArrowUpDown className="h-5 w-5 text-gray-700 dark:text-foreground" />
+            <button className="p-2">
+              <ArrowUpDown className="h-5 w-5 text-gray-600" />
             </button>
             <button 
               onClick={() => navigate('/trade')}
-              className="p-2 rounded-lg bg-blue-600"
+              className="p-2 bg-blue-600 rounded"
             >
               <Plus className="h-5 w-5 text-white" />
             </button>
@@ -149,41 +148,41 @@ export default function ActivePositions() {
         </div>
       </div>
 
-      <main className="px-4 py-4 space-y-4">
-        {/* Account Summary - MetaTrader Style */}
-        <div className="bg-white dark:bg-card rounded-lg border border-gray-200 dark:border-border">
-          <div className="flex justify-between items-center py-3 px-4 border-b border-gray-100 dark:border-border">
-            <span className="text-gray-600 dark:text-muted-foreground">Balance:</span>
-            <span className="font-bold text-gray-900 dark:text-foreground text-lg">{currentBalance.toFixed(2)}</span>
+      <main className="px-4 py-3 space-y-3">
+        {/* Account Summary - Exact MetaTrader Style */}
+        <div className="bg-white rounded-lg overflow-hidden">
+          <div className="flex justify-between items-center py-3 px-4 border-b border-gray-100">
+            <span className="text-gray-700 font-medium">Balance:</span>
+            <span className="font-bold text-gray-900 text-xl">{currentBalance.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between items-center py-3 px-4 border-b border-gray-100 dark:border-border">
-            <span className="text-gray-600 dark:text-muted-foreground">Equity:</span>
+          <div className="flex justify-between items-center py-3 px-4 border-b border-gray-100">
+            <span className="text-gray-700 font-medium">Equity:</span>
             <span className={cn(
-              "font-bold text-lg",
-              equity >= currentBalance ? "text-green-600" : "text-red-600"
+              "font-bold text-xl",
+              equity >= currentBalance ? "text-blue-600" : "text-red-600"
             )}>
               {equity.toFixed(2)}
             </span>
           </div>
           <div className="flex justify-between items-center py-3 px-4">
-            <span className="text-gray-600 dark:text-muted-foreground font-semibold">Free margin:</span>
-            <span className="font-bold text-gray-900 dark:text-foreground text-lg">{freeMargin.toFixed(2)}</span>
+            <span className="text-gray-700 font-medium">Free margin:</span>
+            <span className="font-bold text-gray-900 text-xl">{freeMargin.toFixed(2)}</span>
           </div>
         </div>
 
         {/* Positions Section */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-gray-900 dark:text-foreground">Positions</h2>
-            <button className="text-gray-400">•••</button>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-bold text-gray-900">Positions</h2>
+            <button className="text-gray-400 text-lg">•••</button>
           </div>
 
           {positions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-muted-foreground">
+            <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
               <p>No open positions</p>
               <button 
                 onClick={() => navigate('/trade')}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium"
+                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-medium"
               >
                 Open a Trade
               </button>
@@ -193,17 +192,17 @@ export default function ActivePositions() {
               {positions.map((position) => (
                 <div 
                   key={position.id}
-                  className="bg-white dark:bg-card rounded-lg border border-gray-200 dark:border-border p-4"
+                  className="bg-white rounded-lg px-4 py-3"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900 dark:text-foreground">{position.symbol}</span>
+                        <span className="font-bold text-gray-900">{position.symbol},</span>
                         <span className="text-blue-600 font-medium">
                           {position.type} {position.lotSize.toFixed(2)}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-muted-foreground mt-1 font-mono">
+                      <div className="text-sm text-gray-500 mt-0.5 font-mono">
                         {formatPrice(position.entryPrice, position.symbol)} → {formatPrice(position.currentPrice, position.symbol)}
                       </div>
                     </div>
@@ -216,7 +215,7 @@ export default function ActivePositions() {
                       </span>
                       <button
                         onClick={() => closePosition(position.id)}
-                        className="p-2 rounded-full bg-red-100 dark:bg-destructive/20 hover:bg-red-200 transition-colors"
+                        className="p-1.5 rounded-full bg-red-100 hover:bg-red-200 transition-colors"
                       >
                         <X className="h-4 w-4 text-red-600" />
                       </button>
@@ -229,42 +228,42 @@ export default function ActivePositions() {
         </div>
       </main>
 
-      {/* Bottom Trade Navigation - MetaTrader Style */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-card border-t border-gray-200 dark:border-border px-4 py-3">
+      {/* Bottom Navigation - MetaTrader Style */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 safe-area-inset-bottom">
         <div className="flex items-center justify-around">
           <button 
             onClick={() => navigate('/markets')}
-            className="flex flex-col items-center gap-1 text-gray-500"
+            className="flex flex-col items-center gap-0.5 py-1 px-3"
           >
-            <span className="text-lg">↕</span>
-            <span className="text-xs">Quotes</span>
+            <span className="text-gray-500 text-lg">↕</span>
+            <span className="text-xs text-gray-500">Quotes</span>
           </button>
           <button 
             onClick={() => navigate('/trade')}
-            className="flex flex-col items-center gap-1 text-gray-500"
+            className="flex flex-col items-center gap-0.5 py-1 px-3"
           >
-            <span className="text-lg">📊</span>
-            <span className="text-xs font-medium">Charts</span>
+            <span className="text-gray-500 text-lg">00</span>
+            <span className="text-xs text-gray-500 font-medium">Charts</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-blue-600">
-            <span className="text-lg">📈</span>
-            <span className="text-xs font-bold">Trade</span>
+          <button className="flex flex-col items-center gap-0.5 py-1 px-3">
+            <span className="text-blue-600 text-lg">↗</span>
+            <span className="text-xs text-blue-600 font-bold">Trade</span>
           </button>
           <button 
             onClick={() => navigate('/history')}
-            className="flex flex-col items-center gap-1 text-gray-500"
+            className="flex flex-col items-center gap-0.5 py-1 px-3"
           >
-            <Clock className="h-5 w-5" />
-            <span className="text-xs">History</span>
+            <Clock className="h-5 w-5 text-gray-500" />
+            <span className="text-xs text-gray-500">History</span>
           </button>
-          <button className="flex flex-col items-center gap-1 text-gray-500 relative">
+          <button className="flex flex-col items-center gap-0.5 py-1 px-3 relative">
             <div className="relative">
-              <span className="text-lg">💬</span>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-gray-500 text-lg">💬</span>
+              <div className="absolute -top-1 -right-2 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
                 <span className="text-[10px] text-white font-bold">3</span>
               </div>
             </div>
-            <span className="text-xs">Messages</span>
+            <span className="text-xs text-gray-500">Messages</span>
           </button>
         </div>
       </div>
