@@ -1,14 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAccount } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { TradingViewWidget } from '@/components/TradingViewWidget';
 import { cn } from '@/lib/utils';
-import { Search, MoreVertical } from 'lucide-react';
+import { Search, Menu, Plus, X, ChevronUp, ChevronDown, Clock, MessageSquare, TrendingUp, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { tradingPairs, getMarketCategories, getPairsByCategory, type TradingPair } from '@/data/tradingPairs';
 import { Input } from '@/components/ui/input';
-import { useTheme } from 'next-themes';
 import { supabase } from '@/integrations/supabase/client';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
 
@@ -25,18 +24,23 @@ interface ActivePosition {
 
 export default function ManualTrade() {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const [selectedPair, setSelectedPair] = useState<TradingPair>(tradingPairs.find(p => p.symbol === 'EUR/USD') || tradingPairs[0]);
   const [showPairSelector, setShowPairSelector] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [pairSearch, setPairSearch] = useState('');
-  const [lotSize, setLotSize] = useState(0.08);
-  const [showPositionsMenu, setShowPositionsMenu] = useState(false);
+  const [lotSize, setLotSize] = useState(0.5);
+  const [lotInput, setLotInput] = useState('0.50');
   const [positions, setPositions] = useState<ActivePosition[]>([]);
   
   const { currentBalance, accountType, updateBalance, isLoggedIn, user, userEmail } = useAccount();
   const { toast } = useToast();
   const { getCryptoWithPrice } = useCryptoPrices();
+  const positionsRef = useRef(positions);
+
+  useEffect(() => {
+    positionsRef.current = positions;
+  }, [positions]);
 
   const categories = getMarketCategories();
   
@@ -55,14 +59,24 @@ export default function ManualTrade() {
     return basePrice + (Math.random() - 0.5) * 2 * volatility;
   }, [selectedPair, getCryptoWithPrice]);
 
-  const [currentPrice, setCurrentPrice] = useState(getCurrentPrice());
+  const [sellPrice, setSellPrice] = useState(getCurrentPrice());
+  const [buyPrice, setBuyPrice] = useState(getCurrentPrice() * 1.0002);
+
+  useEffect(() => {
+    const basePrice = selectedPair.basePrice || 1.0;
+    const spread = selectedPair.symbol.includes('XAU') ? 0.14 : 0.0002;
+    setSellPrice(basePrice);
+    setBuyPrice(basePrice + spread);
+  }, [selectedPair]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentPrice(getCurrentPrice());
+      const volatility = selectedPair.symbol.includes('XAU') ? 0.3 : 0.0001;
+      setSellPrice(prev => prev + (Math.random() - 0.5) * volatility);
+      setBuyPrice(prev => prev + (Math.random() - 0.5) * volatility);
     }, 500);
     return () => clearInterval(interval);
-  }, [getCurrentPrice]);
+  }, [selectedPair]);
 
   // Update positions P/L
   useEffect(() => {
@@ -120,7 +134,7 @@ export default function ManualTrade() {
       return;
     }
 
-    const entryPrice = getCurrentPrice();
+    const entryPrice = direction === 'buy' ? buyPrice : sellPrice;
     const newPosition: ActivePosition = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       symbol: selectedPair.symbol,
@@ -158,10 +172,9 @@ export default function ManualTrade() {
   };
 
   const closePosition = async (positionId: string) => {
-    const position = positions.find(p => p.id === positionId);
+    const position = positionsRef.current.find(p => p.id === positionId);
     if (!position) return;
 
-    // Return investment + profit/loss
     const totalReturn = position.investment + position.profitLoss;
     if (totalReturn > 0) {
       await updateBalance(accountType, totalReturn, 'add');
@@ -205,187 +218,262 @@ export default function ManualTrade() {
     return price >= 1 ? price.toFixed(2) : price.toFixed(4);
   };
 
-  const adjustLotSize = (delta: number) => {
-    const newSize = Math.max(0.01, Math.min(10, lotSize + delta));
-    setLotSize(parseFloat(newSize.toFixed(2)));
+  const adjustLotSize = (direction: 'up' | 'down') => {
+    const step = 0.01;
+    let newVal: number;
+    if (direction === 'up') {
+      newVal = Math.min(lotSize + step, 10);
+    } else {
+      newVal = Math.max(lotSize - step, 0.01);
+    }
+    setLotSize(newVal);
+    setLotInput(newVal.toFixed(2));
+  };
+
+  const handleLotInputChange = (val: string) => {
+    setLotInput(val);
+    const num = parseFloat(val);
+    if (!isNaN(num) && num >= 0.01 && num <= 10) {
+      setLotSize(num);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Top Toolbar - MT Style */}
-      <div className="bg-white border-b border-gray-200 px-3 py-2 flex items-center justify-between">
-        <button 
-          onClick={() => setShowPairSelector(!showPairSelector)}
-          className="text-blue-600 font-medium"
-        >
-          H4
-        </button>
-        
-        <div className="flex items-center gap-4">
-          <button className="text-gray-600">+</button>
-          <button className="text-gray-600 italic font-serif">f</button>
-          <button className="text-blue-600">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    <div className="h-screen flex flex-col" style={{ backgroundColor: '#1a1a2e' }}>
+      {/* MT5 Top Toolbar */}
+      <div className="flex items-center justify-between px-3 py-2 border-b" style={{ backgroundColor: '#252547', borderColor: '#3d3d6b' }}>
+        <div className="flex items-center gap-3">
+          <button className="p-1">
+            <Menu className="h-5 w-5" style={{ color: '#9ca3af' }} />
+          </button>
+          <button className="p-1">
+            <Plus className="h-5 w-5" style={{ color: '#9ca3af' }} />
+          </button>
+          <button className="p-1">
+            <svg className="h-5 w-5" style={{ color: '#9ca3af' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 4l7 7m0 0l-7 7m7-7H20"/>
             </svg>
           </button>
+        </div>
+        <span className="font-medium" style={{ color: 'white' }}>H4</span>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#3b82f6' }} />
+          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#f97316' }} />
           <button 
-            onClick={() => navigate('/positions')}
-            className="text-blue-600 font-medium"
+            onClick={() => setShowSettings(!showSettings)}
+            className="flex items-center gap-1"
           >
-            Trade
+            <div className="w-3 h-3" style={{ backgroundColor: '#ef4444' }} />
+            <div className="w-3 h-3" style={{ backgroundColor: '#22c55e' }} />
           </button>
         </div>
       </div>
 
-      {/* Pair Info Bar */}
-      <div className="bg-white border-b border-gray-200 px-3 py-1">
-        <div className="text-xs text-gray-600 font-mono">
-          {selectedPair.symbol.replace('/', '')}.m, H4, {formatPrice(currentPrice)} {formatPrice(currentPrice)} {formatPrice(currentPrice)} {formatPrice(currentPrice)}
+      {/* Price Bar with SELL/BUY */}
+      <div className="flex items-center justify-between px-2 py-1.5" style={{ backgroundColor: '#1e1e3f' }}>
+        {/* SELL Button */}
+        <button 
+          onClick={() => handleTrade('sell')}
+          className="flex-1 max-w-[140px] py-2.5 px-3 rounded-md flex flex-col items-center"
+          style={{ backgroundColor: '#2563eb' }}
+        >
+          <span className="text-[10px] opacity-80" style={{ color: 'white' }}>SELL</span>
+          <span className="text-lg font-bold tabular-nums" style={{ color: 'white' }}>{formatPrice(sellPrice)}</span>
+        </button>
+
+        {/* Lot Size with arrows */}
+        <div className="flex items-center gap-1 px-2">
+          <button onClick={() => adjustLotSize('down')} className="p-1" style={{ color: '#9ca3af' }}>
+            <ChevronDown className="h-4 w-4" />
+          </button>
+          <span className="font-bold text-lg tabular-nums w-12 text-center" style={{ color: 'white' }}>{lotSize.toFixed(2)}</span>
+          <button onClick={() => adjustLotSize('up')} className="p-1" style={{ color: '#9ca3af' }}>
+            <ChevronUp className="h-4 w-4" />
+          </button>
         </div>
-        {positions.length > 0 && (
-          <div className="text-xs text-gray-500 mt-0.5">
-            buy {positions.filter(p => p.type === 'buy').reduce((s, p) => s + p.lotSize, 0).toFixed(2)}
-          </div>
-        )}
+
+        {/* BUY Button */}
+        <button 
+          onClick={() => handleTrade('buy')}
+          className="flex-1 max-w-[140px] py-2.5 px-3 rounded-md flex flex-col items-center"
+          style={{ backgroundColor: '#22c55e' }}
+        >
+          <span className="text-[10px] opacity-80" style={{ color: 'white' }}>BUY</span>
+          <span className="text-lg font-bold tabular-nums" style={{ color: 'white' }}>{formatPrice(buyPrice)}</span>
+        </button>
+      </div>
+
+      {/* Symbol Info Bar */}
+      <div className="px-3 py-1 flex items-center gap-2 text-xs border-b" style={{ backgroundColor: '#252547', borderColor: '#3d3d6b' }}>
+        <button 
+          onClick={() => setShowPairSelector(true)}
+          className="font-medium" style={{ color: 'white' }}
+        >
+          {selectedPair.symbol.replace('/', '')} • H4
+        </button>
+        <span className="ml-auto" style={{ color: '#9ca3af' }}>{selectedPair.name}</span>
       </div>
 
       {/* TradingView Chart - Full Screen */}
-      <div className="flex-1 relative" style={{ minHeight: 'calc(100vh - 200px)' }}>
+      <div className="flex-1 relative" style={{ backgroundColor: '#131326' }}>
         <TradingViewWidget 
           symbol={selectedPair.symbol}
-          theme="light"
-          height={window.innerHeight - 200}
+          theme="dark"
+          height={window.innerHeight - 220}
         />
       </div>
 
-      {/* Bottom Navigation - MT Style */}
-      <div className="bg-white border-t border-gray-200 px-2 py-3 safe-area-inset-bottom">
+      {/* MT5 Bottom Navigation */}
+      <div className="border-t px-2 py-2 safe-area-inset-bottom" style={{ backgroundColor: '#252547', borderColor: '#3d3d6b' }}>
         <div className="flex items-center justify-around">
           <button 
             onClick={() => navigate('/markets')}
             className="flex flex-col items-center gap-0.5"
           >
-            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M7 17l-4-4 4-4M17 7l4 4-4 4M3 13h18"/>
-            </svg>
-            <span className="text-xs text-gray-500">Quotes</span>
+            <BarChart3 className="h-5 w-5" style={{ color: '#9ca3af' }} />
+            <span className="text-[10px]" style={{ color: '#9ca3af' }}>Quotes</span>
           </button>
           <button className="flex flex-col items-center gap-0.5">
-            <svg className="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-            </svg>
-            <span className="text-xs text-blue-600 font-bold">Chart</span>
+            <TrendingUp className="h-5 w-5" style={{ color: '#3b82f6' }} />
+            <span className="text-[10px] font-bold" style={{ color: '#3b82f6' }}>Charts</span>
           </button>
           <button 
             onClick={() => navigate('/positions')}
             className="flex flex-col items-center gap-0.5"
           >
-            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="h-5 w-5" style={{ color: '#9ca3af' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M3 3v18h18"/>
               <path d="M7 16l4-8 4 4 4-8"/>
             </svg>
-            <span className="text-xs text-gray-500">Trade</span>
+            <span className="text-[10px]" style={{ color: '#9ca3af' }}>Trade</span>
           </button>
           <button 
             onClick={() => navigate('/history')}
             className="flex flex-col items-center gap-0.5"
           >
-            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="16" rx="2"/>
-              <path d="M3 10h18"/>
-            </svg>
-            <span className="text-xs text-gray-500">History</span>
+            <Clock className="h-5 w-5" style={{ color: '#9ca3af' }} />
+            <span className="text-[10px]" style={{ color: '#9ca3af' }}>History</span>
           </button>
-          <button 
-            onClick={() => setShowPositionsMenu(!showPositionsMenu)}
-            className="flex flex-col items-center gap-0.5 relative"
-          >
-            <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/>
-            </svg>
-            <span className="text-xs text-gray-500">Settings</span>
+          <button className="flex flex-col items-center gap-0.5 relative">
+            <MessageSquare className="h-5 w-5" style={{ color: '#9ca3af' }} />
+            <span className="text-[10px]" style={{ color: '#9ca3af' }}>Messages</span>
+            <span className="absolute -top-1 -right-1 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#ef4444' }}>2</span>
           </button>
         </div>
       </div>
 
-      {/* Positions Menu Overlay */}
-      {showPositionsMenu && positions.length > 0 && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/30" onClick={() => setShowPositionsMenu(false)} />
-          <div className="fixed bottom-20 left-4 right-4 z-50 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
-            <div className="p-3 border-b border-gray-100 flex justify-between items-center">
-              <span className="font-bold text-gray-800">Open Positions ({positions.length})</span>
-              <button onClick={() => setShowPositionsMenu(false)} className="text-gray-500">✕</button>
+      {/* Settings Panel */}
+      {showSettings && (
+        <div className="fixed inset-0 z-50 flex items-end" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+          <div className="w-full rounded-t-2xl p-4 max-h-[70vh] overflow-y-auto" style={{ backgroundColor: '#1e1e3f' }}>
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-bold text-lg" style={{ color: 'white' }}>Settings</span>
+              <button onClick={() => setShowSettings(false)}>
+                <X className="h-5 w-5" style={{ color: '#9ca3af' }} />
+              </button>
             </div>
-            <div className="max-h-64 overflow-y-auto">
-              {positions.map((pos) => (
-                <div key={pos.id} className="flex items-center justify-between p-3 border-b border-gray-50">
-                  <div>
-                    <div className="font-medium text-gray-900">{pos.symbol}</div>
-                    <div className="text-xs text-gray-500">{pos.type} {pos.lotSize.toFixed(2)}</div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className={cn(
-                      "font-bold",
-                      pos.profitLoss >= 0 ? "text-blue-600" : "text-red-600"
-                    )}>
-                      {pos.profitLoss >= 0 ? '+' : ''}{pos.profitLoss.toFixed(2)}
-                    </span>
-                    <button 
-                      onClick={() => closePosition(pos.id)}
-                      className="px-3 py-1 bg-red-500 text-white text-xs rounded font-medium"
-                    >
-                      Close
-                    </button>
-                  </div>
+            
+            {/* Lot Size Input */}
+            <div className="mb-4">
+              <label className="text-sm mb-2 block" style={{ color: '#9ca3af' }}>Lot Size</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={lotInput}
+                onChange={(e) => handleLotInputChange(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg text-lg"
+                style={{ backgroundColor: '#252547', borderColor: '#3d3d6b', color: 'white', border: '1px solid #3d3d6b' }}
+                placeholder="0.01"
+              />
+            </div>
+
+            {/* Open Positions */}
+            <div className="mb-4">
+              <span className="font-bold mb-2 block" style={{ color: 'white' }}>Open Positions ({positions.length})</span>
+              {positions.length === 0 ? (
+                <p className="text-sm" style={{ color: '#9ca3af' }}>No open positions</p>
+              ) : (
+                <div className="space-y-2">
+                  {positions.map(pos => (
+                    <div key={pos.id} className="p-3 rounded-lg" style={{ backgroundColor: '#252547' }}>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-medium" style={{ color: 'white' }}>{pos.symbol}</span>
+                          <span className={cn("ml-2 text-sm", pos.type === 'buy' ? "text-green-500" : "text-blue-500")}>
+                            {pos.type.toUpperCase()} {pos.lotSize}
+                          </span>
+                        </div>
+                        <span className={cn("font-bold", pos.profitLoss >= 0 ? "text-green-500" : "text-red-500")}>
+                          {pos.profitLoss >= 0 ? '+' : ''}{pos.profitLoss.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-xs" style={{ color: '#9ca3af' }}>
+                          {formatPrice(pos.entryPrice)} → {formatPrice(pos.currentPrice)}
+                        </span>
+                        <button 
+                          onClick={() => closePosition(pos.id)}
+                          className="text-white text-sm px-3 py-1 rounded"
+                          style={{ backgroundColor: '#ef4444' }}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Pair Selector Modal */}
       {showPairSelector && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowPairSelector(false)} />
-          <div className="fixed inset-x-4 top-16 z-50 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden max-h-[70vh]">
-            <div className="p-3 border-b border-gray-200">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search markets..."
-                  value={pairSearch}
-                  onChange={(e) => setPairSearch(e.target.value)}
-                  className="pl-9 border-gray-300"
-                />
-              </div>
+        <div className="fixed inset-0 z-50 flex items-end" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+          <div className="w-full rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto" style={{ backgroundColor: '#1e1e3f' }}>
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-bold text-lg" style={{ color: 'white' }}>Select Market</span>
+              <button onClick={() => setShowPairSelector(false)}>
+                <X className="h-5 w-5" style={{ color: '#9ca3af' }} />
+              </button>
             </div>
             
-            <div className="flex gap-1 p-2 border-b border-gray-200 overflow-x-auto">
-              {categories.map((cat) => (
+            {/* Search */}
+            <div className="mb-4 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: '#9ca3af' }} />
+              <input
+                type="text"
+                placeholder="Search markets..."
+                value={pairSearch}
+                onChange={(e) => setPairSearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-lg"
+                style={{ backgroundColor: '#252547', borderColor: '#3d3d6b', color: 'white', border: '1px solid #3d3d6b' }}
+              />
+            </div>
+            
+            {/* Category Tabs */}
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+              {categories.map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors",
-                    selectedCategory === cat.id
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-600"
+                    "px-4 py-2 rounded-full text-sm whitespace-nowrap",
+                    selectedCategory === cat.id 
+                      ? "bg-blue-600 text-white" 
+                      : ""
                   )}
+                  style={selectedCategory !== cat.id ? { backgroundColor: '#252547', color: '#9ca3af' } : {}}
                 >
                   {cat.icon} {cat.name}
                 </button>
               ))}
             </div>
-            
-            <div className="overflow-y-auto max-h-[50vh]">
-              {filteredPairs.map((pair) => (
+
+            {/* Pairs List */}
+            <div className="space-y-2">
+              {filteredPairs.map(pair => (
                 <button
                   key={pair.id}
                   onClick={() => {
@@ -394,51 +482,30 @@ export default function ManualTrade() {
                     setPairSearch('');
                   }}
                   className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors",
-                    selectedPair.id === pair.id && "bg-blue-50"
+                    "w-full p-3 rounded-lg flex items-center justify-between",
+                    selectedPair.id === pair.id ? "border" : ""
                   )}
+                  style={selectedPair.id === pair.id 
+                    ? { backgroundColor: 'rgba(37, 99, 235, 0.2)', borderColor: '#3b82f6' }
+                    : { backgroundColor: '#252547' }
+                  }
                 >
-                  <span className="text-xl">{pair.icon}</span>
-                  <div className="text-left flex-1">
-                    <p className="font-medium text-gray-900">{pair.symbol}</p>
-                    <p className="text-xs text-gray-500">{pair.name}</p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{pair.icon}</span>
+                    <div className="text-left">
+                      <div className="font-medium" style={{ color: 'white' }}>{pair.symbol}</div>
+                      <div className="text-xs" style={{ color: '#9ca3af' }}>{pair.name}</div>
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-400 capitalize">{pair.type}</span>
+                  {selectedPair.id === pair.id && (
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#3b82f6' }} />
+                  )}
                 </button>
               ))}
             </div>
           </div>
-        </>
-      )}
-
-      {/* Floating Trade Controls */}
-      <div className="fixed bottom-24 left-4 right-4 z-30">
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-3">
-          <div className="flex items-center justify-between gap-2">
-            <button 
-              onClick={() => handleTrade('sell')}
-              className="flex-1 bg-red-500 py-3 rounded-lg active:scale-95 transition-transform"
-            >
-              <div className="text-[10px] text-white/80 uppercase">Sell</div>
-              <div className="text-lg font-bold text-white">{formatPrice(currentPrice * 0.9999)}</div>
-            </button>
-
-            <div className="flex flex-col items-center px-2">
-              <button onClick={() => adjustLotSize(0.01)} className="text-gray-400 text-lg">▲</button>
-              <span className="text-lg font-bold text-gray-900">{lotSize.toFixed(2)}</span>
-              <button onClick={() => adjustLotSize(-0.01)} className="text-gray-400 text-lg">▼</button>
-            </div>
-
-            <button 
-              onClick={() => handleTrade('buy')}
-              className="flex-1 bg-green-500 py-3 rounded-lg active:scale-95 transition-transform"
-            >
-              <div className="text-[10px] text-white/80 uppercase">Buy</div>
-              <div className="text-lg font-bold text-white">{formatPrice(currentPrice * 1.0001)}</div>
-            </button>
-          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
