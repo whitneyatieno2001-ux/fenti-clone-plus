@@ -7,15 +7,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
 import { TradingViewWidget } from '@/components/TradingViewWidget';
 import {
-  Menu,
-  Plus,
   ChevronUp,
   ChevronDown,
   X,
-  TrendingUp,
-  Clock,
-  MessageSquare,
-  BarChart3,
+  Settings,
 } from 'lucide-react';
 
 interface ForexPosition {
@@ -30,375 +25,335 @@ interface ForexPosition {
 }
 
 const FOREX_PAIRS = [
-  { symbol: 'XAU/USD', name: 'Gold vs US Dollar', basePrice: 2778.50, decimals: 2 },
-  { symbol: 'EUR/USD', name: 'Euro vs US Dollar', basePrice: 1.0862, decimals: 5 },
-  { symbol: 'GBP/USD', name: 'Pound vs US Dollar', basePrice: 1.2645, decimals: 5 },
-  { symbol: 'USD/JPY', name: 'US Dollar vs Yen', basePrice: 149.85, decimals: 3 },
+  { symbol: 'EUR/USD', name: 'Euro vs US Dollar', code: 'EURUSD.s', basePrice: 1.13661, decimals: 5 },
+  { symbol: 'GBP/USD', name: 'Pound vs US Dollar', code: 'GBPUSD.s', basePrice: 1.2645, decimals: 5 },
+  { symbol: 'USD/JPY', name: 'US Dollar vs Yen', code: 'USDJPY.s', basePrice: 149.85, decimals: 3 },
+  { symbol: 'XAU/USD', name: 'Gold vs US Dollar', code: 'XAUUSD.s', basePrice: 2778.50, decimals: 2 },
 ];
+
+type ActiveTab = 'chart' | 'trade';
 
 export default function ForexBot() {
   const navigate = useNavigate();
   const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
   const { toast } = useToast();
-  
-  const [isRunning, setIsRunning] = useState(false);
+
+  const [activeTab, setActiveTab] = useState<ActiveTab>('chart');
   const [positions, setPositions] = useState<ForexPosition[]>([]);
   const [selectedPair, setSelectedPair] = useState(FOREX_PAIRS[0]);
   const [showPairSelector, setShowPairSelector] = useState(false);
-  const [buyPrice, setBuyPrice] = useState(selectedPair.basePrice + 0.14);
+  const [buyPrice, setBuyPrice] = useState(selectedPair.basePrice + 0.00006);
   const [sellPrice, setSellPrice] = useState(selectedPair.basePrice);
-  const [lotSize, setLotSize] = useState(0.5);
+  const [lotSize, setLotSize] = useState(1);
   const [equity, setEquity] = useState(currentBalance);
   const [margin, setMargin] = useState(0);
   const [freeMargin, setFreeMargin] = useState(currentBalance);
-  
-  const tradingInterval = useRef<NodeJS.Timeout | null>(null);
+  const [marginLevel, setMarginLevel] = useState(0);
+
   const positionsRef = useRef(positions);
-  
+
   useEffect(() => {
     positionsRef.current = positions;
   }, [positions]);
 
-  // Update prices
   useEffect(() => {
-    const basePrice = selectedPair.basePrice;
-    const spread = selectedPair.symbol.includes('XAU') ? 0.14 : 0.0002;
-    setBuyPrice(basePrice + spread);
-    setSellPrice(basePrice);
+    const spread = selectedPair.symbol.includes('XAU') ? 0.14 : 0.00006;
+    setBuyPrice(selectedPair.basePrice + spread);
+    setSellPrice(selectedPair.basePrice);
   }, [selectedPair]);
 
-  // Real-time price updates
   useEffect(() => {
     const interval = setInterval(() => {
-      const volatility = selectedPair.symbol.includes('XAU') ? 0.5 : 0.0001;
+      const volatility = selectedPair.symbol.includes('XAU') ? 0.5 : 0.00005;
       setBuyPrice(prev => prev + (Math.random() - 0.5) * volatility);
       setSellPrice(prev => prev + (Math.random() - 0.5) * volatility);
     }, 500);
     return () => clearInterval(interval);
   }, [selectedPair]);
 
-  // Calculate account metrics
   useEffect(() => {
     const totalPL = positions.reduce((sum, pos) => sum + pos.profitLoss, 0);
     const usedMargin = positions.reduce((sum, pos) => sum + (pos.lotSize * 1000), 0);
-    
-    setEquity(currentBalance + totalPL);
+    const eq = currentBalance + totalPL;
+    setEquity(eq);
     setMargin(usedMargin);
-    setFreeMargin(currentBalance + totalPL - usedMargin);
+    setFreeMargin(eq - usedMargin);
+    setMarginLevel(usedMargin > 0 ? (eq / usedMargin) * 100 : 0);
   }, [positions, currentBalance]);
 
-  // Real-time position updates with win/loss bias
   useEffect(() => {
     if (positions.length === 0) return;
-
     const interval = setInterval(() => {
       setPositions(prev => prev.map(pos => {
-        const pair = FOREX_PAIRS.find(p => p.symbol === pos.symbol);
-        if (!pair) return pos;
-
         const outcome = getTradeOutcome({ accountType, userEmail });
         const bias = outcome === 'win' ? 0.55 : 0.42;
-        
         const volatility = pos.symbol.includes('XAU') ? 0.8 : 0.0003;
         const change = (Math.random() - bias) * volatility;
         const newPrice = pos.currentPrice + change;
-        
-        const priceDiff = pos.type === 'buy' 
-          ? newPrice - pos.entryPrice 
-          : pos.entryPrice - newPrice;
-        
+        const priceDiff = pos.type === 'buy' ? newPrice - pos.entryPrice : pos.entryPrice - newPrice;
         const multiplier = pos.symbol.includes('XAU') ? 100 : 100000;
         const profitLoss = priceDiff * pos.lotSize * multiplier;
-
-        return {
-          ...pos,
-          currentPrice: newPrice,
-          profitLoss: parseFloat(profitLoss.toFixed(2)),
-        };
+        return { ...pos, currentPrice: newPrice, profitLoss: parseFloat(profitLoss.toFixed(2)) };
       }));
     }, 400);
-
     return () => clearInterval(interval);
   }, [positions.length, accountType, userEmail]);
 
-  // Auto-close profitable positions
   useEffect(() => {
     positions.forEach(async (pos) => {
       const targetProfit = pos.lotSize * 40;
-      
       if (pos.profitLoss >= targetProfit) {
         await closePosition(pos.id);
-        toast({
-          title: "Profit Taken! 💰",
-          description: `${pos.symbol} closed at +$${pos.profitLoss.toFixed(2)}`,
-        });
+        toast({ title: "Profit Taken! 💰", description: `${pos.symbol} closed at +$${pos.profitLoss.toFixed(2)}` });
       }
     });
   }, [positions]);
 
   const openPosition = useCallback(async (direction: 'buy' | 'sell') => {
     if (currentBalance < 1) return;
-    
     const entryPrice = direction === 'buy' ? buyPrice : sellPrice;
-    
     const newPosition: ForexPosition = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       symbol: selectedPair.symbol,
       type: direction,
-      lotSize: lotSize,
-      entryPrice: entryPrice,
+      lotSize,
+      entryPrice,
       currentPrice: entryPrice,
       profitLoss: 0,
       openTime: Date.now(),
     };
-    
     setPositions(prev => [...prev, newPosition]);
-    
     if (user) {
       try {
         await supabase.from('transactions').insert({
-          user_id: user.id,
-          type: 'bot_trade',
-          amount: 0,
-          currency: 'USD',
-          status: 'completed',
+          user_id: user.id, type: 'bot_trade', amount: 0, currency: 'USD', status: 'completed',
           description: `Forex EA: Opened ${direction.toUpperCase()} ${selectedPair.symbol} @ ${entryPrice.toFixed(selectedPair.decimals)}`,
-          account_type: accountType,
-          profit_loss: 0,
+          account_type: accountType, profit_loss: 0,
         });
-      } catch (err) {
-        console.error('Error logging position:', err);
-      }
+      } catch (err) { console.error('Error logging position:', err); }
     }
-
-    toast({
-      title: `${direction.toUpperCase()} Order Placed`,
-      description: `${selectedPair.symbol} @ ${entryPrice.toFixed(selectedPair.decimals)}`,
-    });
+    toast({ title: `${direction.toUpperCase()} Order Placed`, description: `${selectedPair.symbol} @ ${entryPrice.toFixed(selectedPair.decimals)}` });
   }, [currentBalance, user, accountType, selectedPair, buyPrice, sellPrice, lotSize]);
 
   const closePosition = async (positionId: string) => {
     const position = positionsRef.current.find(p => p.id === positionId);
     if (!position) return;
-
     if (position.profitLoss !== 0) {
       const operation = position.profitLoss > 0 ? 'add' : 'subtract';
       await updateBalance(accountType, Math.abs(position.profitLoss), operation);
     }
-
     if (user) {
       try {
         await supabase.from('transactions').insert({
-          user_id: user.id,
-          type: 'bot_trade',
-          amount: Math.abs(position.profitLoss),
-          currency: 'USD',
-          status: 'completed',
+          user_id: user.id, type: 'bot_trade', amount: Math.abs(position.profitLoss), currency: 'USD', status: 'completed',
           description: `Forex EA: Closed ${position.type.toUpperCase()} ${position.symbol} P/L: ${position.profitLoss >= 0 ? '+' : ''}$${position.profitLoss.toFixed(2)}`,
-          account_type: accountType,
-          profit_loss: position.profitLoss,
+          account_type: accountType, profit_loss: position.profitLoss,
         });
-      } catch (err) {
-        console.error('Error logging close:', err);
-      }
+      } catch (err) { console.error('Error logging close:', err); }
     }
-
     setPositions(prev => prev.filter(p => p.id !== positionId));
   };
 
   const adjustLotSize = (direction: 'up' | 'down') => {
-    const step = 0.1;
-    if (direction === 'up') {
-      setLotSize(prev => Math.min(prev + step, 10));
-    } else {
-      setLotSize(prev => Math.max(prev - step, 0.1));
-    }
+    if (direction === 'up') setLotSize(prev => Math.min(prev + 1, 100));
+    else setLotSize(prev => Math.max(prev - 1, 1));
   };
 
-  const formatPrice = (price: number) => {
-    return price.toFixed(selectedPair.decimals);
+  const formatPrice = (price: number) => price.toFixed(selectedPair.decimals);
+
+  const formatBalance = (val: number) => {
+    return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#1a1a2e]">
-      {/* MT5 Top Toolbar */}
-      <div className="bg-[#252547] flex items-center justify-between px-3 py-2 border-b border-[#3d3d6b]">
-        <div className="flex items-center gap-3">
-          <button className="p-1">
-            <Menu className="h-5 w-5 text-gray-400" />
-          </button>
-          <button className="p-1">
-            <Plus className="h-5 w-5 text-gray-400" />
-          </button>
-          <button className="p-1">
-            <svg className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 4l7 7m0 0l-7 7m7-7H20"/>
-            </svg>
-          </button>
+    <div className="h-screen flex flex-col bg-white">
+      {/* Top Toolbar - MT5 style */}
+      <div className="bg-[#f0f0f0] flex items-center justify-between px-3 py-2 border-b border-gray-300">
+        <span className="text-black font-bold text-sm">M30</span>
+        <div className="flex items-center gap-4">
+          <span className="text-gray-600 text-lg">┼</span>
+          <span className="text-gray-600 text-lg italic">f</span>
+          <span className="text-gray-600 text-lg">⌂</span>
         </div>
-        <span className="text-white font-medium">H4</span>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-blue-500" />
-          <div className="w-4 h-4 rounded-full bg-orange-500" />
+          <div className="w-5 h-5 rounded-full bg-blue-600 border-2 border-white" />
+          <div className="w-5 h-5 rounded bg-red-600 border-2 border-white" />
         </div>
       </div>
 
-      {/* Price Bar with SELL/BUY */}
-      <div className="bg-[#1e1e3f] flex items-center justify-between px-2 py-1.5">
-        {/* SELL Button */}
-        <button 
+      {/* Price Bar: SELL | Lot | BUY */}
+      <div className="bg-[#e8e8e8] flex items-center justify-between px-1 py-1 border-b border-gray-300">
+        <button
           onClick={() => openPosition('sell')}
-          className="flex-1 max-w-[140px] bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-2.5 px-3 rounded-md flex flex-col items-center"
+          className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5"
         >
-          <span className="text-[10px] opacity-80">SELL</span>
-          <span className="text-lg font-bold tabular-nums">{formatPrice(sellPrice)}</span>
+          <span className="text-[9px] font-medium tracking-wider">SELL</span>
+          <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(sellPrice)}</span>
         </button>
 
-        {/* Lot Size with arrows */}
-        <div className="flex items-center gap-1 px-2">
-          <button onClick={() => adjustLotSize('down')} className="text-gray-400 p-1">
+        <div className="flex items-center gap-0 px-1">
+          <button onClick={() => adjustLotSize('down')} className="text-gray-600 p-0.5">
             <ChevronDown className="h-4 w-4" />
           </button>
-          <span className="text-white font-bold text-lg tabular-nums w-12 text-center">{lotSize.toFixed(1)}</span>
-          <button onClick={() => adjustLotSize('up')} className="text-gray-400 p-1">
+          <span className="text-black font-bold text-base tabular-nums w-8 text-center">{lotSize}</span>
+          <button onClick={() => adjustLotSize('up')} className="text-gray-600 p-0.5">
             <ChevronUp className="h-4 w-4" />
           </button>
         </div>
 
-        {/* BUY Button */}
-        <button 
+        <button
           onClick={() => openPosition('buy')}
-          className="flex-1 max-w-[140px] bg-[#22c55e] hover:bg-[#16a34a] text-white py-2.5 px-3 rounded-md flex flex-col items-center"
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5"
         >
-          <span className="text-[10px] opacity-80">BUY</span>
-          <span className="text-lg font-bold tabular-nums">{formatPrice(buyPrice)}</span>
+          <span className="text-[9px] font-medium tracking-wider">BUY</span>
+          <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(buyPrice)}</span>
         </button>
       </div>
 
-      {/* Symbol Info Bar */}
-      <div className="bg-[#252547] px-3 py-1.5 flex items-center justify-between text-xs border-b border-[#3d3d6b]">
-        <button 
-          onClick={() => setShowPairSelector(true)}
-          className="text-white font-medium flex items-center gap-1"
-        >
-          {selectedPair.symbol.replace('/', '')} • H4
+      {/* Symbol Info */}
+      <div className="bg-white px-3 py-1 border-b border-gray-200">
+        <button onClick={() => setShowPairSelector(true)} className="text-left">
+          <span className="text-black text-xs font-medium">{selectedPair.code} ▾ M30</span>
+          <br />
+          <span className="text-gray-500 text-[10px]">{selectedPair.name}</span>
         </button>
-        <span className="text-gray-400">{selectedPair.name}</span>
       </div>
 
-      {/* TradingView Chart - Full Screen */}
-      <div className="flex-1 relative bg-[#131326]">
-        <TradingViewWidget 
-          symbol={selectedPair.symbol} 
-          theme="dark" 
-          height={window.innerHeight - 280}
-        />
-      </div>
-
-      {/* Open Positions Summary */}
-      {positions.length > 0 && (
-        <div className="bg-[#252547] border-t border-[#3d3d6b] px-3 py-2 max-h-32 overflow-y-auto">
-          {positions.map((pos) => (
-            <div 
-              key={pos.id}
-              className="flex items-center justify-between py-1.5 border-b border-[#3d3d6b] last:border-0"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-white text-sm font-medium">{pos.symbol}</span>
-                <span className={cn(
-                  "text-xs",
-                  pos.type === 'buy' ? "text-green-500" : "text-blue-500"
-                )}>
-                  {pos.type.toUpperCase()} {pos.lotSize}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={cn(
-                  "font-bold tabular-nums",
-                  pos.profitLoss >= 0 ? "text-blue-400" : "text-red-400"
-                )}>
-                  {pos.profitLoss >= 0 ? '+' : ''}{pos.profitLoss.toFixed(2)}
-                </span>
-                <button 
-                  onClick={() => closePosition(pos.id)}
-                  className="text-red-500 text-xs hover:underline"
-                >
-                  Close
-                </button>
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-hidden">
+        {activeTab === 'chart' ? (
+          <div className="h-full bg-white">
+            <TradingViewWidget symbol={selectedPair.symbol} theme="light" height={window.innerHeight - 220} />
+          </div>
+        ) : (
+          /* Trade/Positions Tab - matches screenshot 1 */
+          <div className="h-full bg-white overflow-y-auto">
+            {/* Balance Header */}
+            <div className="text-center py-3 border-b border-gray-200">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-black font-bold text-lg">{formatBalance(currentBalance)} USD</span>
+                <span className="text-blue-600 text-xl cursor-pointer">+</span>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            {/* Account Metrics */}
+            <div className="px-4 py-2 border-b border-gray-200 space-y-0.5">
+              <div className="flex justify-between">
+                <span className="text-gray-600 text-sm">Balance:</span>
+                <span className="text-black text-sm font-medium">{formatBalance(currentBalance)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 text-sm">Equity:</span>
+                <span className="text-black text-sm font-medium">{formatBalance(equity)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 text-sm">Margin:</span>
+                <span className="text-black text-sm font-medium">{formatBalance(margin)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 text-sm">Free Margin:</span>
+                <span className="text-black text-sm font-medium">{formatBalance(freeMargin)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 text-sm">Margin Level (%):</span>
+                <span className="text-black text-sm font-medium">{marginLevel > 0 ? marginLevel.toFixed(2) : '0.00'}</span>
+              </div>
+            </div>
+
+            {/* Positions Header */}
+            <div className="px-4 py-2 border-b border-gray-200 flex items-center justify-between">
+              <span className="text-black font-bold text-sm">Positions</span>
+              <span className="text-gray-400 text-lg">•••</span>
+            </div>
+
+            {/* Position List */}
+            {positions.length === 0 ? (
+              <div className="px-4 py-8 text-center text-gray-400 text-sm">No open positions</div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {positions.map((pos) => {
+                  const pair = FOREX_PAIRS.find(p => p.symbol === pos.symbol);
+                  const code = pair?.code || pos.symbol.replace('/', '');
+                  const decimals = pair?.decimals || 5;
+                  return (
+                    <div key={pos.id} className="px-4 py-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-black text-sm font-medium">{code}</span>
+                          <span className={cn("text-sm ml-1", pos.type === 'sell' ? 'text-red-600' : 'text-blue-600')}>
+                            {pos.type} {pos.lotSize.toFixed(1)}
+                          </span>
+                        </div>
+                        <span className={cn(
+                          "font-bold text-sm tabular-nums",
+                          pos.profitLoss >= 0 ? "text-blue-700" : "text-red-600"
+                        )}>
+                          {pos.profitLoss.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="text-gray-500 text-xs mt-0.5">
+                        {pos.entryPrice.toFixed(decimals)} → {pos.currentPrice.toFixed(decimals)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* MT5 Bottom Navigation */}
-      <div className="bg-[#252547] border-t border-[#3d3d6b] px-2 py-2 safe-area-inset-bottom">
+      <div className="bg-[#f5f5f5] border-t border-gray-300 px-2 py-1.5 safe-area-inset-bottom">
         <div className="flex items-center justify-around">
-          <button 
-            onClick={() => navigate('/markets')}
-            className="flex flex-col items-center gap-0.5"
-          >
-            <BarChart3 className="h-5 w-5 text-gray-400" />
-            <span className="text-[10px] text-gray-400">Quotes</span>
+          <button onClick={() => navigate('/markets')} className="flex flex-col items-center gap-0.5">
+            <span className="text-gray-500 text-base">↕↑</span>
+            <span className="text-[10px] text-gray-500">Quotes</span>
+          </button>
+          <button onClick={() => setActiveTab('chart')} className="flex flex-col items-center gap-0.5">
+            <span className={cn("text-base", activeTab === 'chart' ? "text-blue-600" : "text-gray-500")}>↗⇡</span>
+            <span className={cn("text-[10px] font-medium", activeTab === 'chart' ? "text-blue-600" : "text-gray-500")}>Chart</span>
+          </button>
+          <button onClick={() => setActiveTab('trade')} className="flex flex-col items-center gap-0.5">
+            <span className={cn("text-base", activeTab === 'trade' ? "text-blue-600" : "text-gray-500")}>☑</span>
+            <span className={cn("text-[10px] font-medium", activeTab === 'trade' ? "text-blue-600" : "text-gray-500")}>Trade</span>
+          </button>
+          <button onClick={() => navigate('/history')} className="flex flex-col items-center gap-0.5">
+            <span className="text-gray-500 text-base">⏱</span>
+            <span className="text-[10px] text-gray-500">History</span>
           </button>
           <button className="flex flex-col items-center gap-0.5">
-            <TrendingUp className="h-5 w-5 text-blue-500" />
-            <span className="text-[10px] text-blue-500 font-bold">Charts</span>
-          </button>
-          <button 
-            onClick={() => navigate('/positions')}
-            className="flex flex-col items-center gap-0.5"
-          >
-            <svg className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 3v18h18"/>
-              <path d="M7 16l4-8 4 4 4-8"/>
-            </svg>
-            <span className="text-[10px] text-gray-400">Trade</span>
-          </button>
-          <button 
-            onClick={() => navigate('/history')}
-            className="flex flex-col items-center gap-0.5"
-          >
-            <Clock className="h-5 w-5 text-gray-400" />
-            <span className="text-[10px] text-gray-400">History</span>
-          </button>
-          <button className="flex flex-col items-center gap-0.5 relative">
-            <MessageSquare className="h-5 w-5 text-gray-400" />
-            <span className="text-[10px] text-gray-400">Messages</span>
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center">2</span>
+            <Settings className="h-4 w-4 text-gray-500" />
+            <span className="text-[10px] text-gray-500">Settings</span>
           </button>
         </div>
       </div>
 
       {/* Pair Selector Modal */}
       {showPairSelector && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end">
-          <div className="bg-[#1e1e3f] w-full rounded-t-2xl p-4 max-h-[60vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-2xl p-4 max-h-[60vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-white font-bold text-lg">Select Forex Pair</span>
+              <span className="text-black font-bold text-lg">Select Pair</span>
               <button onClick={() => setShowPairSelector(false)}>
-                <X className="h-5 w-5 text-gray-400" />
+                <X className="h-5 w-5 text-gray-500" />
               </button>
             </div>
-            
             <div className="space-y-2">
               {FOREX_PAIRS.map(pair => (
                 <button
                   key={pair.symbol}
-                  onClick={() => {
-                    setSelectedPair(pair);
-                    setShowPairSelector(false);
-                  }}
+                  onClick={() => { setSelectedPair(pair); setShowPairSelector(false); }}
                   className={cn(
-                    "w-full p-3 rounded-lg flex items-center justify-between",
-                    selectedPair.symbol === pair.symbol ? "bg-blue-600/20 border border-blue-500" : "bg-[#252547]"
+                    "w-full p-3 rounded-lg flex items-center justify-between border",
+                    selectedPair.symbol === pair.symbol ? "bg-blue-50 border-blue-500" : "bg-gray-50 border-gray-200"
                   )}
                 >
                   <div className="text-left">
-                    <div className="text-white font-medium">{pair.symbol}</div>
-                    <div className="text-gray-400 text-xs">{pair.name}</div>
+                    <div className="text-black font-medium">{pair.code}</div>
+                    <div className="text-gray-500 text-xs">{pair.name}</div>
                   </div>
-                  <span className="text-white font-mono">{pair.basePrice.toFixed(pair.decimals)}</span>
+                  <span className="text-black font-mono text-sm">{pair.basePrice.toFixed(pair.decimals)}</span>
                 </button>
               ))}
             </div>
