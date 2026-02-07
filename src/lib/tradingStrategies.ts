@@ -252,38 +252,25 @@ export const executeSignalTrade = (stakeAmount: number): TradeResult => {
   const slippage = calculateSlippage(0.4);
   const spread = calculateSpread();
   
-  // Signal-based trades only execute when there's a clear signal
   if (analysis.overallSignal.action === 'HOLD') {
-    return {
-      isWin: false,
-      profitPercent: 0,
-      slippage: 0,
-      spread: 0,
-      netProfit: 0
-    };
+    return { isWin: false, profitPercent: 0, slippage: 0, spread: 0, netProfit: 0 };
   }
   
-  // 40% base win rate for Signal Master (free bot)
+  // Free bot: 5% payout
   const baseWinRate = 0.40;
   const isWin = Math.random() < baseWinRate;
-  
-  // 80% payout: stake $10, win = $8 profit, loss = $10 stake
-  const PAYOUT_RATE = 0.80;
+  const PAYOUT_RATE = 0.05;
   let netProfit: number;
   
   if (isWin) {
-    // Win: 80% of stake as profit
     netProfit = stakeAmount * PAYOUT_RATE;
   } else {
-    // Loss: lose entire stake
     netProfit = -stakeAmount;
   }
   
-  // Add small variance to make it feel realistic
   const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
   netProfit += variance;
   
-  // Ensure minimum profit/loss of $0.25 to avoid $0.00 trades
   if (Math.abs(netProfit) < 0.25) {
     netProfit = isWin ? (0.25 + Math.random() * 0.50) : -(0.25 + Math.random() * 0.50);
   }
