@@ -285,7 +285,7 @@ export const executeSignalTrade = (stakeAmount: number): TradeResult => {
 };
 
 // Get bot strategy info
-export type BotStrategy = 'arbitrage' | 'scalping' | 'signal';
+export type BotStrategy = 'arbitrage' | 'scalping' | 'signal' | 'trend' | 'grid';
 
 export const getBotStrategyInfo = (strategy: BotStrategy) => {
   switch (strategy) {
