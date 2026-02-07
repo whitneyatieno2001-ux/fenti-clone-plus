@@ -278,34 +278,42 @@ export default function ManualTrade() {
         </div>
       </div>
 
-      {/* Price Bar: SELL | Lot | BUY */}
-      <div className="bg-[#e8e8e8] flex items-center justify-between px-1 py-1 border-b border-gray-300">
-        <button
-          onClick={() => handleTrade('sell')}
-          className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5"
-        >
-          <span className="text-[9px] font-medium tracking-wider">SELL</span>
-          <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(sellPrice)}</span>
-        </button>
-
-        <div className="flex items-center gap-0 px-1">
-          <button onClick={() => adjustLotSize('down')} className="text-gray-600 p-0.5">
-            <ChevronDown className="h-4 w-4" />
+      {/* Price Bar: SELL | Lot | BUY - only on Chart tab, color changes like real MT5 */}
+      {activeTab === 'chart' && (
+        <div className="bg-[#e8e8e8] flex items-center justify-between px-1 py-1 border-b border-gray-300">
+          <button
+            onClick={() => handleTrade('sell')}
+            className={cn(
+              "flex-1 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5 transition-colors duration-200",
+              priceDirection === 'down' ? "bg-red-600 hover:bg-red-700" : "bg-gray-500 hover:bg-gray-600"
+            )}
+          >
+            <span className="text-[9px] font-medium tracking-wider">SELL</span>
+            <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(sellPrice)}</span>
           </button>
-          <span className="text-black font-bold text-base tabular-nums w-8 text-center">{lotSize}</span>
-          <button onClick={() => adjustLotSize('up')} className="text-gray-600 p-0.5">
-            <ChevronUp className="h-4 w-4" />
+
+          <div className="flex items-center gap-0 px-1">
+            <button onClick={() => adjustLotSize('down')} className="text-gray-600 p-0.5">
+              <ChevronDown className="h-4 w-4" />
+            </button>
+            <span className="text-black font-bold text-base tabular-nums w-8 text-center">{lotSize}</span>
+            <button onClick={() => adjustLotSize('up')} className="text-gray-600 p-0.5">
+              <ChevronUp className="h-4 w-4" />
+            </button>
+          </div>
+
+          <button
+            onClick={() => handleTrade('buy')}
+            className={cn(
+              "flex-1 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5 transition-colors duration-200",
+              priceDirection === 'up' ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 hover:bg-gray-600"
+            )}
+          >
+            <span className="text-[9px] font-medium tracking-wider">BUY</span>
+            <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(buyPrice)}</span>
           </button>
         </div>
-
-        <button
-          onClick={() => handleTrade('buy')}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5"
-        >
-          <span className="text-[9px] font-medium tracking-wider">BUY</span>
-          <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(buyPrice)}</span>
-        </button>
-      </div>
+      )}
 
       {/* Symbol Info */}
       <div className="bg-white px-3 py-1 border-b border-gray-200">
