@@ -79,8 +79,10 @@ export default function ManualTrade() {
   useEffect(() => {
     const interval = setInterval(() => {
       const volatility = selectedPair.symbol.includes('XAU') ? 0.3 : 0.00005;
-      setSellPrice(prev => prev + (Math.random() - 0.5) * volatility);
-      setBuyPrice(prev => prev + (Math.random() - 0.5) * volatility);
+      const change = (Math.random() - 0.5) * volatility;
+      setPriceDirection(change > 0 ? 'up' : 'down');
+      setSellPrice(prev => prev + change);
+      setBuyPrice(prev => prev + change);
     }, 500);
     return () => clearInterval(interval);
   }, [selectedPair]);
