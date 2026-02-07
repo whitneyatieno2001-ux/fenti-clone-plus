@@ -86,28 +86,22 @@ export const executeArbitrageTrade = (stakeAmount: number, basePrice: number): T
   const slippage = calculateSlippage(0.3);
   const spread = calculateSpread();
   
-  // Arbitrage success depends on timing and spread
-  // 60% base win rate for crypto bots
   const adjustedWinRate = opportunity.profitable ? 0.65 : 0.45;
   const isWin = Math.random() < adjustedWinRate;
   
-  // 80% payout: stake $10, win = $8 profit, loss = $10 stake
-  const PAYOUT_RATE = 0.80;
+  // Paid bot: 50% payout
+  const PAYOUT_RATE = 0.50;
   let netProfit: number;
   
   if (isWin) {
-    // Win: 80% of stake as profit
     netProfit = stakeAmount * PAYOUT_RATE;
   } else {
-    // Loss: lose entire stake
     netProfit = -stakeAmount;
   }
   
-  // Add small variance to make it feel realistic
   const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
   netProfit += variance;
   
-  // Ensure minimum profit/loss of $0.15 to avoid $0.00 trades
   if (Math.abs(netProfit) < 0.15) {
     netProfit = isWin ? (0.15 + Math.random() * 0.35) : -(0.15 + Math.random() * 0.35);
   }
@@ -145,31 +139,25 @@ export const executeScalpingTrade = (stakeAmount: number): TradeResult => {
   const slippage = calculateSlippage(conditions.volatility);
   const spread = calculateSpread();
   
-  // Scalping struggles in sideways and high volatility markets
-  // 80% base win rate for Speed Scalper bot
   let baseWinRate = 0.80;
   if (conditions.isSideways) baseWinRate -= 0.10;
   if (conditions.volatility > 0.7) baseWinRate -= 0.05;
   
   const isWin = Math.random() < Math.max(0.60, Math.min(0.85, baseWinRate));
   
-  // 80% payout: stake $10, win = $8 profit, loss = $10 stake
-  const PAYOUT_RATE = 0.80;
+  // Paid bot: 50% payout
+  const PAYOUT_RATE = 0.50;
   let netProfit: number;
   
   if (isWin) {
-    // Win: 80% of stake as profit
     netProfit = stakeAmount * PAYOUT_RATE;
   } else {
-    // Loss: lose entire stake
     netProfit = -stakeAmount;
   }
   
-  // Add small variance to make it feel realistic
   const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
   netProfit += variance;
   
-  // Ensure minimum profit/loss of $0.20 to avoid $0.00 trades
   if (Math.abs(netProfit) < 0.20) {
     netProfit = isWin ? (0.20 + Math.random() * 0.40) : -(0.20 + Math.random() * 0.40);
   }
@@ -264,38 +252,25 @@ export const executeSignalTrade = (stakeAmount: number): TradeResult => {
   const slippage = calculateSlippage(0.4);
   const spread = calculateSpread();
   
-  // Signal-based trades only execute when there's a clear signal
   if (analysis.overallSignal.action === 'HOLD') {
-    return {
-      isWin: false,
-      profitPercent: 0,
-      slippage: 0,
-      spread: 0,
-      netProfit: 0
-    };
+    return { isWin: false, profitPercent: 0, slippage: 0, spread: 0, netProfit: 0 };
   }
   
-  // 40% base win rate for Signal Master (free bot)
+  // Free bot: 5% payout
   const baseWinRate = 0.40;
   const isWin = Math.random() < baseWinRate;
-  
-  // 80% payout: stake $10, win = $8 profit, loss = $10 stake
-  const PAYOUT_RATE = 0.80;
+  const PAYOUT_RATE = 0.05;
   let netProfit: number;
   
   if (isWin) {
-    // Win: 80% of stake as profit
     netProfit = stakeAmount * PAYOUT_RATE;
   } else {
-    // Loss: lose entire stake
     netProfit = -stakeAmount;
   }
   
-  // Add small variance to make it feel realistic
   const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
   netProfit += variance;
   
-  // Ensure minimum profit/loss of $0.25 to avoid $0.00 trades
   if (Math.abs(netProfit) < 0.25) {
     netProfit = isWin ? (0.25 + Math.random() * 0.50) : -(0.25 + Math.random() * 0.50);
   }
@@ -310,37 +285,50 @@ export const executeSignalTrade = (stakeAmount: number): TradeResult => {
 };
 
 // Get bot strategy info
-export type BotStrategy = 'arbitrage' | 'scalping' | 'signal';
+export type BotStrategy = 'arbitrage' | 'scalping' | 'signal' | 'trend' | 'grid';
+
+export const executeTrendTrade = (stakeAmount: number): TradeResult => {
+  const slippage = calculateSlippage(0.4);
+  const spread = calculateSpread();
+  const isWin = Math.random() < 0.45;
+  // Free bot: 5% payout
+  const PAYOUT_RATE = 0.05;
+  let netProfit = isWin ? stakeAmount * PAYOUT_RATE : -stakeAmount;
+  const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
+  netProfit += variance;
+  if (Math.abs(netProfit) < 0.15) {
+    netProfit = isWin ? (0.15 + Math.random() * 0.35) : -(0.15 + Math.random() * 0.35);
+  }
+  return { isWin: netProfit > 0, profitPercent: (netProfit / stakeAmount) * 100, slippage, spread, netProfit: parseFloat(netProfit.toFixed(2)) };
+};
+
+export const executeGridTrade = (stakeAmount: number): TradeResult => {
+  const slippage = calculateSlippage(0.3);
+  const spread = calculateSpread();
+  const isWin = Math.random() < 0.50;
+  // Free bot: 5% payout
+  const PAYOUT_RATE = 0.05;
+  let netProfit = isWin ? stakeAmount * PAYOUT_RATE : -stakeAmount;
+  const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
+  netProfit += variance;
+  if (Math.abs(netProfit) < 0.15) {
+    netProfit = isWin ? (0.15 + Math.random() * 0.35) : -(0.15 + Math.random() * 0.35);
+  }
+  return { isWin: netProfit > 0, profitPercent: (netProfit / stakeAmount) * 100, slippage, spread, netProfit: parseFloat(netProfit.toFixed(2)) };
+};
 
 export const getBotStrategyInfo = (strategy: BotStrategy) => {
   switch (strategy) {
     case 'arbitrage':
-      return {
-        name: 'Arbitrage Bot',
-        description: 'Detects price differences across markets. Lower risk, smaller frequent profits.',
-        risk: 'low' as const,
-        tradeFrequency: 'high',
-        expectedWinRate: 65,
-        icon: '⚖️'
-      };
+      return { name: 'Arbitrage Bot', description: 'Detects price differences across markets. Lower risk, smaller frequent profits.', risk: 'low' as const, tradeFrequency: 'high', expectedWinRate: 65, icon: '⚖️' };
     case 'scalping':
-      return {
-        name: 'Scalping Bot',
-        description: 'Fast trades on small price movements. High frequency, tight stop-loss.',
-        risk: 'high' as const,
-        tradeFrequency: 'very high',
-        expectedWinRate: 58,
-        icon: '⚡'
-      };
+      return { name: 'Scalping Bot', description: 'Fast trades on small price movements. High frequency, tight stop-loss.', risk: 'high' as const, tradeFrequency: 'very high', expectedWinRate: 58, icon: '⚡' };
     case 'signal':
-      return {
-        name: 'Signal Bot',
-        description: 'Uses RSI, MA crossovers, and patterns. Trades only when signals align.',
-        risk: 'medium' as const,
-        tradeFrequency: 'low',
-        expectedWinRate: 68,
-        icon: '📊'
-      };
+      return { name: 'Signal Bot', description: 'Uses RSI, MA crossovers, and patterns. Trades only when signals align.', risk: 'medium' as const, tradeFrequency: 'low', expectedWinRate: 68, icon: '📊' };
+    case 'trend':
+      return { name: 'Trend Follower', description: 'Follows market momentum and rides trends. Medium frequency trading.', risk: 'medium' as const, tradeFrequency: 'medium', expectedWinRate: 45, icon: '📈' };
+    case 'grid':
+      return { name: 'Grid Bot', description: 'Places orders at preset intervals. Profits from price oscillations.', risk: 'low' as const, tradeFrequency: 'high', expectedWinRate: 50, icon: '🔲' };
   }
 };
 
@@ -352,5 +340,9 @@ export const executeBotTrade = (strategy: BotStrategy, stakeAmount: number, base
       return executeScalpingTrade(stakeAmount);
     case 'signal':
       return executeSignalTrade(stakeAmount);
+    case 'trend':
+      return executeTrendTrade(stakeAmount);
+    case 'grid':
+      return executeGridTrade(stakeAmount);
   }
 };
