@@ -287,35 +287,48 @@ export const executeSignalTrade = (stakeAmount: number): TradeResult => {
 // Get bot strategy info
 export type BotStrategy = 'arbitrage' | 'scalping' | 'signal' | 'trend' | 'grid';
 
+export const executeTrendTrade = (stakeAmount: number): TradeResult => {
+  const slippage = calculateSlippage(0.4);
+  const spread = calculateSpread();
+  const isWin = Math.random() < 0.45;
+  // Free bot: 5% payout
+  const PAYOUT_RATE = 0.05;
+  let netProfit = isWin ? stakeAmount * PAYOUT_RATE : -stakeAmount;
+  const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
+  netProfit += variance;
+  if (Math.abs(netProfit) < 0.15) {
+    netProfit = isWin ? (0.15 + Math.random() * 0.35) : -(0.15 + Math.random() * 0.35);
+  }
+  return { isWin: netProfit > 0, profitPercent: (netProfit / stakeAmount) * 100, slippage, spread, netProfit: parseFloat(netProfit.toFixed(2)) };
+};
+
+export const executeGridTrade = (stakeAmount: number): TradeResult => {
+  const slippage = calculateSlippage(0.3);
+  const spread = calculateSpread();
+  const isWin = Math.random() < 0.50;
+  // Free bot: 5% payout
+  const PAYOUT_RATE = 0.05;
+  let netProfit = isWin ? stakeAmount * PAYOUT_RATE : -stakeAmount;
+  const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
+  netProfit += variance;
+  if (Math.abs(netProfit) < 0.15) {
+    netProfit = isWin ? (0.15 + Math.random() * 0.35) : -(0.15 + Math.random() * 0.35);
+  }
+  return { isWin: netProfit > 0, profitPercent: (netProfit / stakeAmount) * 100, slippage, spread, netProfit: parseFloat(netProfit.toFixed(2)) };
+};
+
 export const getBotStrategyInfo = (strategy: BotStrategy) => {
   switch (strategy) {
     case 'arbitrage':
-      return {
-        name: 'Arbitrage Bot',
-        description: 'Detects price differences across markets. Lower risk, smaller frequent profits.',
-        risk: 'low' as const,
-        tradeFrequency: 'high',
-        expectedWinRate: 65,
-        icon: '⚖️'
-      };
+      return { name: 'Arbitrage Bot', description: 'Detects price differences across markets. Lower risk, smaller frequent profits.', risk: 'low' as const, tradeFrequency: 'high', expectedWinRate: 65, icon: '⚖️' };
     case 'scalping':
-      return {
-        name: 'Scalping Bot',
-        description: 'Fast trades on small price movements. High frequency, tight stop-loss.',
-        risk: 'high' as const,
-        tradeFrequency: 'very high',
-        expectedWinRate: 58,
-        icon: '⚡'
-      };
+      return { name: 'Scalping Bot', description: 'Fast trades on small price movements. High frequency, tight stop-loss.', risk: 'high' as const, tradeFrequency: 'very high', expectedWinRate: 58, icon: '⚡' };
     case 'signal':
-      return {
-        name: 'Signal Bot',
-        description: 'Uses RSI, MA crossovers, and patterns. Trades only when signals align.',
-        risk: 'medium' as const,
-        tradeFrequency: 'low',
-        expectedWinRate: 68,
-        icon: '📊'
-      };
+      return { name: 'Signal Bot', description: 'Uses RSI, MA crossovers, and patterns. Trades only when signals align.', risk: 'medium' as const, tradeFrequency: 'low', expectedWinRate: 68, icon: '📊' };
+    case 'trend':
+      return { name: 'Trend Follower', description: 'Follows market momentum and rides trends. Medium frequency trading.', risk: 'medium' as const, tradeFrequency: 'medium', expectedWinRate: 45, icon: '📈' };
+    case 'grid':
+      return { name: 'Grid Bot', description: 'Places orders at preset intervals. Profits from price oscillations.', risk: 'low' as const, tradeFrequency: 'high', expectedWinRate: 50, icon: '🔲' };
   }
 };
 
@@ -327,5 +340,9 @@ export const executeBotTrade = (strategy: BotStrategy, stakeAmount: number, base
       return executeScalpingTrade(stakeAmount);
     case 'signal':
       return executeSignalTrade(stakeAmount);
+    case 'trend':
+      return executeTrendTrade(stakeAmount);
+    case 'grid':
+      return executeGridTrade(stakeAmount);
   }
 };
