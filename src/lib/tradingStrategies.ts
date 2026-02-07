@@ -86,28 +86,22 @@ export const executeArbitrageTrade = (stakeAmount: number, basePrice: number): T
   const slippage = calculateSlippage(0.3);
   const spread = calculateSpread();
   
-  // Arbitrage success depends on timing and spread
-  // 60% base win rate for crypto bots
   const adjustedWinRate = opportunity.profitable ? 0.65 : 0.45;
   const isWin = Math.random() < adjustedWinRate;
   
-  // 80% payout: stake $10, win = $8 profit, loss = $10 stake
-  const PAYOUT_RATE = 0.80;
+  // Paid bot: 50% payout
+  const PAYOUT_RATE = 0.50;
   let netProfit: number;
   
   if (isWin) {
-    // Win: 80% of stake as profit
     netProfit = stakeAmount * PAYOUT_RATE;
   } else {
-    // Loss: lose entire stake
     netProfit = -stakeAmount;
   }
   
-  // Add small variance to make it feel realistic
   const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
   netProfit += variance;
   
-  // Ensure minimum profit/loss of $0.15 to avoid $0.00 trades
   if (Math.abs(netProfit) < 0.15) {
     netProfit = isWin ? (0.15 + Math.random() * 0.35) : -(0.15 + Math.random() * 0.35);
   }
