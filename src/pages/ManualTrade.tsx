@@ -34,6 +34,7 @@ export default function ManualTrade() {
   const [lotSize, setLotSize] = useState(1);
   const [lotInput, setLotInput] = useState('1.00');
   const [positions, setPositions] = useState<ActivePosition[]>([]);
+  const [priceDirection, setPriceDirection] = useState<'up' | 'down' | 'neutral'>('neutral');
   const [equity, setEquity] = useState(0);
   const [margin, setMargin] = useState(0);
   const [freeMargin, setFreeMargin] = useState(0);
