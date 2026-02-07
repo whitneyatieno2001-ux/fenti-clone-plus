@@ -139,31 +139,25 @@ export const executeScalpingTrade = (stakeAmount: number): TradeResult => {
   const slippage = calculateSlippage(conditions.volatility);
   const spread = calculateSpread();
   
-  // Scalping struggles in sideways and high volatility markets
-  // 80% base win rate for Speed Scalper bot
   let baseWinRate = 0.80;
   if (conditions.isSideways) baseWinRate -= 0.10;
   if (conditions.volatility > 0.7) baseWinRate -= 0.05;
   
   const isWin = Math.random() < Math.max(0.60, Math.min(0.85, baseWinRate));
   
-  // 80% payout: stake $10, win = $8 profit, loss = $10 stake
-  const PAYOUT_RATE = 0.80;
+  // Paid bot: 50% payout
+  const PAYOUT_RATE = 0.50;
   let netProfit: number;
   
   if (isWin) {
-    // Win: 80% of stake as profit
     netProfit = stakeAmount * PAYOUT_RATE;
   } else {
-    // Loss: lose entire stake
     netProfit = -stakeAmount;
   }
   
-  // Add small variance to make it feel realistic
   const variance = (Math.random() - 0.5) * 0.1 * Math.abs(netProfit);
   netProfit += variance;
   
-  // Ensure minimum profit/loss of $0.20 to avoid $0.00 trades
   if (Math.abs(netProfit) < 0.20) {
     netProfit = isWin ? (0.20 + Math.random() * 0.40) : -(0.20 + Math.random() * 0.40);
   }
