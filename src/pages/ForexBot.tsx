@@ -184,11 +184,14 @@ export default function ForexBot() {
         </div>
       </div>
 
-      {/* Price Bar: SELL | Lot | BUY */}
+      {/* Price Bar: SELL | Lot | BUY - color changes like real MT5 */}
       <div className="bg-[#e8e8e8] flex items-center justify-between px-1 py-1 border-b border-gray-300">
         <button
           onClick={() => openPosition('sell')}
-          className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5"
+          className={cn(
+            "flex-1 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5 transition-colors duration-200",
+            priceDirection === 'down' ? "bg-red-600 hover:bg-red-700" : "bg-gray-500 hover:bg-gray-600"
+          )}
         >
           <span className="text-[9px] font-medium tracking-wider">SELL</span>
           <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(sellPrice)}</span>
@@ -206,7 +209,10 @@ export default function ForexBot() {
 
         <button
           onClick={() => openPosition('buy')}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5"
+          className={cn(
+            "flex-1 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5 transition-colors duration-200",
+            priceDirection === 'up' ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 hover:bg-gray-600"
+          )}
         >
           <span className="text-[9px] font-medium tracking-wider">BUY</span>
           <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(buyPrice)}</span>
