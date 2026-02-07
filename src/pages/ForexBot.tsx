@@ -66,8 +66,10 @@ export default function ForexBot() {
   useEffect(() => {
     const interval = setInterval(() => {
       const volatility = selectedPair.symbol.includes('XAU') ? 0.5 : 0.00005;
-      setBuyPrice(prev => prev + (Math.random() - 0.5) * volatility);
-      setSellPrice(prev => prev + (Math.random() - 0.5) * volatility);
+      const change = (Math.random() - 0.5) * volatility;
+      setPriceDirection(change > 0 ? 'up' : 'down');
+      setBuyPrice(prev => prev + change);
+      setSellPrice(prev => prev + change);
     }, 500);
     return () => clearInterval(interval);
   }, [selectedPair]);
