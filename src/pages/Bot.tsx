@@ -28,6 +28,8 @@ import { BotPurchaseModal } from '@/components/BotPurchaseModal';
 import botArbitrageImage from '@/assets/bot-arbitrage.jpg';
 import botScalperImage from '@/assets/bot-scalper.jpg';
 import botSignalImage from '@/assets/bot-signal.jpg';
+import botTrendImage from '@/assets/bot-trend.jpg';
+import botGridImage from '@/assets/bot-grid.jpg';
 
 interface TradeLogEntry {
   id: string;
