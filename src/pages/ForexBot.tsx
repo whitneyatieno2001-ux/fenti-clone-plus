@@ -194,7 +194,7 @@ export default function ForexBot() {
           </div>
           <div className="bg-[#e8e8e8] flex items-center justify-between px-1 py-1 border-b border-gray-300">
             <button
-              onClick={() => openPosition('sell')}
+              onClick={() => openMultiplePositions('sell')}
               className={cn(
                 "flex-1 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5 transition-colors duration-200",
                 priceDirection === 'down' ? "bg-red-600 hover:bg-red-700" : "bg-gray-500 hover:bg-gray-600"
