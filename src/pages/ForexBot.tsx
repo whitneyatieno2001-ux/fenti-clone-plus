@@ -331,7 +331,7 @@ export default function ForexBot() {
             <span className="text-gray-500 text-base">⏱</span>
             <span className="text-[10px] text-gray-500">History</span>
           </button>
-          <button className="flex flex-col items-center gap-0.5">
+          <button onClick={() => setShowSettings(true)} className="flex flex-col items-center gap-0.5">
             <Settings className="h-4 w-4 text-gray-500" />
             <span className="text-[10px] text-gray-500">Settings</span>
           </button>
