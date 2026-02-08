@@ -50,6 +50,9 @@ export default function ForexBot() {
   const [freeMargin, setFreeMargin] = useState(currentBalance);
   const [marginLevel, setMarginLevel] = useState(0);
   const [priceDirection, setPriceDirection] = useState<'up' | 'down' | 'neutral'>('neutral');
+  const [showSettings, setShowSettings] = useState(false);
+  const [takeProfitTarget, setTakeProfitTarget] = useState('40');
+  const [positionsToOpen, setPositionsToOpen] = useState('1');
 
   const positionsRef = useRef(positions);
 
@@ -104,13 +107,21 @@ export default function ForexBot() {
 
   useEffect(() => {
     positions.forEach(async (pos) => {
-      const targetProfit = pos.lotSize * 40;
+      const tp = parseFloat(takeProfitTarget) || 40;
+      const targetProfit = pos.lotSize * tp;
       if (pos.profitLoss >= targetProfit) {
         await closePosition(pos.id);
         toast({ title: "Profit Taken! 💰", description: `${pos.symbol} closed at +$${pos.profitLoss.toFixed(2)}` });
       }
     });
   }, [positions]);
+
+  const openMultiplePositions = useCallback(async (direction: 'buy' | 'sell') => {
+    const count = Math.max(1, parseInt(positionsToOpen) || 1);
+    for (let i = 0; i < count; i++) {
+      await openPosition(direction);
+    }
+  }, [positionsToOpen]);
 
   const openPosition = useCallback(async (direction: 'buy' | 'sell') => {
     if (currentBalance < 1) return;
@@ -170,79 +181,66 @@ export default function ForexBot() {
 
   return (
     <div className="h-screen flex flex-col bg-white">
-      {/* Top Toolbar - MT5 style */}
-      <div className="bg-[#f0f0f0] flex items-center justify-between px-3 py-2 border-b border-gray-300">
-        <span className="text-black font-bold text-sm">M30</span>
-        <div className="flex items-center gap-4">
-          <span className="text-gray-600 text-lg">┼</span>
-          <span className="text-gray-600 text-lg italic">f</span>
-          <span className="text-gray-600 text-lg">⌂</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded-full bg-blue-600 border-2 border-white" />
-          <div className="w-5 h-5 rounded bg-red-600 border-2 border-white" />
-        </div>
-      </div>
-
-      {/* Price Bar: SELL | Lot | BUY - only on Chart tab, color changes like real MT5 */}
+      {/* Price Bar: SELL | Lot | BUY - only on Chart tab */}
       {activeTab === 'chart' && (
-        <div className="bg-[#e8e8e8] flex items-center justify-between px-1 py-1 border-b border-gray-300">
-          <button
-            onClick={() => openPosition('sell')}
-            className={cn(
-              "flex-1 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5 transition-colors duration-200",
-              priceDirection === 'down' ? "bg-red-600 hover:bg-red-700" : "bg-gray-500 hover:bg-gray-600"
-            )}
-          >
-            <span className="text-[9px] font-medium tracking-wider">SELL</span>
-            <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(sellPrice)}</span>
-          </button>
-
-          <div className="flex items-center gap-0 px-1">
-            <button onClick={() => adjustLotSize('down')} className="text-gray-600 p-0.5">
-              <ChevronDown className="h-4 w-4" />
-            </button>
-            <span className="text-black font-bold text-base tabular-nums w-8 text-center">{lotSize}</span>
-            <button onClick={() => adjustLotSize('up')} className="text-gray-600 p-0.5">
-              <ChevronUp className="h-4 w-4" />
+        <>
+          {/* Symbol Info - only on chart */}
+          <div className="bg-white px-3 py-1 border-b border-gray-200">
+            <button onClick={() => setShowPairSelector(true)} className="text-left">
+              <span className="text-black text-xs font-medium">{selectedPair.code} ▾ M30</span>
+              <br />
+              <span className="text-gray-500 text-[10px]">{selectedPair.name}</span>
             </button>
           </div>
+          <div className="bg-[#e8e8e8] flex items-center justify-between px-1 py-1 border-b border-gray-300">
+            <button
+              onClick={() => openMultiplePositions('sell')}
+              className={cn(
+                "flex-1 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5 transition-colors duration-200",
+                priceDirection === 'down' ? "bg-red-600 hover:bg-red-700" : "bg-gray-500 hover:bg-gray-600"
+              )}
+            >
+              <span className="text-[9px] font-medium tracking-wider">SELL</span>
+              <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(sellPrice)}</span>
+            </button>
 
-          <button
-            onClick={() => openPosition('buy')}
-            className={cn(
-              "flex-1 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5 transition-colors duration-200",
-              priceDirection === 'up' ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 hover:bg-gray-600"
-            )}
-          >
-            <span className="text-[9px] font-medium tracking-wider">BUY</span>
-            <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(buyPrice)}</span>
-          </button>
-        </div>
+            <div className="flex items-center gap-0 px-1">
+              <button onClick={() => adjustLotSize('down')} className="text-gray-600 p-0.5">
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <span className="text-black font-bold text-base tabular-nums w-8 text-center">{lotSize}</span>
+              <button onClick={() => adjustLotSize('up')} className="text-gray-600 p-0.5">
+                <ChevronUp className="h-4 w-4" />
+              </button>
+            </div>
+
+            <button
+              onClick={() => openMultiplePositions('buy')}
+              className={cn(
+                "flex-1 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5 transition-colors duration-200",
+                priceDirection === 'up' ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 hover:bg-gray-600"
+              )}
+            >
+              <span className="text-[9px] font-medium tracking-wider">BUY</span>
+              <span className="text-base font-bold tabular-nums tracking-tight">{formatPrice(buyPrice)}</span>
+            </button>
+          </div>
+        </>
       )}
-
-      {/* Symbol Info */}
-      <div className="bg-white px-3 py-1 border-b border-gray-200">
-        <button onClick={() => setShowPairSelector(true)} className="text-left">
-          <span className="text-black text-xs font-medium">{selectedPair.code} ▾ M30</span>
-          <br />
-          <span className="text-gray-500 text-[10px]">{selectedPair.name}</span>
-        </button>
-      </div>
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden">
         {activeTab === 'chart' ? (
           <div className="h-full bg-white">
-            <TradingViewWidget symbol={selectedPair.symbol} theme="light" height={window.innerHeight - 220} />
+            <TradingViewWidget symbol={selectedPair.symbol} theme="light" height={window.innerHeight - 130} />
           </div>
         ) : (
-          /* Trade/Positions Tab - matches screenshot 1 */
+          /* Trade/Positions Tab - clean like real MT5 */
           <div className="h-full bg-white overflow-y-auto">
-            {/* Balance Header */}
+            {/* Balance Header - blue like MT5 */}
             <div className="text-center py-3 border-b border-gray-200">
               <div className="flex items-center justify-center gap-2">
-                <span className="text-black font-bold text-lg">{formatBalance(currentBalance)} USD</span>
+                <span className="text-blue-600 font-bold text-lg">{formatBalance(currentBalance)} USD</span>
                 <span className="text-blue-600 text-xl cursor-pointer">+</span>
               </div>
             </div>
@@ -333,12 +331,62 @@ export default function ForexBot() {
             <span className="text-gray-500 text-base">⏱</span>
             <span className="text-[10px] text-gray-500">History</span>
           </button>
-          <button className="flex flex-col items-center gap-0.5">
+          <button onClick={() => setShowSettings(true)} className="flex flex-col items-center gap-0.5">
             <Settings className="h-4 w-4 text-gray-500" />
             <span className="text-[10px] text-gray-500">Settings</span>
           </button>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-2xl p-4 max-h-[60vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-black font-bold text-lg">EA Settings</span>
+              <button onClick={() => setShowSettings(false)}>
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-gray-600 text-sm mb-2 block">Take Profit Target ($ per lot)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={takeProfitTarget}
+                  onChange={(e) => setTakeProfitTarget(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg text-lg border border-gray-300 bg-gray-50 text-black"
+                  placeholder="40"
+                />
+              </div>
+              <div>
+                <label className="text-gray-600 text-sm mb-2 block">Positions to Open per Click</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={positionsToOpen}
+                  onChange={(e) => setPositionsToOpen(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg text-lg border border-gray-300 bg-gray-50 text-black"
+                  placeholder="1"
+                />
+              </div>
+              <div>
+                <label className="text-gray-600 text-sm mb-2 block">Lot Size</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => adjustLotSize('down')} className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                    <ChevronDown className="h-5 w-5 text-black" />
+                  </button>
+                  <span className="text-black font-bold text-xl flex-1 text-center">{lotSize}</span>
+                  <button onClick={() => adjustLotSize('up')} className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                    <ChevronUp className="h-5 w-5 text-black" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pair Selector Modal */}
       {showPairSelector && (
