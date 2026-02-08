@@ -215,7 +215,7 @@ export default function ForexBot() {
             </div>
 
             <button
-              onClick={() => openPosition('buy')}
+              onClick={() => openMultiplePositions('buy')}
               className={cn(
                 "flex-1 text-white py-2 px-2 rounded-sm flex flex-col items-center mx-0.5 transition-colors duration-200",
                 priceDirection === 'up' ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 hover:bg-gray-600"
