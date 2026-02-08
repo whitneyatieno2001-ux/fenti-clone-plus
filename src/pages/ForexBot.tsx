@@ -338,6 +338,56 @@ export default function ForexBot() {
         </div>
       </div>
 
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-2xl p-4 max-h-[60vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-black font-bold text-lg">EA Settings</span>
+              <button onClick={() => setShowSettings(false)}>
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-gray-600 text-sm mb-2 block">Take Profit Target ($ per lot)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={takeProfitTarget}
+                  onChange={(e) => setTakeProfitTarget(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg text-lg border border-gray-300 bg-gray-50 text-black"
+                  placeholder="40"
+                />
+              </div>
+              <div>
+                <label className="text-gray-600 text-sm mb-2 block">Positions to Open per Click</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={positionsToOpen}
+                  onChange={(e) => setPositionsToOpen(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg text-lg border border-gray-300 bg-gray-50 text-black"
+                  placeholder="1"
+                />
+              </div>
+              <div>
+                <label className="text-gray-600 text-sm mb-2 block">Lot Size</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => adjustLotSize('down')} className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                    <ChevronDown className="h-5 w-5 text-black" />
+                  </button>
+                  <span className="text-black font-bold text-xl flex-1 text-center">{lotSize}</span>
+                  <button onClick={() => adjustLotSize('up')} className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                    <ChevronUp className="h-5 w-5 text-black" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pair Selector Modal */}
       {showPairSelector && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end">
