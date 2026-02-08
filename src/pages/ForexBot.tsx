@@ -116,6 +116,13 @@ export default function ForexBot() {
     });
   }, [positions]);
 
+  const openMultiplePositions = useCallback(async (direction: 'buy' | 'sell') => {
+    const count = Math.max(1, parseInt(positionsToOpen) || 1);
+    for (let i = 0; i < count; i++) {
+      await openPosition(direction);
+    }
+  }, [positionsToOpen]);
+
   const openPosition = useCallback(async (direction: 'buy' | 'sell') => {
     if (currentBalance < 1) return;
     const entryPrice = direction === 'buy' ? buyPrice : sellPrice;
