@@ -107,7 +107,8 @@ export default function ForexBot() {
 
   useEffect(() => {
     positions.forEach(async (pos) => {
-      const targetProfit = pos.lotSize * 40;
+      const tp = parseFloat(takeProfitTarget) || 40;
+      const targetProfit = pos.lotSize * tp;
       if (pos.profitLoss >= targetProfit) {
         await closePosition(pos.id);
         toast({ title: "Profit Taken! 💰", description: `${pos.symbol} closed at +$${pos.profitLoss.toFixed(2)}` });
