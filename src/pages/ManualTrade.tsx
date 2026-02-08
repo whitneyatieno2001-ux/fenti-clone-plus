@@ -322,7 +322,7 @@ export default function ManualTrade() {
             {/* Balance Header */}
             <div className="text-center py-3 border-b border-gray-200">
               <div className="flex items-center justify-center gap-2">
-                <span className="text-black font-bold text-lg">{formatBalance(currentBalance)} USD</span>
+                <span className="text-blue-600 font-bold text-lg">{formatBalance(currentBalance)} USD</span>
                 <span className="text-blue-600 text-xl cursor-pointer">+</span>
               </div>
             </div>
