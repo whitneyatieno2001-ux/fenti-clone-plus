@@ -50,6 +50,9 @@ export default function ForexBot() {
   const [freeMargin, setFreeMargin] = useState(currentBalance);
   const [marginLevel, setMarginLevel] = useState(0);
   const [priceDirection, setPriceDirection] = useState<'up' | 'down' | 'neutral'>('neutral');
+  const [showSettings, setShowSettings] = useState(false);
+  const [takeProfitTarget, setTakeProfitTarget] = useState('40');
+  const [positionsToOpen, setPositionsToOpen] = useState('1');
 
   const positionsRef = useRef(positions);
 
