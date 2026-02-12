@@ -396,42 +396,48 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 {/* Crypto Option */}
                 <button
                   onClick={() => setPaymentCategory('crypto')}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 transition-colors"
+                  className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
                 >
-                  <div className="h-12 w-12 rounded-full bg-orange-500 flex items-center justify-center">
-                    <Bitcoin className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-foreground">Crypto Payments</p>
-                    <p className="text-xs text-muted-foreground">Pay with cryptocurrency</p>
+                  <div className="flex items-center gap-3 p-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Bitcoin className="h-5 w-5 text-success" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[15px] font-semibold text-foreground">Crypto Payments</p>
+                      <p className="text-[13px] text-muted-foreground">≈ 0.5% Fee</p>
+                    </div>
                   </div>
                 </button>
 
                 {/* Mobile Money Option */}
                 <button
                   onClick={() => setPaymentCategory('mobile')}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+                  className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
                 >
-                  <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
-                    <Wallet className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-foreground">Mobile Money</p>
-                    <p className="text-xs text-muted-foreground">M-Pesa, Airtel Money, PayPal</p>
+                  <div className="flex items-center gap-3 p-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Wallet className="h-5 w-5 text-success" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[15px] font-semibold text-foreground">Mobile Money</p>
+                      <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
+                    </div>
                   </div>
                 </button>
 
                 {/* Card Payment Option */}
                 <button
                   onClick={() => setPaymentCategory('card')}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
+                  className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
                 >
-                  <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
-                    <CreditCard className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-foreground">Card Payment</p>
-                    <p className="text-xs text-muted-foreground">Visa, Mastercard, etc.</p>
+                  <div className="flex items-center gap-3 p-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <CreditCard className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[15px] font-semibold text-foreground">Card Payment</p>
+                      <p className="text-[13px] text-muted-foreground">≈ 1.8% Fee</p>
+                    </div>
                   </div>
                 </button>
               </div>
@@ -444,14 +450,16 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 
                 <button
                   onClick={() => setPaymentMethod('binance')}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors"
+                  className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
                 >
-                  <div className="h-12 w-12 rounded-full bg-yellow-500 flex items-center justify-center">
-                    <span className="text-xl font-bold text-black">B</span>
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-foreground">Binance</p>
-                    <p className="text-xs text-muted-foreground">Pay with Binance Pay</p>
+                  <div className="flex items-center gap-3 p-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <span className="text-lg font-bold text-primary">B</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[15px] font-semibold text-foreground">Binance</p>
+                      <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
+                    </div>
                   </div>
                 </button>
               </div>
@@ -465,42 +473,48 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 {/* M-Pesa */}
                 <button
                   onClick={() => setPaymentMethod('mpesa')}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+                  className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
                 >
-                  <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
-                    <Smartphone className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-foreground">M-Pesa</p>
-                    <p className="text-xs text-muted-foreground">Safaricom Mobile Money</p>
+                  <div className="flex items-center gap-3 p-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Smartphone className="h-5 w-5 text-success" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[15px] font-semibold text-foreground">M-Pesa</p>
+                      <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
+                    </div>
                   </div>
                 </button>
 
                 {/* Airtel Money */}
                 <button
                   onClick={() => setPaymentMethod('airtel')}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                  className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
                 >
-                  <div className="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center">
-                    <Smartphone className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-foreground">Airtel Money</p>
-                    <p className="text-xs text-muted-foreground">Airtel Mobile Money</p>
+                  <div className="flex items-center gap-3 p-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Smartphone className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[15px] font-semibold text-foreground">Airtel Money</p>
+                      <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
+                    </div>
                   </div>
                 </button>
 
                 {/* PayPal */}
                 <button
                   onClick={() => setPaymentMethod('paypal')}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+                  className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
                 >
-                  <div className="h-12 w-12 rounded-full bg-blue-600 flex items-center justify-center">
-                    <span className="text-lg font-bold text-white">P</span>
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-foreground">PayPal</p>
-                    <p className="text-xs text-muted-foreground">Pay with PayPal</p>
+                  <div className="flex items-center gap-3 p-4">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <span className="text-lg font-bold text-primary">P</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[15px] font-semibold text-foreground">PayPal</p>
+                      <p className="text-[13px] text-muted-foreground">≈ 1% Fee</p>
+                    </div>
                   </div>
                 </button>
 
@@ -937,42 +951,48 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               {/* Crypto Option */}
               <button
                 onClick={() => setWithdrawCategory('crypto')}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 transition-colors"
+                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
               >
-                <div className="h-12 w-12 rounded-full bg-orange-500 flex items-center justify-center">
-                  <Bitcoin className="h-6 w-6 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-foreground">Crypto Payments</p>
-                  <p className="text-xs text-muted-foreground">Withdraw to crypto wallet</p>
+                <div className="flex items-center gap-3 p-4">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Bitcoin className="h-5 w-5 text-success" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[15px] font-semibold text-foreground">Crypto Payments</p>
+                    <p className="text-[13px] text-muted-foreground">≈ 0.5% Fee</p>
+                  </div>
                 </div>
               </button>
 
               {/* Mobile Money Option */}
               <button
                 onClick={() => setWithdrawCategory('mobile')}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
               >
-                <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
-                  <Wallet className="h-6 w-6 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-foreground">Mobile Money</p>
-                  <p className="text-xs text-muted-foreground">M-Pesa, Airtel Money</p>
+                <div className="flex items-center gap-3 p-4">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Wallet className="h-5 w-5 text-success" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[15px] font-semibold text-foreground">Mobile Money</p>
+                    <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
+                  </div>
                 </div>
               </button>
 
               {/* Card Option */}
               <button
                 onClick={() => setWithdrawCategory('card')}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
+                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
               >
-                <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
-                  <CreditCard className="h-6 w-6 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-foreground">Card / Bank</p>
-                  <p className="text-xs text-muted-foreground">Withdraw to card or bank</p>
+                <div className="flex items-center gap-3 p-4">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[15px] font-semibold text-foreground">Card / Bank</p>
+                    <p className="text-[13px] text-muted-foreground">≈ 1.8% Fee</p>
+                  </div>
                 </div>
               </button>
             </div>
@@ -985,14 +1005,16 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
 
               <button
                 onClick={() => setWithdrawMethod('binance')}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors"
+                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
               >
-                <div className="h-12 w-12 rounded-full bg-yellow-500 flex items-center justify-center">
-                  <span className="text-xl font-bold text-black">B</span>
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-foreground">Binance</p>
-                  <p className="text-xs text-muted-foreground">Withdraw via Binance Pay</p>
+                <div className="flex items-center gap-3 p-4">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <span className="text-lg font-bold text-primary">B</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[15px] font-semibold text-foreground">Binance</p>
+                    <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
+                  </div>
                 </div>
               </button>
             </div>
@@ -1064,28 +1086,32 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               {/* M-Pesa */}
               <button
                 onClick={() => setWithdrawMethod('mpesa')}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
               >
-                <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
-                  <Smartphone className="h-6 w-6 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-foreground">M-Pesa</p>
-                  <p className="text-xs text-muted-foreground">Safaricom Mobile Money</p>
+                <div className="flex items-center gap-3 p-4">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Smartphone className="h-5 w-5 text-success" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[15px] font-semibold text-foreground">M-Pesa</p>
+                    <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
+                  </div>
                 </div>
               </button>
 
               {/* Airtel Money */}
               <button
                 onClick={() => setWithdrawMethod('airtel')}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
               >
-                <div className="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center">
-                  <Smartphone className="h-6 w-6 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-foreground">Airtel Money</p>
-                  <p className="text-xs text-muted-foreground">Coming Soon</p>
+                <div className="flex items-center gap-3 p-4">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Smartphone className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[15px] font-semibold text-foreground">Airtel Money</p>
+                    <p className="text-[13px] text-muted-foreground">Coming Soon</p>
+                  </div>
                 </div>
               </button>
             </div>
