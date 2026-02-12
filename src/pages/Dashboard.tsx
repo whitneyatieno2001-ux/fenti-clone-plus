@@ -87,35 +87,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Quick Actions Grid */}
-        <div className="grid grid-cols-4 gap-3 animate-slide-up" style={{ animationDelay: '0.05s' }}>
-          {[
-            { icon: '💰', label: 'Deposit', action: () => setModalType('deposit') },
-            { icon: '💸', label: 'Withdraw', action: () => setModalType('withdraw') },
-            { icon: '📊', label: 'Trade', path: '/trade' },
-            { icon: '🤖', label: 'Bot', path: '/bot' },
-          ].map((item) => (
-            item.path ? (
-              <Link
-                key={item.label}
-                to={item.path}
-                className="flex flex-col items-center gap-2 p-3 rounded-lg bg-card hover:bg-secondary border border-border/50 transition-all"
-              >
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-xs font-medium text-muted-foreground">{item.label}</span>
-              </Link>
-            ) : (
-              <button
-                key={item.label}
-                onClick={item.action}
-                className="flex flex-col items-center gap-2 p-3 rounded-lg bg-card hover:bg-secondary border border-border/50 transition-all"
-              >
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-xs font-medium text-muted-foreground">{item.label}</span>
-              </button>
-            )
-          ))}
-        </div>
 
         {/* Markets / Favorites */}
         <div className="card rounded-xl p-5 bg-card border border-border animate-slide-up" style={{ animationDelay: '0.1s' }}>
