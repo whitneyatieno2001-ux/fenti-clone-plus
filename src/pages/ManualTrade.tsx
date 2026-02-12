@@ -19,6 +19,7 @@ import {
   Edit,
   ArrowUpFromLine,
   SquarePlus,
+  ChevronLeft,
 } from 'lucide-react';
 
 interface ActivePosition {
@@ -323,15 +324,17 @@ export default function ManualTrade() {
       {activeTab === 'charts' && (
         <>
           <div className="bg-white flex items-center justify-between px-4 py-2 border-b border-gray-200">
-            <Menu className="h-5 w-5 text-gray-700" />
-            <div className="flex items-center gap-6">
-              <span className="text-gray-600 text-lg">⊞</span>
-              <span className="text-gray-600 text-lg">📈</span>
-              <span className="text-black font-medium text-sm">M1</span>
-              <span className="text-gray-600 text-lg">⏱</span>
-              <span className="text-gray-600 text-lg">📋</span>
-            </div>
-          </div>
+             <button onClick={() => navigate('/dashboard')} className="text-gray-700 hover:text-gray-900">
+               <ChevronLeft className="h-5 w-5" />
+             </button>
+             <div className="flex items-center gap-6">
+               <span className="text-gray-600 text-lg">⊞</span>
+               <span className="text-gray-600 text-lg">📈</span>
+               <span className="text-black font-medium text-sm">M1</span>
+               <span className="text-gray-600 text-lg">⏱</span>
+               <span className="text-gray-600 text-lg">📋</span>
+             </div>
+           </div>
 
           <div className="flex items-stretch">
             <button
