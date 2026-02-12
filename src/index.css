@@ -6,39 +6,39 @@
 
 @layer base {
   :root {
-    --background: 240 10% 6%;
-    --foreground: 60 9% 98%;
+    --background: 220 20% 10%;
+    --foreground: 0 0% 98%;
 
-    --card: 240 10% 9%;
-    --card-foreground: 60 9% 98%;
+    --card: 220 20% 13%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 8%;
-    --popover-foreground: 60 9% 98%;
+    --popover: 220 20% 12%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 45 93% 47%;
-    --primary-foreground: 240 10% 6%;
+    --primary: 225 80% 56%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 10% 14%;
-    --secondary-foreground: 60 9% 98%;
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 10% 12%;
-    --muted-foreground: 240 5% 55%;
+    --muted: 220 20% 16%;
+    --muted-foreground: 220 10% 55%;
 
-    --accent: 45 93% 47%;
-    --accent-foreground: 240 10% 6%;
+    --accent: 225 80% 56%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 60 9% 98%;
+    --destructive-foreground: 0 0% 98%;
 
     --success: 142 71% 45%;
-    --success-foreground: 240 10% 6%;
+    --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 240 10% 6%;
+    --warning-foreground: 220 20% 10%;
 
-    --border: 240 10% 18%;
-    --input: 240 10% 14%;
-    --ring: 45 93% 47%;
+    --border: 220 15% 22%;
+    --input: 220 20% 18%;
+    --ring: 225 80% 56%;
 
     --radius: 0.75rem;
 
@@ -51,34 +51,34 @@
     --crypto-card-red-border: 0 72% 60%;
 
     /* Gradients */
-    --gradient-portfolio: linear-gradient(135deg, hsl(45 93% 35%) 0%, hsl(45 93% 50%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(38 90% 40%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(240 10% 11%) 0%, hsl(240 10% 7%) 100%);
+    --gradient-portfolio: linear-gradient(135deg, hsl(225 80% 45%) 0%, hsl(225 80% 60%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(225 80% 56%) 0%, hsl(225 85% 48%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(220 20% 15%) 0%, hsl(220 20% 10%) 100%);
 
-    --sidebar-background: 240 10% 6%;
-    --sidebar-foreground: 60 9% 98%;
-    --sidebar-primary: 45 93% 47%;
-    --sidebar-primary-foreground: 240 10% 6%;
-    --sidebar-accent: 240 10% 14%;
-    --sidebar-accent-foreground: 60 9% 98%;
-    --sidebar-border: 240 10% 18%;
-    --sidebar-ring: 45 93% 47%;
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 225 80% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 18%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 15% 22%;
+    --sidebar-ring: 225 80% 56%;
   }
 
   .light {
     --background: 0 0% 100%;
-    --foreground: 240 10% 10%;
-    --card: 0 0% 98%;
-    --card-foreground: 240 10% 10%;
+    --foreground: 220 20% 15%;
+    --card: 0 0% 99%;
+    --card-foreground: 220 20% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 10%;
-    --primary: 45 93% 47%;
+    --popover-foreground: 220 20% 15%;
+    --primary: 225 80% 56%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 92%;
-    --secondary-foreground: 240 10% 10%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 5% 40%;
-    --accent: 45 93% 47%;
+    --secondary: 220 15% 94%;
+    --secondary-foreground: 220 20% 15%;
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 225 80% 56%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -86,9 +86,9 @@
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --border: 240 5% 85%;
-    --input: 240 5% 92%;
-    --ring: 45 93% 47%;
+    --border: 220 15% 90%;
+    --input: 220 15% 94%;
+    --ring: 225 80% 56%;
 
     --crypto-positive: 142 71% 35%;
     --crypto-negative: 0 72% 51%;
@@ -97,36 +97,36 @@
     --crypto-card-green-border: 142 71% 50%;
     --crypto-card-red-border: 0 72% 50%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 10% 10%;
-    --sidebar-primary: 45 93% 47%;
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 220 20% 15%;
+    --sidebar-primary: 225 80% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 92%;
-    --sidebar-accent-foreground: 240 10% 10%;
-    --sidebar-border: 240 5% 85%;
-    --sidebar-ring: 45 93% 47%;
+    --sidebar-accent: 220 15% 94%;
+    --sidebar-accent-foreground: 220 20% 15%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-ring: 225 80% 56%;
   }
 
   .dark {
-    --background: 240 10% 6%;
-    --foreground: 60 9% 98%;
-    --card: 240 10% 9%;
-    --card-foreground: 60 9% 98%;
-    --popover: 240 10% 8%;
-    --popover-foreground: 60 9% 98%;
-    --primary: 45 93% 47%;
-    --primary-foreground: 240 10% 6%;
-    --secondary: 240 10% 14%;
-    --secondary-foreground: 60 9% 98%;
-    --muted: 240 10% 12%;
-    --muted-foreground: 240 5% 55%;
-    --accent: 45 93% 47%;
-    --accent-foreground: 240 10% 6%;
+    --background: 220 20% 10%;
+    --foreground: 0 0% 98%;
+    --card: 220 20% 13%;
+    --card-foreground: 0 0% 98%;
+    --popover: 220 20% 12%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 225 80% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 220 20% 16%;
+    --muted-foreground: 220 10% 55%;
+    --accent: 225 80% 56%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 60 9% 98%;
-    --border: 240 10% 18%;
-    --input: 240 10% 14%;
-    --ring: 45 93% 47%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 15% 22%;
+    --input: 220 20% 18%;
+    --ring: 225 80% 56%;
   }
 }
 
@@ -148,7 +148,7 @@
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(45 93% 47%) 0%, hsl(45 93% 60%) 100%);
+    background-image: linear-gradient(135deg, hsl(225 80% 56%) 0%, hsl(225 80% 70%) 100%);
   }
 
   .glass-card {
