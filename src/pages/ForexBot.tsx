@@ -34,12 +34,28 @@ interface ForexPosition {
 }
 
 const FOREX_PAIRS = [
-  { symbol: 'EUR/USD', name: 'Euro vs US Dollar', code: 'EURUSD.m', basePrice: 1.13661, decimals: 5, spread: 6 },
-  { symbol: 'GBP/USD', name: 'Pound vs US Dollar', code: 'GBPUSD.m', basePrice: 1.2645, decimals: 5, spread: 8 },
-  { symbol: 'USD/JPY', name: 'US Dollar vs Yen', code: 'USDJPY.m', basePrice: 149.85, decimals: 3, spread: 10 },
-  { symbol: 'GBP/JPY', name: 'Great Britain Pound vs Japanese Yen', code: 'GBPJPY.m', basePrice: 208.275, decimals: 3, spread: 30 },
-  { symbol: 'XAU/USD', name: 'Gold vs US Dollar', code: 'XAUUSD.m', basePrice: 2778.50, decimals: 2, spread: 14 },
+  { symbol: 'EUR/USD', name: 'Euro vs US Dollar', code: 'EURUSD.m', basePrice: 1.13661, decimals: 5, spread: 6, contractSize: 100000 },
+  { symbol: 'GBP/USD', name: 'Pound vs US Dollar', code: 'GBPUSD.m', basePrice: 1.2645, decimals: 5, spread: 8, contractSize: 100000 },
+  { symbol: 'USD/JPY', name: 'US Dollar vs Yen', code: 'USDJPY.m', basePrice: 149.85, decimals: 3, spread: 10, contractSize: 100000 },
+  { symbol: 'GBP/JPY', name: 'Great Britain Pound vs Japanese Yen', code: 'GBPJPY.m', basePrice: 208.275, decimals: 3, spread: 30, contractSize: 100000 },
+  { symbol: 'XAU/USD', name: 'Gold vs US Dollar', code: 'XAUUSD.m', basePrice: 2778.50, decimals: 2, spread: 14, contractSize: 100 },
 ];
+
+const LEVERAGE = 500;
+
+function calculateMarginForex(lotSize: number, pair: typeof FOREX_PAIRS[0], entryPrice: number): number {
+  const contractValue = lotSize * pair.contractSize;
+  if (pair.symbol.includes('XAU')) return (contractValue * entryPrice) / LEVERAGE;
+  if (pair.symbol.startsWith('USD/')) return contractValue / LEVERAGE;
+  return (contractValue * entryPrice) / LEVERAGE;
+}
+
+function calculatePLForex(pos: { type: 'buy' | 'sell'; entryPrice: number; currentPrice: number; lotSize: number }, pair: typeof FOREX_PAIRS[0]): number {
+  const priceDiff = pos.type === 'buy' ? pos.currentPrice - pos.entryPrice : pos.entryPrice - pos.currentPrice;
+  if (pair.symbol.includes('XAU')) return priceDiff * pos.lotSize * pair.contractSize;
+  if (pair.symbol.endsWith('/JPY')) return (priceDiff * pos.lotSize * pair.contractSize) / pos.currentPrice;
+  return priceDiff * pos.lotSize * pair.contractSize;
+}
 
 // Extended quotes list matching MT5 screenshot
 const QUOTES_LIST = [
@@ -176,29 +192,49 @@ export default function ForexBot() {
     return () => clearInterval(interval);
   }, [selectedPair]);
 
-  useEffect(() => {
-    const totalPL = positions.reduce((sum, pos) => sum + pos.profitLoss, 0);
-    const usedMargin = positions.reduce((sum, pos) => sum + (pos.lotSize * 1000), 0);
-    const eq = currentBalance + totalPL;
-    setEquity(eq);
-    setMargin(usedMargin);
-    setFreeMargin(eq - usedMargin);
-    setMarginLevel(usedMargin > 0 ? (eq / usedMargin) * 100 : 0);
-  }, [positions, currentBalance]);
+  // Real MT5 margin calculations (derived, not state)
+  const totalPL = positions.reduce((sum, pos) => sum + pos.profitLoss, 0);
+  const totalMarginCalc = positions.reduce((sum, pos) => {
+    const pair = FOREX_PAIRS.find(p => p.symbol === pos.symbol);
+    if (!pair) return sum;
+    return sum + calculateMarginForex(pos.lotSize, pair, pos.entryPrice);
+  }, 0);
+  const equityCalc = currentBalance + totalPL;
+  const freeMarginCalc = equityCalc - totalMarginCalc;
+  const marginLevelCalc = totalMarginCalc > 0 ? (equityCalc / totalMarginCalc) * 100 : 0;
 
+  // Sync derived values to state for UI
+  useEffect(() => {
+    setEquity(equityCalc);
+    setMargin(totalMarginCalc);
+    setFreeMargin(freeMarginCalc);
+    setMarginLevel(marginLevelCalc);
+  }, [equityCalc, totalMarginCalc, freeMarginCalc, marginLevelCalc]);
+
+  // Update positions P/L with real forex pip calculations
   useEffect(() => {
     if (positions.length === 0) return;
     const interval = setInterval(() => {
       setPositions(prev => prev.map(pos => {
+        const pair = FOREX_PAIRS.find(p => p.symbol === pos.symbol);
+        if (!pair) return pos;
         const outcome = getTradeOutcome({ accountType, userEmail });
         const bias = outcome === 'win' ? 0.55 : 0.42;
-        const volatility = pos.symbol.includes('XAU') ? 0.8 : 0.0003;
+        const volatility = pair.symbol.includes('XAU') ? 0.8 
+          : pair.symbol.includes('JPY') ? 0.03 
+          : 0.0003;
         const change = (Math.random() - bias) * volatility;
         const newPrice = pos.currentPrice + change;
-        const priceDiff = pos.type === 'buy' ? newPrice - pos.entryPrice : pos.entryPrice - newPrice;
-        const multiplier = pos.symbol.includes('XAU') ? 100 : 100000;
-        const profitLoss = priceDiff * pos.lotSize * multiplier;
-        return { ...pos, currentPrice: newPrice, profitLoss: parseFloat(profitLoss.toFixed(2)) };
+        const profitLoss = calculatePLForex({ ...pos, currentPrice: newPrice }, pair);
+        
+        // Ensure minimum P/L of $0.15 after initial movement
+        const timeSinceOpen = Date.now() - pos.openTime;
+        let finalPL = parseFloat(profitLoss.toFixed(2));
+        if (timeSinceOpen > 3000 && Math.abs(finalPL) < 0.15 && finalPL !== 0) {
+          finalPL = finalPL > 0 ? 0.15 : -0.15;
+        }
+        
+        return { ...pos, currentPrice: newPrice, profitLoss: finalPL };
       }));
     }, 400);
     return () => clearInterval(interval);
@@ -223,8 +259,13 @@ export default function ForexBot() {
   }, [positionsToOpen]);
 
   const openPosition = useCallback(async (direction: 'buy' | 'sell') => {
-    if (currentBalance < 1) return;
     const entryPrice = direction === 'buy' ? buyPrice : sellPrice;
+    const requiredMargin = calculateMarginForex(lotSize, selectedPair, entryPrice);
+    if (requiredMargin > freeMarginCalc) {
+      toast({ title: "Insufficient Margin", description: `Required: $${requiredMargin.toFixed(2)}`, variant: "destructive" });
+      return;
+    }
+    // entryPrice already defined above
     const newPosition: ForexPosition = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       symbol: selectedPair.symbol,
@@ -278,7 +319,7 @@ export default function ForexBot() {
     return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const totalPL = positions.reduce((sum, pos) => sum + pos.profitLoss, 0);
+  // totalPL already declared above as derived value
 
   // Format price with last digit superscript style for quotes
   const formatQuotePrice = (price: number, decimals: number) => {
