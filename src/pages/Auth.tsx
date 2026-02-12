@@ -123,7 +123,7 @@ export default function Auth() {
           <img 
             src={cryptoWaveLogo} 
             alt="Crypto Wave" 
-            className="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-lg"
+            className="w-20 h-20 rounded-2xl mx-auto mb-4 object-contain mix-blend-multiply dark:mix-blend-screen"
           />
           <h1 className="text-2xl font-bold font-display text-foreground">Welcome to Crypto Wave</h1>
           <p className="text-muted-foreground mt-1">Your trusted platform for cryptocurrency trading</p>
