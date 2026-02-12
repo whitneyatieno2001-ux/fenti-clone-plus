@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { 
   Bot, Play, Pause, TrendingUp, TrendingDown, 
   DollarSign, Activity, Zap, BarChart3, ArrowUpDown, Settings2,
-  CheckCircle2, XCircle, ScrollText, Lock, Unlock
+  CheckCircle2, XCircle, ScrollText, Lock, Unlock, Plus
 } from 'lucide-react';
 import { 
   type BotStrategy, 
@@ -528,6 +528,15 @@ export default function BotPage() {
             </div>
           </div>
         </div>
+
+        {/* Create Bot Button */}
+        <Button
+          onClick={() => navigate('/create-bot')}
+          className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Create Custom Bot
+        </Button>
 
         {/* Bot List */}
         <div className="space-y-3">
