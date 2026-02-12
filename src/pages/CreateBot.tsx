@@ -99,7 +99,7 @@ export default function CreateBot() {
     await new Promise(r => setTimeout(r, 2000));
 
     toast({
-      title: '🚀 Bot Deployed!',
+      title: 'Bot Deployed',
       description: `${botName} is now trading ${selectedPair.symbol} with ${strategyInfo.name} strategy`,
     });
 

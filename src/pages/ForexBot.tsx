@@ -246,7 +246,7 @@ export default function ForexBot() {
       const targetProfit = pos.lotSize * tp;
       if (pos.profitLoss >= targetProfit) {
         await closePosition(pos.id);
-        toast({ title: "Profit Taken! 💰", description: `${pos.symbol} closed at +$${pos.profitLoss.toFixed(2)}` });
+        toast({ title: "Profit Taken", description: `${pos.symbol} closed at +$${pos.profitLoss.toFixed(2)}` });
       }
     });
   }, [positions]);
@@ -342,13 +342,7 @@ export default function ForexBot() {
           {/* Top toolbar */}
           <div className="bg-white flex items-center justify-between px-4 py-2 border-b border-gray-200">
             <Menu className="h-5 w-5 text-gray-700" />
-            <div className="flex items-center gap-6">
-              <span className="text-gray-600 text-lg">⊞</span>
-              <span className="text-gray-600 text-lg">📈</span>
-              <span className="text-black font-medium text-sm">M1</span>
-              <span className="text-gray-600 text-lg">⏱</span>
-              <span className="text-gray-600 text-lg">📋</span>
-            </div>
+            <span className="text-black font-medium text-sm">M1</span>
           </div>
 
           {/* SELL / lot / BUY bar */}
@@ -482,7 +476,7 @@ export default function ForexBot() {
                       </div>
                       <div className="text-black font-bold text-base mt-0.5">{q.code}</div>
                       <div className="text-gray-400 text-xs mt-0.5">
-                        {q.timestamp} ⊞ {q.spread}
+                        {q.timestamp} | {q.spread}
                       </div>
                     </div>
                     <div className="flex items-start gap-4">

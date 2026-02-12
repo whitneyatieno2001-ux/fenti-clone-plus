@@ -131,6 +131,7 @@ export default function ManualTrade() {
   const [sellPrice, setSellPrice] = useState(selectedPair.basePrice);
   const [lotSize, setLotSize] = useState(0.01);
   const [priceDirection, setPriceDirection] = useState<'up' | 'down' | 'neutral'>('neutral');
+  const [showBulkOps, setShowBulkOps] = useState(false);
   const [quotes, setQuotes] = useState<QuoteData[]>([]);
 
   const positionsRef = useRef(positions);
@@ -295,7 +296,7 @@ export default function ManualTrade() {
     }
     setPositions(prev => prev.filter(p => p.id !== positionId));
     toast({
-      title: position.profitLoss >= 0 ? "Profit Taken! 💰" : "Position Closed",
+      title: position.profitLoss >= 0 ? "Profit Taken" : "Position Closed",
       description: `${position.symbol} P/L: ${position.profitLoss >= 0 ? '+' : ''}$${position.profitLoss.toFixed(2)}`,
     });
   };
@@ -303,6 +304,32 @@ export default function ManualTrade() {
   const adjustLotSize = (direction: 'up' | 'down') => {
     if (direction === 'up') setLotSize(prev => parseFloat(Math.min(prev + 0.01, 100).toFixed(2)));
     else setLotSize(prev => parseFloat(Math.max(prev - 0.01, 0.01).toFixed(2)));
+  };
+
+  const closeAllPositions = async () => {
+    setShowBulkOps(false);
+    for (const pos of positions) {
+      await closePosition(pos.id);
+    }
+    toast({ title: "All Positions Closed", description: `${positions.length} positions closed` });
+  };
+
+  const closeProfitablePositions = async () => {
+    setShowBulkOps(false);
+    const profitable = positions.filter(p => p.profitLoss > 0);
+    for (const pos of profitable) {
+      await closePosition(pos.id);
+    }
+    toast({ title: "Profitable Positions Closed", description: `${profitable.length} positions closed` });
+  };
+
+  const closeLosingPositions = async () => {
+    setShowBulkOps(false);
+    const losing = positions.filter(p => p.profitLoss < 0);
+    for (const pos of losing) {
+      await closePosition(pos.id);
+    }
+    toast({ title: "Losing Positions Closed", description: `${losing.length} positions closed` });
   };
 
   const formatPrice = (price: number) => price.toFixed(selectedPair.decimals);
@@ -327,13 +354,7 @@ export default function ManualTrade() {
              <button onClick={() => navigate('/dashboard')} className="text-gray-700 hover:text-gray-900">
                <ChevronLeft className="h-5 w-5" />
              </button>
-             <div className="flex items-center gap-6">
-               <span className="text-gray-600 text-lg">⊞</span>
-               <span className="text-gray-600 text-lg">📈</span>
-               <span className="text-black font-medium text-sm">M1</span>
-               <span className="text-gray-600 text-lg">⏱</span>
-               <span className="text-gray-600 text-lg">📋</span>
-             </div>
+             <span className="text-black font-medium text-sm">M1</span>
            </div>
 
           <div className="flex items-stretch">
@@ -463,7 +484,7 @@ export default function ManualTrade() {
                       </div>
                       <div className="text-black font-bold text-base mt-0.5">{q.code}</div>
                       <div className="text-gray-400 text-xs mt-0.5">
-                        {q.timestamp} ⊞ {q.spread}
+                        {q.timestamp} | {q.spread}
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -531,7 +552,7 @@ export default function ManualTrade() {
               <>
                 <div className="px-4 py-2 border-b border-gray-200 flex items-center justify-between bg-gray-50">
                   <span className="text-gray-500 font-medium text-sm">Positions</span>
-                  <span className="text-gray-400 text-lg">•••</span>
+                  <button onClick={() => setShowBulkOps(true)} className="text-gray-400 text-lg">•••</button>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {positions.map((pos) => {
@@ -641,6 +662,36 @@ export default function ManualTrade() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Operations Bottom Sheet */}
+      {showBulkOps && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={() => setShowBulkOps(false)}>
+          <div className="bg-white w-full rounded-t-2xl pb-8" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-center py-3">
+              <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
+            </div>
+            <h3 className="text-center text-black font-bold text-lg pb-3 border-b border-gray-200">Bulk Operations</h3>
+            <button
+              onClick={closeAllPositions}
+              className="w-full text-left px-6 py-4 text-black text-base hover:bg-gray-50 active:bg-gray-100"
+            >
+              Close All Positions
+            </button>
+            <button
+              onClick={closeProfitablePositions}
+              className="w-full text-left px-6 py-4 text-black text-base hover:bg-gray-50 active:bg-gray-100"
+            >
+              Close Profitable Positions
+            </button>
+            <button
+              onClick={closeLosingPositions}
+              className="w-full text-left px-6 py-4 text-black text-base hover:bg-gray-50 active:bg-gray-100"
+            >
+              Close Losing Positions
+            </button>
           </div>
         </div>
       )}

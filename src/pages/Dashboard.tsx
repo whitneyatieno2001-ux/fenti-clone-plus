@@ -35,7 +35,7 @@ export default function Dashboard() {
   const recentActivity = [
     { icon: '↓', title: 'Deposit Successful', info: 'USD via M-Pesa', time: '5 mins ago', type: 'success' },
     { icon: '↑', title: 'Withdrawal Processed', info: '50.00 USD', time: '2 hours ago', type: 'warning' },
-    { icon: '⚡', title: 'Bot Trade Executed', info: 'BTC/USDT +0.5%', time: '4 hours ago', type: 'success' },
+    { icon: 'B', title: 'Bot Trade Executed', info: 'BTC/USDT +0.5%', time: '4 hours ago', type: 'success' },
   ];
 
   return (
