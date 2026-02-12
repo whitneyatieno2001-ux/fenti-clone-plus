@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  ArrowLeft, CreditCard, Plus, Smartphone, Building2, Trash2 
+  ArrowLeft, CreditCard, Plus, Smartphone, Building2, Trash2, Shield, ChevronRight
 } from 'lucide-react';
 
 interface PaymentMethod {
@@ -79,6 +79,21 @@ export default function PaymentMethods() {
           <h1 className="text-2xl font-bold text-foreground">Payment Methods</h1>
           <p className="text-muted-foreground">Manage your payment options</p>
         </div>
+
+        {/* KYC Banner */}
+        <button
+          onClick={() => navigate('/kyc')}
+          className="w-full p-4 rounded-xl bg-primary/10 border border-primary/30 flex items-center gap-3 hover:bg-primary/15 transition-colors text-left"
+        >
+          <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+            <Shield className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-foreground text-sm">Complete KYC Verification</p>
+            <p className="text-xs text-muted-foreground">Verify your identity to enable withdrawals and higher limits</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
 
         {/* Payment Methods List */}
         <div className="space-y-3">

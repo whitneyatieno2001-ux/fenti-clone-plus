@@ -7,12 +7,13 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { 
   User, Settings, Shield, CreditCard, HelpCircle, LogOut, 
-  ChevronRight, Bell, Lock, History, RefreshCw
+  ChevronRight, Bell, Lock, History, RefreshCw, ScanFace
 } from 'lucide-react';
 
 const menuItems = [
   { icon: History, label: 'Transaction History', path: '/history' },
   { icon: CreditCard, label: 'Payment Methods', path: '/payments' },
+  { icon: ScanFace, label: 'KYC Verification', path: '/kyc' },
   { icon: Shield, label: 'Security', path: '/security' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },
   { icon: Lock, label: 'Privacy', path: '/privacy' },
