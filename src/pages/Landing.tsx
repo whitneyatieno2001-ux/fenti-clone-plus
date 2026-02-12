@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAccount } from '@/contexts/AccountContext';
-import cryptoWaveLogo from '@/assets/crypto-wave-logo.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function Landing() {
@@ -34,10 +33,7 @@ export default function Landing() {
       {/* Navbar */}
       <header className="h-[72px] border-b border-border sticky top-0 bg-background/90 backdrop-blur-xl z-50">
         <div className="max-w-[1200px] mx-auto px-6 md:px-10 h-full flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <img src={cryptoWaveLogo} alt="CryptoWave" className="w-8 h-8 rounded-md flex-shrink-0" />
-            <span className="text-primary font-bold text-xl">CryptoWave</span>
-          </div>
+          <span className="text-primary font-bold text-xl cursor-pointer" onClick={() => navigate('/')}>CryptoWave</span>
 
           <nav className="hidden md:flex gap-8">
             {['Buy Crypto', 'Markets', 'Trade', 'Futures', 'Earn', 'Web3 Wallet'].map((item, i) => (
@@ -355,10 +351,7 @@ export default function Landing() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-10">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-10 text-center md:text-left">
             <div>
-              <div className="flex items-center gap-2 justify-center md:justify-start mb-4">
-                <img src={cryptoWaveLogo} alt="CryptoWave" className="w-8 h-8 rounded-lg" />
-                <span className="text-primary font-bold text-lg">CryptoWave</span>
-              </div>
+              <span className="text-primary font-bold text-lg">CryptoWave</span>
             </div>
             {[
               { title: 'About Us', links: ['About', 'Careers', 'Business Contacts', 'Community'] },
