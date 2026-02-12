@@ -17,6 +17,7 @@ import Bot from "./pages/Bot";
 import BotSelection from "./pages/BotSelection";
 import ForexBot from "./pages/ForexBot";
 import BotTrade from "./pages/BotTrade";
+import CreateBot from "./pages/CreateBot";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/bot" element={<Bot />} />
               <Route path="/forex-bot" element={<ForexBot />} />
               <Route path="/bot/:botId" element={<BotTrade />} />
+              <Route path="/create-bot" element={<CreateBot />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/history" element={<TransactionHistory />} />
