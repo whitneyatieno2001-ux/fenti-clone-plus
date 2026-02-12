@@ -239,26 +239,15 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     setMpesaStatus('processing');
 
     try {
-      const { data, error } = await supabase.functions.invoke('mpesa-payment', {
-        body: {
-          action: 'deposit',
-          amount: numAmount,
-          phoneNumber: mpesaPhone,
-        },
+      // Mock mode - simulate STK push without calling PayHero
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+      
+      setMpesaStatus('waiting');
+      setPaymentId('MOCK-' + Math.floor(1000000000 + Math.random() * 9000000000).toString());
+      toast({
+        title: "STK Push Sent!",
+        description: "Check your phone and enter your M-Pesa PIN to complete payment",
       });
-
-      if (error) throw error;
-
-      if (data.success) {
-        setMpesaStatus('waiting');
-        setPaymentId(data.checkoutRequestId || Math.floor(1000000000 + Math.random() * 9000000000).toString());
-        toast({
-          title: "STK Push Sent!",
-          description: "Check your phone and enter your M-Pesa PIN to complete payment",
-        });
-      } else {
-        throw new Error(data.error || 'Failed to initiate payment');
-      }
     } catch (error: any) {
       console.error('M-Pesa error:', error);
       setMpesaStatus('failed');
