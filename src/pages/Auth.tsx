@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
-import cryptoWaveLogo from '@/assets/crypto-wave-logo.png';
+
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -120,11 +120,6 @@ export default function Auth() {
       <div className="flex-1 flex flex-col justify-center px-6 pb-12">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img 
-            src={cryptoWaveLogo} 
-            alt="Crypto Wave" 
-            className="w-20 h-20 rounded-2xl mx-auto mb-4 object-contain mix-blend-multiply dark:mix-blend-screen"
-          />
           <h1 className="text-2xl font-bold font-display text-foreground">Welcome to Crypto Wave</h1>
           <p className="text-muted-foreground mt-1">Your trusted platform for cryptocurrency trading</p>
         </div>
