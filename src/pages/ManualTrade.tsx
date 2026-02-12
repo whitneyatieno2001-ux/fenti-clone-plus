@@ -577,9 +577,7 @@ export default function ManualTrade() {
                         </div>
                         <div className="text-gray-500 text-xs mt-0.5 flex items-center justify-between">
                           <span>{pos.entryPrice.toFixed(decimals)} → {pos.currentPrice.toFixed(decimals)}</span>
-                          <button onClick={() => closePosition(pos.id)} className="text-red-500 text-xs font-medium">
-                            X
-                          </button>
+                          
                         </div>
                       </div>
                     );
