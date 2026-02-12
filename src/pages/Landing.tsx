@@ -35,8 +35,12 @@ export default function Landing() {
       <header className="h-[72px] border-b border-[#2B3139] sticky top-0 bg-[#0b0e11]/90 backdrop-blur-xl z-50">
         <div className="max-w-[1200px] mx-auto px-6 md:px-10 h-full flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <img src={cryptoWaveLogo} alt="CryptoWave" className="w-8 h-8 rounded-lg" />
-            <span className="text-[#FCD535] font-bold text-xl">CryptoWave</span>
+            <div className="w-8 h-8 bg-[#FCD535] rounded-md flex items-center justify-center flex-shrink-0">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#181a20]" fill="currentColor">
+                <path d="M8 8l8 0l0 8l-8 0z M12 12l4 -4l4 4l0 4l-4 4l-4 -4z"/>
+              </svg>
+            </div>
+            <span className="text-[#FCD535] font-bold text-xl">Binance</span>
           </div>
 
           <nav className="hidden md:flex gap-8">
