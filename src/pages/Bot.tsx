@@ -295,7 +295,7 @@ export default function BotPage() {
 
     // Show trade notification (less frequent to avoid spam)
     if (Math.random() < 0.3) {
-      const notifTitle = result.isWin ? "Trade Won! 🎉" : "Trade Lost 📉";
+      const notifTitle = result.isWin ? "Trade Won" : "Trade Lost";
       const notifDesc = `${bot.name}: ${result.netProfit >= 0 ? '+' : ''}$${result.netProfit.toFixed(2)}`;
       
       toast({
@@ -383,7 +383,7 @@ export default function BotPage() {
       scanningIntervals.current[id] = scanInterval;
 
       toast({
-        title: "Bot Activated 🤖",
+        title: "Bot Activated",
         description: `${bot.name} is now trading with $${bot.stakeAmount} stake`,
       });
     } else {

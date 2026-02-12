@@ -134,7 +134,7 @@ export default function ActivePositions() {
     setPositions(prev => prev.filter(p => p.id !== positionId));
     
     toast({
-      title: position.profitLoss >= 0 ? "Profit Taken! 💰" : "Position Closed",
+      title: position.profitLoss >= 0 ? "Profit Taken" : "Position Closed",
       description: `${position.symbol} P/L: ${position.profitLoss >= 0 ? '+' : ''}$${position.profitLoss.toFixed(2)}`,
     });
   };

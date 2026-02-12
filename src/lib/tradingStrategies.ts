@@ -320,15 +320,15 @@ export const executeGridTrade = (stakeAmount: number): TradeResult => {
 export const getBotStrategyInfo = (strategy: BotStrategy) => {
   switch (strategy) {
     case 'arbitrage':
-      return { name: 'Arbitrage Bot', description: 'Detects price differences across markets. Lower risk, smaller frequent profits.', risk: 'low' as const, tradeFrequency: 'high', expectedWinRate: 65, icon: '⚖️' };
+      return { name: 'Arbitrage Bot', description: 'Detects price differences across markets. Lower risk, smaller frequent profits.', risk: 'low' as const, tradeFrequency: 'high', expectedWinRate: 65, icon: 'ARB' };
     case 'scalping':
-      return { name: 'Scalping Bot', description: 'Fast trades on small price movements. High frequency, tight stop-loss.', risk: 'high' as const, tradeFrequency: 'very high', expectedWinRate: 58, icon: '⚡' };
+      return { name: 'Scalping Bot', description: 'Fast trades on small price movements. High frequency, tight stop-loss.', risk: 'high' as const, tradeFrequency: 'very high', expectedWinRate: 58, icon: 'SCA' };
     case 'signal':
-      return { name: 'Signal Bot', description: 'Uses RSI, MA crossovers, and patterns. Trades only when signals align.', risk: 'medium' as const, tradeFrequency: 'low', expectedWinRate: 68, icon: '📊' };
+      return { name: 'Signal Bot', description: 'Uses RSI, MA crossovers, and patterns. Trades only when signals align.', risk: 'medium' as const, tradeFrequency: 'low', expectedWinRate: 68, icon: 'SIG' };
     case 'trend':
-      return { name: 'Trend Follower', description: 'Follows market momentum and rides trends. Medium frequency trading.', risk: 'medium' as const, tradeFrequency: 'medium', expectedWinRate: 45, icon: '📈' };
+      return { name: 'Trend Follower', description: 'Follows market momentum and rides trends. Medium frequency trading.', risk: 'medium' as const, tradeFrequency: 'medium', expectedWinRate: 45, icon: 'TRD' };
     case 'grid':
-      return { name: 'Grid Bot', description: 'Places orders at preset intervals. Profits from price oscillations.', risk: 'low' as const, tradeFrequency: 'high', expectedWinRate: 50, icon: '🔲' };
+      return { name: 'Grid Bot', description: 'Places orders at preset intervals. Profits from price oscillations.', risk: 'low' as const, tradeFrequency: 'high', expectedWinRate: 50, icon: 'GRD' };
   }
 };
 
