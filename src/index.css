@@ -135,9 +135,25 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Poppins', sans-serif;
+  }
+
+  * {
+    @apply transition-colors duration-200;
+  }
+
+  a, button, input, select, textarea {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  img {
+    @apply transition-opacity duration-300 ease-out;
   }
 
   h1, h2, h3, h4, h5, h6 {
