@@ -15,6 +15,36 @@ const COIN_ICONS: Record<string, string> = {
   DOT: 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png',
   AVAX: 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png',
   LINK: 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png',
+  MATIC: 'https://assets.coingecko.com/coins/images/4713/small/polygon.png',
+  TRX: 'https://assets.coingecko.com/coins/images/1094/small/tron-logo.png',
+  UNI: 'https://assets.coingecko.com/coins/images/12504/small/uni.jpg',
+  LTC: 'https://assets.coingecko.com/coins/images/2/small/litecoin.png',
+  ATOM: 'https://assets.coingecko.com/coins/images/1481/small/cosmos_hub.png',
+  XLM: 'https://assets.coingecko.com/coins/images/100/small/Stellar_symbol_black_RGB.png',
+  FIL: 'https://assets.coingecko.com/coins/images/12817/small/filecoin.png',
+  NEAR: 'https://assets.coingecko.com/coins/images/10365/small/near.jpg',
+  APT: 'https://assets.coingecko.com/coins/images/26455/small/aptos_round.png',
+  ARB: 'https://assets.coingecko.com/coins/images/16547/small/photo_2023-03-29_21.47.00.jpeg',
+  OP: 'https://assets.coingecko.com/coins/images/25244/small/Optimism.png',
+  INJ: 'https://assets.coingecko.com/coins/images/12882/small/Secondary_Symbol.png',
+  SUI: 'https://assets.coingecko.com/coins/images/26375/small/sui_asset.jpeg',
+  RNDR: 'https://assets.coingecko.com/coins/images/11636/small/rndr.png',
+  PEPE: 'https://assets.coingecko.com/coins/images/29850/small/pepe-token.jpeg',
+  SHIB: 'https://assets.coingecko.com/coins/images/11939/small/shiba.png',
+  USDT: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
+  USDC: 'https://assets.coingecko.com/coins/images/6319/small/usdc.png',
+};
+
+// Category mappings for filter chips
+const CATEGORY_MAP: Record<string, string[]> = {
+  'Solana': ['SOL', 'RNDR', 'BONK'],
+  'Meme': ['DOGE', 'SHIB', 'PEPE'],
+  'AI': ['RNDR', 'INJ', 'NEAR', 'FIL'],
+  'Layer 1': ['BTC', 'ETH', 'SOL', 'ADA', 'AVAX', 'DOT', 'NEAR', 'APT', 'SUI', 'ATOM', 'TRX', 'XRP'],
+  'DeFi': ['UNI', 'LINK', 'INJ', 'AAVE', 'ARB', 'OP'],
+  'Gaming': ['RNDR', 'SUI', 'MATIC'],
+  'Metaverse': ['MATIC', 'RNDR'],
+  'Storage': ['FIL', 'ATOM'],
 };
 
 export default function Markets() {
@@ -29,10 +59,12 @@ export default function Markets() {
   const cryptoAssets = getAllCryptosWithPrices();
   const itemsPerPage = 10;
 
-  const filteredCryptos = cryptoAssets.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCryptos = cryptoAssets.filter(c => {
+    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.symbol.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = activeFilter === 'All' || (CATEGORY_MAP[activeFilter]?.includes(c.symbol) ?? false);
+    return matchesSearch && matchesCategory;
+  });
   const totalPages = Math.ceil(filteredCryptos.length / itemsPerPage);
   const paginated = filteredCryptos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
