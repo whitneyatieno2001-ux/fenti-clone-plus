@@ -8,14 +8,12 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Markets from "./pages/Markets";
-import Trade from "./pages/Trade";
-import ManualTrade from "./pages/ManualTrade";
+import SpotTrade from "./pages/SpotTrade";
 import AssetTrade from "./pages/AssetTrade";
 import ActivePositions from "./pages/ActivePositions";
 import Futures from "./pages/Futures";
 import Bot from "./pages/Bot";
 import BotSelection from "./pages/BotSelection";
-import ForexBot from "./pages/ForexBot";
 import BotTrade from "./pages/BotTrade";
 import CreateBot from "./pages/CreateBot";
 import Profile from "./pages/Profile";
@@ -44,14 +42,12 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/markets" element={<Markets />} />
-              <Route path="/trade" element={<ManualTrade />} />
-              <Route path="/spot" element={<Trade />} />
+              <Route path="/trade" element={<SpotTrade />} />
               <Route path="/trade/:assetId" element={<AssetTrade />} />
               <Route path="/positions" element={<ActivePositions />} />
               <Route path="/futures" element={<Futures />} />
               <Route path="/bot-select" element={<BotSelection />} />
               <Route path="/bot" element={<Bot />} />
-              <Route path="/forex-bot" element={<ForexBot />} />
               <Route path="/bot/:botId" element={<BotTrade />} />
               <Route path="/create-bot" element={<CreateBot />} />
               <Route path="/profile" element={<Profile />} />
