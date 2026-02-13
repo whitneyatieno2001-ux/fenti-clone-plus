@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CryptoTradingBot>
+
+    <BotInfo>
+        <Name>Speed Scalper Bot</Name>
+        <Version>1.0</Version>
+        <Mode>Live</Mode>
+        <StrategyType>High Frequency Scalping</StrategyType>
+    </BotInfo>
+
+    <Exchange>
+        <Name>Binance</Name>
+        <MarketType>Futures</MarketType>
+        <Leverage>10x</Leverage>
+    </Exchange>
+
+    <TradingSettings>
+        <Symbol>ETHUSDT</Symbol>
+        <Timeframe>1m</Timeframe>
+        <MaxOpenTrades>5</MaxOpenTrades>
+    </TradingSettings>
+
+    <Indicators>
+        <EMA Fast="9" Slow="21"/>
+        <RSI Period="7" Overbought="80" Oversold="20"/>
+        <VWAP Enabled="true"/>
+        <VolumeSpike Enabled="true"/>
+    </Indicators>
+
+    <EntryRules>
+        <Buy>
+            <Condition>EMA9 > EMA21 AND RSI < 25 AND VolumeSpike = True</Condition>
+        </Buy>
+        <Sell>
+            <Condition>EMA9 < EMA21 AND RSI > 75 AND VolumeSpike = True</Condition>
+        </Sell>
+    </EntryRules>
+
+    <RiskManagement>
+        <RiskPerTrade>1%</RiskPerTrade>
+        <StopLoss>0.4%</StopLoss>
+        <TakeProfit>0.8%</TakeProfit>
+        <CooldownSeconds>10</CooldownSeconds>
+    </RiskManagement>
+
+</CryptoTradingBot>

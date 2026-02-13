@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CryptoTradingBot>
+
+    <BotInfo>
+        <Name>Crypto Printer Bot</Name>
+        <Version>1.0</Version>
+        <Mode>Live</Mode>
+        <StrategyType>Trend Swing</StrategyType>
+    </BotInfo>
+
+    <Exchange>
+        <Name>Binance</Name>
+        <MarketType>Spot</MarketType>
+    </Exchange>
+
+    <TradingSettings>
+        <Symbol>BTCUSDT</Symbol>
+        <Timeframe>5m</Timeframe>
+        <MaxOpenTrades>2</MaxOpenTrades>
+    </TradingSettings>
+
+    <Indicators>
+        <EMA Fast="50" Slow="200"/>
+        <RSI Period="14" Overbought="70" Oversold="30"/>
+        <MACD Enabled="true"/>
+    </Indicators>
+
+    <EntryRules>
+        <Buy>
+            <Condition>EMA50 > EMA200 AND RSI < 35 AND MACD = Bullish</Condition>
+        </Buy>
+        <Sell>
+            <Condition>EMA50 < EMA200 AND RSI > 65 AND MACD = Bearish</Condition>
+        </Sell>
+    </EntryRules>
+
+    <RiskManagement>
+        <RiskPerTrade>2%</RiskPerTrade>
+        <StopLoss>1.5%</StopLoss>
+        <TakeProfit>3%</TakeProfit>
+        <TrailingStop Enabled="true" Distance="1%"/>
+    </RiskManagement>
+
+</CryptoTradingBot>

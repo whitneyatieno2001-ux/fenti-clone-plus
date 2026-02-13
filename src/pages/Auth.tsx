@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
+import { lovable } from '@/integrations/lovable/index';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -37,23 +38,21 @@ export default function Auth() {
     try {
       emailSchema.parse(email);
     } catch (e) {
-      if (e instanceof z.ZodError) {
-        newErrors.email = e.errors[0].message;
-      }
+      if (e instanceof z.ZodError) newErrors.email = e.errors[0].message;
     }
 
-    if (mode === 'login') {
-      try {
-        passwordSchema.parse(password);
-      } catch (e) {
-        if (e instanceof z.ZodError) {
-          newErrors.password = e.errors[0].message;
-        }
-      }
+    try {
+      passwordSchema.parse(password);
+    } catch (e) {
+      if (e instanceof z.ZodError) newErrors.password = e.errors[0].message;
     }
 
     if (mode === 'signup') {
-      // signup only needs email for step 1
+      try {
+        nameSchema.parse(name);
+      } catch (e) {
+        if (e instanceof z.ZodError) newErrors.name = e.errors[0].message;
+      }
     }
 
     setErrors(newErrors);
@@ -62,7 +61,6 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
 
     if (mode === 'signup' && !agreed) {
@@ -74,7 +72,6 @@ export default function Auth() {
 
     try {
       let result;
-      
       if (mode === 'login') {
         result = await login(email, password);
       } else {
@@ -82,11 +79,18 @@ export default function Auth() {
       }
 
       if (result.success) {
-        toast({
-          title: mode === 'login' ? "Welcome Back!" : "Account Created!",
-          description: mode === 'login' ? "You have successfully logged in" : "Your account has been created with $10,000 demo balance",
-        });
-        navigate('/dashboard');
+        if (mode === 'signup') {
+          toast({
+            title: "Verification Email Sent!",
+            description: "Please check your email for a verification code to complete your registration.",
+          });
+        } else {
+          toast({
+            title: "Welcome Back!",
+            description: "You have successfully logged in",
+          });
+          navigate('/dashboard');
+        }
       } else {
         toast({
           title: "Error",
@@ -105,6 +109,15 @@ export default function Auth() {
     setIsLoading(false);
   };
 
+  const handleGoogleSignIn = async () => {
+    const { error } = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (error) {
+      toast({ title: "Google Sign-In Failed", description: String(error), variant: "destructive" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Brand Header */}
@@ -115,63 +128,52 @@ export default function Auth() {
       </div>
 
       <div className="flex-1 flex flex-col px-6 pt-4 pb-12">
-        {/* Title */}
         <h1 className="text-3xl font-bold font-display text-foreground mb-8">
           {mode === 'signup' ? 'Welcome to CryptoWave' : 'Welcome Back'}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5 flex-1">
-          {/* Email / Phone label */}
+          {/* Email */}
           <div>
-            <label className="text-sm text-muted-foreground mb-2 block">
-              {mode === 'signup' ? 'Email/Phone number' : 'Email'}
-            </label>
+            <label className="text-sm text-muted-foreground mb-2 block">Email</label>
             <Input
               type="email"
-              placeholder="Email/Phone (without country code)"
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={cn(
-                "h-12 bg-background border-border focus:border-primary",
-                errors.email && "border-destructive"
-              )}
+              className={cn("h-12 bg-background border-border focus:border-primary", errors.email && "border-destructive")}
               required
             />
             {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
           </div>
 
-          {/* Password - only on login */}
-          {mode === 'login' && (
-            <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Password</label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className={cn(
-                    "h-12 pr-10 bg-background border-border focus:border-primary",
-                    errors.password && "border-destructive"
-                  )}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
-              </div>
-              {errors.password && <p className="text-sm text-destructive mt-1">{errors.password}</p>}
-              <div className="text-right mt-2">
-                <button type="button" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </button>
-              </div>
+          {/* Password - always shown */}
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">Password</label>
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder={mode === 'signup' ? 'Create a password (min 6 characters)' : 'Enter your password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={cn("h-12 pr-10 bg-background border-border focus:border-primary", errors.password && "border-destructive")}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
-          )}
+            {errors.password && <p className="text-sm text-destructive mt-1">{errors.password}</p>}
+            {mode === 'login' && (
+              <div className="text-right mt-2">
+                <button type="button" className="text-sm text-primary hover:underline">Forgot password?</button>
+              </div>
+            )}
+          </div>
 
           {/* Name - signup */}
           {mode === 'signup' && (
@@ -182,10 +184,7 @@ export default function Auth() {
                 placeholder="Enter your full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={cn(
-                  "h-12 bg-background border-border focus:border-primary",
-                  errors.name && "border-destructive"
-                )}
+                className={cn("h-12 bg-background border-border focus:border-primary", errors.name && "border-destructive")}
               />
               {errors.name && <p className="text-sm text-destructive mt-1">{errors.name}</p>}
             </div>
@@ -202,14 +201,18 @@ export default function Auth() {
               />
               <span className="text-sm text-foreground">
                 By creating an account, I agree to CryptoWave's{' '}
-                <button type="button" className="text-primary underline underline-offset-2 hover:text-primary/80">
+                <button
+                  type="button"
+                  onClick={() => navigate('/trading-risk-policy')}
+                  className="text-primary underline underline-offset-2 hover:text-primary/80"
+                >
                   Privacy Notice
                 </button>.
               </span>
             </label>
           )}
 
-          {/* Continue / Login Button */}
+          {/* Submit */}
           <Button
             type="submit"
             disabled={isLoading || (mode === 'signup' && !agreed)}
@@ -221,7 +224,7 @@ export default function Auth() {
                 {mode === 'login' ? 'Logging in...' : 'Creating account...'}
               </span>
             ) : (
-              mode === 'signup' ? 'Continue' : 'Log In'
+              mode === 'signup' ? 'Sign Up' : 'Log In'
             )}
           </Button>
 
@@ -237,7 +240,7 @@ export default function Auth() {
             <button
               type="button"
               className="w-full h-12 rounded-lg border border-border bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center gap-3 text-foreground font-medium"
-              onClick={() => toast({ title: 'Coming Soon', description: 'Google sign-in will be available soon' })}
+              onClick={handleGoogleSignIn}
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -265,16 +268,12 @@ export default function Auth() {
             {mode === 'signup' ? (
               <p className="text-sm text-muted-foreground">
                 Already have an account?{' '}
-                <button type="button" onClick={() => setMode('login')} className="text-primary font-semibold hover:underline">
-                  Log in
-                </button>
+                <button type="button" onClick={() => setMode('login')} className="text-primary font-semibold hover:underline">Log in</button>
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
                 Don't have an account?{' '}
-                <button type="button" onClick={() => setMode('signup')} className="text-primary font-semibold hover:underline">
-                  Sign up
-                </button>
+                <button type="button" onClick={() => setMode('signup')} className="text-primary font-semibold hover:underline">Sign up</button>
               </p>
             )}
           </div>

@@ -11,20 +11,20 @@ import { cn } from '@/lib/utils';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
 import { executeBotTrade, type BotStrategy } from '@/lib/tradingStrategies';
 import { supabase } from '@/integrations/supabase/client';
+import { getCoinIcon } from '@/data/coinIcons';
 import {
   Bot, Upload, Key, Settings2, Play, Square, Trash2,
-  ChevronDown, TrendingUp, Plus, Cpu
+  ChevronDown, Plus, Cpu, ScrollText
 } from 'lucide-react';
 
-// Crypto trading assets
 const tradingAssets = [
-  { symbol: 'BTCUSDT', name: 'Bitcoin', icon: '₿', basePrice: 98000 },
-  { symbol: 'ETHUSDT', name: 'Ethereum', icon: 'Ξ', basePrice: 3400 },
-  { symbol: 'SOLUSDT', name: 'Solana', icon: '◎', basePrice: 180 },
-  { symbol: 'BNBUSDT', name: 'BNB', icon: '◆', basePrice: 580 },
-  { symbol: 'XRPUSDT', name: 'Ripple', icon: '✕', basePrice: 0.52 },
-  { symbol: 'ADAUSDT', name: 'Cardano', icon: '₳', basePrice: 0.45 },
-  { symbol: 'DOGEUSDT', name: 'Dogecoin', icon: 'Ð', basePrice: 0.08 },
+  { symbol: 'BTCUSDT', name: 'Bitcoin', basePrice: 98000 },
+  { symbol: 'ETHUSDT', name: 'Ethereum', basePrice: 3400 },
+  { symbol: 'SOLUSDT', name: 'Solana', basePrice: 180 },
+  { symbol: 'BNBUSDT', name: 'BNB', basePrice: 580 },
+  { symbol: 'XRPUSDT', name: 'Ripple', basePrice: 0.52 },
+  { symbol: 'ADAUSDT', name: 'Cardano', basePrice: 0.45 },
+  { symbol: 'DOGEUSDT', name: 'Dogecoin', basePrice: 0.08 },
 ];
 
 const tradeIntervals = [
@@ -33,6 +33,17 @@ const tradeIntervals = [
   { label: '2 minutes', value: 120000 },
   { label: '5 minutes', value: 300000 },
 ];
+
+interface TradeLog {
+  id: string;
+  time: Date;
+  asset: string;
+  direction: 'BUY' | 'SELL';
+  stake: number;
+  result: 'WIN' | 'LOSS';
+  profit: number;
+  botName: string;
+}
 
 interface MyBot {
   id: string;
@@ -45,6 +56,26 @@ interface MyBot {
   totalPL: number;
   trades: number;
   wins: number;
+  payoutPercent: number; // 5% for custom, 50% for uploaded XML
+  source: 'custom' | 'upload' | 'passkey';
+}
+
+// Allowed XML bot names
+const ALLOWED_XML_BOTS = ['Crypto Printer Bot', 'Speed Scalper Bot'];
+
+function parseXmlBot(xmlText: string): { name: string; symbol: string; strategy: string } | null {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, 'text/xml');
+    const name = doc.querySelector('Name')?.textContent || '';
+    const symbol = doc.querySelector('Symbol')?.textContent || 'BTCUSDT';
+    const strategy = doc.querySelector('StrategyType')?.textContent || 'Trend';
+
+    if (!ALLOWED_XML_BOTS.includes(name)) return null;
+    return { name, symbol, strategy };
+  } catch {
+    return null;
+  }
 }
 
 export default function BotPage() {
@@ -53,21 +84,17 @@ export default function BotPage() {
   const { toast } = useToast();
   const { playTradeSound } = useTradingSound();
 
-  // Upload / Passkey
   const [passkey, setPasskey] = useState('');
-
-  // Bot Settings
   const [tradeAmount, setTradeAmount] = useState('10');
   const [selectedInterval, setSelectedInterval] = useState(tradeIntervals[1]);
   const [selectedAsset, setSelectedAsset] = useState(tradingAssets[0]);
   const [intervalOpen, setIntervalOpen] = useState(false);
   const [assetOpen, setAssetOpen] = useState(false);
-
-  // My Bots
   const [myBots, setMyBots] = useState<MyBot[]>([]);
+  const [tradeLogs, setTradeLogs] = useState<TradeLog[]>([]);
   const botIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Cleanup intervals on unmount
   useEffect(() => {
     return () => {
       botIntervalsRef.current.forEach((interval) => clearInterval(interval));
@@ -79,8 +106,6 @@ export default function BotPage() {
       toast({ title: 'Enter Passkey', description: 'Please enter a valid bot passkey', variant: 'destructive' });
       return;
     }
-
-    // Create a bot from passkey
     const newBot: MyBot = {
       id: Date.now().toString(),
       name: 'Pro Trading Bot',
@@ -92,41 +117,61 @@ export default function BotPage() {
       totalPL: 0,
       trades: 0,
       wins: 0,
+      payoutPercent: 5,
+      source: 'passkey',
     };
-
     setMyBots(prev => [...prev, newBot]);
     setPasskey('');
     toast({ title: 'Bot Added', description: 'Your trading bot has been activated' });
   };
 
-  const handleUpload = () => {
-    // Simulate file upload creating a bot
-    const newBot: MyBot = {
-      id: Date.now().toString(),
-      name: `Custom Bot v${(myBots.length + 1).toFixed(1)}`,
-      strategy: 'trend',
-      asset: selectedAsset,
-      tradeAmount: parseFloat(tradeAmount) || 10,
-      interval: selectedInterval.value,
-      status: 'idle',
-      totalPL: 0,
-      trades: 0,
-      wins: 0,
-    };
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.xml')) {
+      toast({ title: 'Invalid File', description: 'Please upload an XML bot file', variant: 'destructive' });
+      return;
+    }
 
-    setMyBots(prev => [...prev, newBot]);
-    toast({ title: 'Bot Uploaded', description: 'Your trading bot has been added' });
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const xmlText = ev.target?.result as string;
+      const parsed = parseXmlBot(xmlText);
+
+      if (!parsed) {
+        toast({ title: 'Unsupported Bot', description: 'Only Crypto Printer Bot and Speed Scalper Bot are supported', variant: 'destructive' });
+        return;
+      }
+
+      // Find matching asset
+      const matchAsset = tradingAssets.find(a => a.symbol === parsed.symbol) || tradingAssets[0];
+
+      const newBot: MyBot = {
+        id: Date.now().toString(),
+        name: parsed.name,
+        strategy: parsed.strategy.toLowerCase().includes('scalp') ? 'scalping' : 'trend',
+        asset: matchAsset,
+        tradeAmount: parseFloat(tradeAmount) || 10,
+        interval: selectedInterval.value,
+        status: 'idle',
+        totalPL: 0,
+        trades: 0,
+        wins: 0,
+        payoutPercent: 50,
+        source: 'upload',
+      };
+
+      setMyBots(prev => [...prev, newBot]);
+      toast({ title: 'Bot Uploaded!', description: `${parsed.name} has been loaded successfully` });
+    };
+    reader.readAsText(file);
+    // Reset file input
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const executeTrade = useCallback(async (botId: string) => {
-    setMyBots(prev => {
-      const bot = prev.find(b => b.id === botId);
-      if (!bot || bot.status !== 'running') return prev;
-      return prev;
-    });
-
     const bot = myBots.find(b => b.id === botId);
-    if (!bot) return;
+    if (!bot || bot.status !== 'running') return;
 
     if (currentBalance < bot.tradeAmount) {
       stopBot(botId);
@@ -137,10 +182,9 @@ export default function BotPage() {
     const outcome = getTradeOutcome({ accountType, userEmail });
     const isWin = outcome === 'win';
 
-    const result = executeBotTrade(bot.strategy, bot.tradeAmount, bot.asset.basePrice);
-    const minProfit = 0.15 + Math.random() * 0.50;
-    const baseProfit = Math.abs(result.netProfit) < minProfit ? minProfit : Math.abs(result.netProfit);
-    const actualProfit = isWin ? baseProfit : -baseProfit;
+    // Calculate profit based on payout percent
+    const payoutAmount = bot.tradeAmount * (bot.payoutPercent / 100);
+    const actualProfit = isWin ? payoutAmount : -payoutAmount;
 
     if (user) {
       const operation = actualProfit > 0 ? 'add' : 'subtract';
@@ -151,7 +195,6 @@ export default function BotPage() {
         return;
       }
 
-      // Log trade
       try {
         await supabase.from('transactions').insert({
           user_id: user.id,
@@ -170,14 +213,21 @@ export default function BotPage() {
 
     playTradeSound(isWin);
 
+    const log: TradeLog = {
+      id: Date.now().toString(),
+      time: new Date(),
+      asset: bot.asset.symbol,
+      direction: Math.random() > 0.5 ? 'BUY' : 'SELL',
+      stake: bot.tradeAmount,
+      result: isWin ? 'WIN' : 'LOSS',
+      profit: actualProfit,
+      botName: bot.name,
+    };
+    setTradeLogs(prev => [log, ...prev].slice(0, 100));
+
     setMyBots(prev => prev.map(b =>
       b.id === botId
-        ? {
-            ...b,
-            totalPL: b.totalPL + actualProfit,
-            trades: b.trades + 1,
-            wins: b.wins + (isWin ? 1 : 0),
-          }
+        ? { ...b, totalPL: b.totalPL + actualProfit, trades: b.trades + 1, wins: b.wins + (isWin ? 1 : 0) }
         : b
     ));
   }, [myBots, currentBalance, accountType, userEmail, user, updateBalance, toast, playTradeSound]);
@@ -192,16 +242,11 @@ export default function BotPage() {
     }
 
     setMyBots(prev => prev.map(b => b.id === botId ? { ...b, status: 'running' as const } : b));
-
-    // Execute first trade immediately
     setTimeout(() => executeTrade(botId), 500);
 
-    const interval = setInterval(() => {
-      executeTrade(botId);
-    }, bot.interval);
-
+    const interval = setInterval(() => executeTrade(botId), bot.interval);
     botIntervalsRef.current.set(botId, interval);
-    toast({ title: 'Bot Started', description: `${bot.name} is now trading` });
+    toast({ title: 'Bot Started', description: `${bot.name} is now trading continuously` });
   }, [myBots, currentBalance, executeTrade, toast]);
 
   const stopBot = useCallback((botId: string) => {
@@ -222,7 +267,6 @@ export default function BotPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <Header />
-
       <main className="px-4 py-4 space-y-4">
         {/* Balance Header */}
         <div className="flex items-center justify-between">
@@ -254,41 +298,36 @@ export default function BotPage() {
             <h2 className="text-base font-semibold text-foreground">Upload Your Trading Bot</h2>
           </div>
 
-          {/* Upload Area */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xml"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
           <button
-            onClick={handleUpload}
+            onClick={() => fileInputRef.current?.click()}
             className="w-full p-8 rounded-lg border-2 border-dashed border-border/70 flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-colors"
           >
             <Bot className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Click to upload or drag and drop</p>
+            <p className="text-sm text-muted-foreground">Click to upload XML bot file</p>
+            <p className="text-xs text-muted-foreground">Supports: Crypto Printer Bot, Speed Scalper Bot</p>
           </button>
 
-          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs text-muted-foreground">OR</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
-          {/* Passkey */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Key className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-foreground">Enter Your Trading Bot Passkey:</span>
             </div>
             <div className="flex gap-2">
-              <Input
-                value={passkey}
-                onChange={(e) => setPasskey(e.target.value)}
-                placeholder="ENTER PASSKEY"
-                className="bg-card border-border flex-1"
-              />
-              <Button
-                onClick={handleSubmitPasskey}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground px-4"
-              >
-                Submit Passkey
-              </Button>
+              <Input value={passkey} onChange={(e) => setPasskey(e.target.value)} placeholder="ENTER PASSKEY" className="bg-card border-border flex-1" />
+              <Button onClick={handleSubmitPasskey} className="bg-primary hover:bg-primary/90 text-primary-foreground px-4">Submit Passkey</Button>
             </div>
           </div>
         </div>
@@ -303,45 +342,27 @@ export default function BotPage() {
             </div>
           </div>
 
-          {/* Trade Amount */}
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">Trade Amount ($ min. $10)</label>
             <Input
-              type="text"
-              inputMode="decimal"
-              value={tradeAmount}
-              onChange={(e) => {
-                if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) {
-                  setTradeAmount(e.target.value);
-                }
-              }}
-              placeholder="10"
-              className="bg-card border-border"
+              type="text" inputMode="decimal" value={tradeAmount}
+              onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setTradeAmount(e.target.value); }}
+              placeholder="10" className="bg-card border-border"
             />
           </div>
 
-          {/* Trade Interval */}
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">Trade Interval</label>
             <div className="relative">
-              <button
-                onClick={() => setIntervalOpen(!intervalOpen)}
-                className="w-full flex items-center justify-between p-2.5 bg-card border border-border rounded-md text-sm text-foreground hover:border-primary transition-colors"
-              >
+              <button onClick={() => setIntervalOpen(!intervalOpen)} className="w-full flex items-center justify-between p-2.5 bg-card border border-border rounded-md text-sm text-foreground hover:border-primary transition-colors">
                 <span>{selectedInterval.label}</span>
                 <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", intervalOpen && "rotate-180")} />
               </button>
               {intervalOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-20">
+                <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border border-border rounded-md shadow-lg z-20">
                   {tradeIntervals.map((item) => (
-                    <button
-                      key={item.value}
-                      onClick={() => { setSelectedInterval(item); setIntervalOpen(false); }}
-                      className={cn(
-                        "w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors",
-                        selectedInterval.value === item.value ? "text-primary font-medium" : "text-foreground"
-                      )}
-                    >
+                    <button key={item.value} onClick={() => { setSelectedInterval(item); setIntervalOpen(false); }}
+                      className={cn("w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors", selectedInterval.value === item.value ? "text-primary font-medium" : "text-foreground")}>
                       {item.label}
                     </button>
                   ))}
@@ -350,32 +371,22 @@ export default function BotPage() {
             </div>
           </div>
 
-          {/* Trading Asset */}
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">Trading Asset</label>
             <div className="relative">
-              <button
-                onClick={() => setAssetOpen(!assetOpen)}
-                className="w-full flex items-center justify-between p-2.5 bg-card border border-border rounded-md text-sm text-foreground hover:border-primary transition-colors"
-              >
+              <button onClick={() => setAssetOpen(!assetOpen)} className="w-full flex items-center justify-between p-2.5 bg-card border border-border rounded-md text-sm text-foreground hover:border-primary transition-colors">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{selectedAsset.icon}</span>
+                  <img src={getCoinIcon(selectedAsset.symbol.replace('USDT', ''))} alt="" className="w-5 h-5 rounded-full" />
                   <span>{selectedAsset.symbol}</span>
                 </div>
                 <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", assetOpen && "rotate-180")} />
               </button>
               {assetOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg max-h-48 overflow-y-auto z-20">
+                <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border border-border rounded-md shadow-lg max-h-48 overflow-y-auto z-20">
                   {tradingAssets.map((asset) => (
-                    <button
-                      key={asset.symbol}
-                      onClick={() => { setSelectedAsset(asset); setAssetOpen(false); }}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50 transition-colors",
-                        selectedAsset.symbol === asset.symbol ? "text-primary font-medium" : "text-foreground"
-                      )}
-                    >
-                      <span className="text-lg">{asset.icon}</span>
+                    <button key={asset.symbol} onClick={() => { setSelectedAsset(asset); setAssetOpen(false); }}
+                      className={cn("w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50 transition-colors", selectedAsset.symbol === asset.symbol ? "text-primary font-medium" : "text-foreground")}>
+                      <img src={getCoinIcon(asset.symbol.replace('USDT', ''))} alt="" className="w-5 h-5 rounded-full" />
                       <span>{asset.symbol}</span>
                     </button>
                   ))}
@@ -397,34 +408,23 @@ export default function BotPage() {
               <div key={bot.id} className="p-4 rounded-xl bg-card border border-border/50 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                      <Bot className="h-5 w-5 text-muted-foreground" />
-                    </div>
+                    <img src={getCoinIcon(bot.asset.symbol.replace('USDT', ''))} alt="" className="w-10 h-10 rounded-full" />
                     <div>
                       <h3 className="font-semibold text-foreground">{bot.name}</h3>
-                      <p className="text-xs text-muted-foreground">v2.1</p>
+                      <p className="text-xs text-muted-foreground">{bot.asset.symbol} • {bot.payoutPercent}% payout</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary">
-                      balanced
+                      {bot.source}
                     </span>
-                    <span className={cn(
-                      "px-2 py-0.5 rounded-full text-xs font-medium",
-                      bot.status === 'running'
-                        ? "bg-success/20 text-success"
-                        : "bg-muted text-muted-foreground"
-                    )}>
+                    <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium",
+                      bot.status === 'running' ? "bg-success/20 text-success" : "bg-muted text-muted-foreground")}>
                       {bot.status}
                     </span>
                   </div>
                 </div>
 
-                <p className="text-sm text-muted-foreground">
-                  Professional algorithmic trading bot with advanced market analysis
-                </p>
-
-                {/* P/L display when running or has traded */}
                 {bot.trades > 0 && (
                   <div className="flex items-center gap-4 text-sm">
                     <span className={cn("font-medium", bot.totalPL >= 0 ? "text-success" : "text-destructive")}>
@@ -437,40 +437,55 @@ export default function BotPage() {
 
                 <div className="flex items-center gap-2">
                   {bot.status === 'idle' ? (
-                    <Button
-                      onClick={() => startBot(bot.id)}
-                      className="bg-success hover:bg-success/90 text-success-foreground"
-                      size="sm"
-                    >
-                      <Play className="h-4 w-4 mr-1" />
-                      Start
+                    <Button onClick={() => startBot(bot.id)} className="bg-success hover:bg-success/90 text-success-foreground" size="sm">
+                      <Play className="h-4 w-4 mr-1" />Start
                     </Button>
                   ) : (
-                    <Button
-                      onClick={() => stopBot(bot.id)}
-                      variant="destructive"
-                      size="sm"
-                    >
-                      <Square className="h-4 w-4 mr-1" />
-                      Stop
+                    <Button onClick={() => stopBot(bot.id)} variant="destructive" size="sm">
+                      <Square className="h-4 w-4 mr-1" />Stop
                     </Button>
                   )}
-                  <Button
-                    onClick={() => deleteBot(bot.id)}
-                    variant="outline"
-                    size="sm"
-                    disabled={bot.status === 'running'}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
+                  <Button onClick={() => deleteBot(bot.id)} variant="outline" size="sm" disabled={bot.status === 'running'}>
+                    <Trash2 className="h-4 w-4 mr-1" />Delete
                   </Button>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </main>
 
+        {/* Trade Logs */}
+        {tradeLogs.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <ScrollText className="h-5 w-5 text-primary" />
+              <h2 className="text-base font-semibold text-foreground">Trade Logs</h2>
+            </div>
+            <div className="rounded-xl bg-card border border-border/50 overflow-hidden max-h-64 overflow-y-auto">
+              {tradeLogs.map((log) => (
+                <div key={log.id} className="flex items-center justify-between px-4 py-2.5 border-b border-border/30 last:border-0 text-sm">
+                  <div className="flex items-center gap-2">
+                    <img src={getCoinIcon(log.asset.replace('USDT', ''))} alt="" className="w-5 h-5 rounded-full" />
+                    <span className="text-foreground font-medium">{log.asset}</span>
+                    <span className={cn("text-xs px-1.5 py-0.5 rounded", log.direction === 'BUY' ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive")}>
+                      {log.direction}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground">${log.stake}</span>
+                    <span className={cn("font-medium", log.result === 'WIN' ? "text-success" : "text-destructive")}>
+                      {log.profit >= 0 ? '+' : ''}${log.profit.toFixed(2)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {log.time.toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
       <BottomNav />
     </div>
   );

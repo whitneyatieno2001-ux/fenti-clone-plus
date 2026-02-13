@@ -27,6 +27,7 @@ import Privacy from "./pages/Privacy";
 import HelpSupport from "./pages/HelpSupport";
 import Settings from "./pages/Settings";
 import KycVerification from "./pages/KycVerification";
+import TradingRiskPolicy from "./pages/TradingRiskPolicy";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/support" element={<HelpSupport />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/kyc" element={<KycVerification />} />
+              <Route path="/trading-risk-policy" element={<TradingRiskPolicy />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
