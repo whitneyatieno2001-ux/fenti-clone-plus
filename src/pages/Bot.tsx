@@ -13,7 +13,7 @@ import { executeBotTrade, type BotStrategy } from '@/lib/tradingStrategies';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Bot, Upload, Key, Settings2, Play, Square, Trash2,
-  ChevronDown, TrendingUp
+  ChevronDown, TrendingUp, Plus, Cpu
 } from 'lucide-react';
 
 // Crypto trading assets
@@ -237,6 +237,15 @@ export default function BotPage() {
             </p>
           </div>
         </div>
+
+        {/* Create Custom Bot */}
+        <Button
+          onClick={() => navigate('/create-bot')}
+          className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Create Custom Bot
+        </Button>
 
         {/* Upload Your Trading Bot */}
         <div className="p-4 rounded-xl bg-card border border-border/50 space-y-4">
