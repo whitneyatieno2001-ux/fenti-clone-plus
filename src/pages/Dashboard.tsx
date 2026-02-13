@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { PageLoader } from '@/components/PageLoader';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { TransactionModal } from '@/components/TransactionModal';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { useAccount } from '@/contexts/AccountContext';
 import { formatPrice, formatChange } from '@/data/cryptoData';
+import { getCoinIcon } from '@/data/coinIcons';
 import { cn } from '@/lib/utils';
 import { 
   Eye, EyeOff, ArrowDownToLine, ArrowUpFromLine, 
@@ -39,6 +41,7 @@ export default function Dashboard() {
   ];
 
   return (
+    <PageLoader>
     <div className="min-h-screen bg-background pb-20">
       <Header />
       
@@ -133,11 +136,8 @@ export default function Dashboard() {
                   className="grid grid-cols-[2fr_1fr_1fr] items-center py-3 border-b border-border/50 cursor-pointer hover:bg-secondary/50 transition-colors"
                 >
                   <div className="flex items-center gap-2 pl-1">
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-                      style={{ backgroundColor: `${crypto.color}20`, color: crypto.color }}
-                    >
-                      {crypto.icon}
+                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-muted">
+                      <img src={getCoinIcon(crypto.symbol)} alt={crypto.symbol} className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-semibold text-sm text-foreground">{crypto.symbol}</p>
@@ -227,5 +227,6 @@ export default function Dashboard() {
         type={modalType || 'deposit'}
       />
     </div>
+    </PageLoader>
   );
 }
