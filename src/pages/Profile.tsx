@@ -37,7 +37,7 @@ export default function Profile() {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/auth');
+    navigate('/');
   };
 
   const handleResetDemo = async () => {
