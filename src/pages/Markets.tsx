@@ -182,8 +182,8 @@ export default function Markets() {
                   <td className={crypto.change24h >= 0 ? 'eczex-text-green' : 'eczex-text-red'}>
                     {crypto.change24h >= 0 ? '+' : ''}{crypto.change24h.toFixed(2)}%
                   </td>
-                  <td className="eczex-col-vol">--</td>
-                  <td className="eczex-col-mcap">--</td>
+                  <td className="eczex-col-vol">{crypto.volume24h}</td>
+                  <td className="eczex-col-mcap">{crypto.marketCap}</td>
                   <td className="eczex-col-actions">
                     <div className="eczex-action-cell">
                       <span className="eczex-trade-btn" onClick={() => navigate(`/trade/${crypto.id}`)}>Trade</span>
