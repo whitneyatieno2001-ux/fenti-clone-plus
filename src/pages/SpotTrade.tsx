@@ -66,6 +66,7 @@ export default function SpotTrade() {
   const [asks, setAsks] = useState<OrderBookEntry[]>([]);
   const [bids, setBids] = useState<OrderBookEntry[]>([]);
   const [marketTrades, setMarketTrades] = useState<MarketTrade[]>([]);
+  const [chartInterval, setChartInterval] = useState('15');
 
   const selectedCrypto = getCryptoWithPrice(cryptoAssets.find(c => c.id === selectedPairId) || cryptoAssets[0]);
   const pairSymbol = `${selectedCrypto.symbol}/USDT`;
@@ -308,17 +309,28 @@ export default function SpotTrade() {
           {/* CENTER: Chart + Trading Form */}
           <div className="flex flex-col">
             {/* Chart Toolbar */}
-            <div className="bg-white border border-t-0 flex items-center gap-4 px-3 py-2 text-xs" style={{ borderColor: '#eaecef', color: '#707a8a' }}>
-              <span>Time</span>
-              <span className="font-semibold" style={{ color: '#f0b90b' }}>15m</span>
-              <span>1H</span>
-              <span>4H</span>
-              <span>1D</span>
-              <span>1W</span>
-              <div className="w-px h-3.5 bg-gray-200" />
-              <span>Original</span>
+            <div className="bg-white border border-t-0 flex items-center gap-1 px-3 py-2 text-xs" style={{ borderColor: '#eaecef', color: '#707a8a' }}>
+              <span className="mr-1">Time</span>
+              {[
+                { label: '1m', value: '1' },
+                { label: '5m', value: '5' },
+                { label: '15m', value: '15' },
+                { label: '1H', value: '60' },
+                { label: '4H', value: '240' },
+                { label: '1D', value: 'D' },
+                { label: '1W', value: 'W' },
+              ].map(tf => (
+                <span
+                  key={tf.value}
+                  onClick={() => setChartInterval(tf.value)}
+                  className={cn("cursor-pointer px-2 py-1 rounded transition-colors", chartInterval === tf.value ? "font-semibold" : "hover:text-[#1e2329]")}
+                  style={chartInterval === tf.value ? { color: '#f0b90b' } : {}}
+                >
+                  {tf.label}
+                </span>
+              ))}
+              <div className="w-px h-3.5 bg-gray-200 mx-1" />
               <span className="font-semibold" style={{ color: '#f0b90b' }}>TradingView</span>
-              <span>Depth</span>
             </div>
 
             {/* Chart Area */}
@@ -327,6 +339,7 @@ export default function SpotTrade() {
                 symbol={`${selectedCrypto.symbol}/USD`} 
                 theme="light" 
                 height={400} 
+                interval={chartInterval}
               />
             </div>
 
@@ -644,12 +657,36 @@ export default function SpotTrade() {
 
           {/* Mobile Content */}
           {mobileTab === 'chart' && (
-            <div className="bg-white mx-2 mt-2 rounded border overflow-hidden" style={{ borderColor: '#eaecef', height: 300 }}>
-              <TradingViewWidget 
-                symbol={`${selectedCrypto.symbol}/USD`} 
-                theme="light" 
-                height={300} 
-              />
+            <div className="bg-white mx-2 mt-2 rounded border overflow-hidden" style={{ borderColor: '#eaecef' }}>
+              {/* Mobile timeframe selector */}
+              <div className="flex items-center gap-1 px-3 py-2 text-xs border-b" style={{ borderColor: '#eaecef', color: '#707a8a' }}>
+                {[
+                  { label: '1m', value: '1' },
+                  { label: '5m', value: '5' },
+                  { label: '15m', value: '15' },
+                  { label: '1H', value: '60' },
+                  { label: '4H', value: '240' },
+                  { label: '1D', value: 'D' },
+                  { label: '1W', value: 'W' },
+                ].map(tf => (
+                  <span
+                    key={tf.value}
+                    onClick={() => setChartInterval(tf.value)}
+                    className={cn("cursor-pointer px-2 py-1 rounded", chartInterval === tf.value ? "font-semibold" : "")}
+                    style={chartInterval === tf.value ? { color: '#f0b90b' } : {}}
+                  >
+                    {tf.label}
+                  </span>
+                ))}
+              </div>
+              <div style={{ height: 280 }}>
+                <TradingViewWidget 
+                  symbol={`${selectedCrypto.symbol}/USD`} 
+                  theme="light" 
+                  height={280} 
+                  interval={chartInterval}
+                />
+              </div>
             </div>
           )}
 
