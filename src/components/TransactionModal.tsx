@@ -400,7 +400,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               </div>
 
               {/* Details Card */}
-              <div className="w-full rounded-lg p-5 mb-8" style={{ backgroundColor: 'var(--bg-alt, #F5F5F5)' }}>
+              <div className="w-full rounded-lg p-5 mb-8 bg-secondary">
                 <div className="flex justify-between items-start mb-4 text-[13px]">
                   <span className="text-muted-foreground">Merchant Name</span>
                   <span className="font-medium text-foreground">Crypto Wave</span>
@@ -969,7 +969,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               <span className="text-lg font-medium text-foreground ml-0.5">USD</span>
             </div>
 
-            <div className="w-full rounded-lg p-5 mb-8" style={{ backgroundColor: 'var(--bg-alt, #F5F5F5)' }}>
+            <div className="w-full rounded-lg p-5 mb-8 bg-secondary">
               <div className="flex justify-between items-start mb-4 text-[13px]">
                 <span className="text-muted-foreground">Merchant Name</span>
                 <span className="font-medium text-foreground">Crypto Wave</span>
