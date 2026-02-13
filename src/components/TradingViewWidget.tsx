@@ -4,9 +4,10 @@ interface TradingViewWidgetProps {
   symbol: string;
   theme?: 'light' | 'dark';
   height?: number;
+  interval?: string;
 }
 
-function TradingViewWidgetComponent({ symbol, theme = 'dark', height = 400 }: TradingViewWidgetProps) {
+function TradingViewWidgetComponent({ symbol, theme = 'dark', height = 400, interval = 'D' }: TradingViewWidgetProps) {
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,7 +77,7 @@ function TradingViewWidgetComponent({ symbol, theme = 'dark', height = 400 }: Tr
     script.innerHTML = JSON.stringify({
       autosize: true,
       symbol: getTradingViewSymbol(symbol),
-      interval: 'D',
+      interval: interval,
       timezone: 'Etc/UTC',
       theme: theme,
       style: '1',
@@ -107,7 +108,7 @@ function TradingViewWidgetComponent({ symbol, theme = 'dark', height = 400 }: Tr
         container.current.innerHTML = '';
       }
     };
-  }, [symbol, theme, height]);
+  }, [symbol, theme, height, interval]);
 
   return (
     <div className="tradingview-widget-container" ref={container} style={{ height: `${height}px`, width: '100%' }}>
