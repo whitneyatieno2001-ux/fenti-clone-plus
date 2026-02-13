@@ -44,6 +44,9 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [feedbackText, setFeedbackText] = useState('');
   const [lastDepositAmount, setLastDepositAmount] = useState('');
   const [lastPaymentMethod, setLastPaymentMethod] = useState('');
+  const [withdrawStatus, setWithdrawStatus] = useState<'form' | 'success'>('form');
+  const [lastWithdrawAmount, setLastWithdrawAmount] = useState('');
+  const [lastWithdrawMethod, setLastWithdrawMethod] = useState('');
   const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit } = useAccount();
   const { toast } = useToast();
 
@@ -67,6 +70,9 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       setFeedbackText('');
       setLastDepositAmount('');
       setLastPaymentMethod('');
+      setWithdrawStatus('form');
+      setLastWithdrawAmount('');
+      setLastWithdrawMethod('');
     }
   }, [isOpen]);
 
@@ -322,15 +328,12 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       if (error) throw error;
 
       if (data.success) {
-        toast({
-          title: "Withdrawal Initiated!",
-          description: data.message,
-        });
-
         await withdraw(numAmount);
+        setLastWithdrawAmount(numAmount.toFixed(2));
+        setLastWithdrawMethod(withdrawMethod === 'mpesa' ? 'M-Pesa' : 'Crypto Wallet');
+        setWithdrawStatus('success');
         setAmount('');
         setPhoneNumber('');
-        onClose();
       } else {
         throw new Error(data.error || 'Transaction failed');
       }
@@ -942,328 +945,367 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-foreground">
-            {(withdrawCategory !== 'select' || withdrawMethod) && (
-              <Button variant="ghost" size="icon" onClick={goBack} className="h-8 w-8 mr-1">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            )}
-            <ArrowUpFromLine className="h-5 w-5 text-primary" />
-            Withdraw Funds
-          </DialogTitle>
-        </DialogHeader>
+        {withdrawStatus === 'success' ? (
+          <div className="flex flex-col items-center px-2 py-6" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}>
+            {/* Icon Composition */}
+            <div className="relative flex justify-center items-center mb-6" style={{ width: 90, height: 90 }}>
+              <div className="absolute rounded-full" style={{ width: 80, height: 80, background: 'linear-gradient(180deg, rgba(14, 203, 129, 0.15) 0%, rgba(14, 203, 129, 0.05) 100%)' }} />
+              <div className="absolute rounded-full" style={{ width: 4, height: 4, top: 15, left: 18, backgroundColor: '#0ECB81', opacity: 0.4 }} />
+              <div className="absolute rounded-full" style={{ width: 3, height: 3, top: 10, right: 20, backgroundColor: '#0ECB81', opacity: 0.6 }} />
+              <div className="absolute rounded-full" style={{ width: 4, height: 4, bottom: 15, right: 15, backgroundColor: '#0ECB81', opacity: 0.5 }} />
+              <div className="relative z-10 flex justify-center items-center rounded-full" style={{ width: 56, height: 56, backgroundColor: '#0ECB81', boxShadow: '0 4px 10px rgba(14, 203, 129, 0.25)' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              </div>
+            </div>
 
-        <div className="space-y-6 py-4">
-          {/* Demo Account Warning */}
-          {accountType === 'demo' && (
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-amber-500">Demo Account</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Withdrawals are only available from your Real account. Please switch to your Real account to withdraw funds.
+            <div className="text-base font-medium text-foreground mb-2">Withdrawal Successful</div>
+
+            <div className="flex items-baseline justify-center mb-8">
+              <span className="text-[32px] font-bold text-foreground" style={{ letterSpacing: '-0.5px' }}>
+                {lastWithdrawAmount || '0.00'}
+              </span>
+              <span className="text-lg font-medium text-foreground ml-0.5">USD</span>
+            </div>
+
+            <div className="w-full rounded-lg p-5 mb-8" style={{ backgroundColor: 'var(--bg-alt, #F5F5F5)' }}>
+              <div className="flex justify-between items-start mb-4 text-[13px]">
+                <span className="text-muted-foreground">Merchant Name</span>
+                <span className="font-medium text-foreground">Crypto Wave</span>
+              </div>
+              <div className="flex justify-between items-start mb-4 text-[13px]">
+                <span className="text-muted-foreground">Product Name</span>
+                <span className="font-medium text-foreground">Withdrawal</span>
+              </div>
+              <div className="flex justify-between items-start mb-4 text-[13px]">
+                <span className="text-muted-foreground">Date</span>
+                <span className="font-medium text-foreground">{new Date().toLocaleTimeString('en-US', { hour12: false })}</span>
+              </div>
+              <div className="flex justify-between items-start mb-4 text-[13px]">
+                <span className="text-muted-foreground">Payment Method</span>
+                <span className="font-medium text-foreground">{lastWithdrawMethod || 'Spot Wallet'}</span>
+              </div>
+              <div className="flex justify-between items-start text-[13px]">
+                <span className="text-muted-foreground">Currency</span>
+                <span className="font-medium text-foreground">{lastWithdrawAmount || '0.00'} USD</span>
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-full py-4 rounded font-medium text-[15px] mb-6 transition-colors"
+              style={{ backgroundColor: '#FCD535', color: '#1E2329' }}
+              onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#F0CA30')}
+              onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#FCD535')}
+            >
+              Back to Wallet
+            </button>
+
+            <div className="text-[13px] text-muted-foreground text-center">
+              Need help? <a href="/support" className="font-medium" style={{ color: '#C99400' }}>Contact Support</a>
+            </div>
+          </div>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-foreground">
+                {(withdrawCategory !== 'select' || withdrawMethod) && (
+                  <Button variant="ghost" size="icon" onClick={goBack} className="h-8 w-8 mr-1">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                )}
+                <ArrowUpFromLine className="h-5 w-5 text-primary" />
+                Withdraw Funds
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {/* Demo Account Warning */}
+              {accountType === 'demo' && (
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-amber-500">Demo Account</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Withdrawals are only available from your Real account. Please switch to your Real account to withdraw funds.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Current Balance */}
+              <div className="p-4 rounded-xl bg-secondary/50">
+                <p className="text-sm text-muted-foreground">Current Balance ({accountType})</p>
+                <p className="text-2xl font-bold text-foreground">
+                  ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+
+              {/* Category Selection - Only show if Real account */}
+              {withdrawCategory === 'select' && accountType === 'real' && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground">Select Withdrawal Method</p>
+
+                  <button
+                    onClick={() => setWithdrawCategory('crypto')}
+                    className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
+                  >
+                    <div className="flex items-center gap-3 p-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Bitcoin className="h-5 w-5 text-success" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[15px] font-semibold text-foreground">Crypto Payments</p>
+                        <p className="text-[13px] text-muted-foreground">≈ 0.5% Fee</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setWithdrawCategory('mobile')}
+                    className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
+                  >
+                    <div className="flex items-center gap-3 p-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Wallet className="h-5 w-5 text-success" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[15px] font-semibold text-foreground">Mobile Money</p>
+                        <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setWithdrawCategory('card')}
+                    className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
+                  >
+                    <div className="flex items-center gap-3 p-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[15px] font-semibold text-foreground">Card / Bank</p>
+                        <p className="text-[13px] text-muted-foreground">≈ 1.8% Fee</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {/* Crypto Options */}
+              {withdrawCategory === 'crypto' && !withdrawMethod && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground">Select Crypto Provider</p>
+                  <button
+                    onClick={() => setWithdrawMethod('binance')}
+                    className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
+                  >
+                    <div className="flex items-center gap-3 p-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <span className="text-lg font-bold text-primary">B</span>
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[15px] font-semibold text-foreground">Binance</p>
+                        <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {/* Card Category */}
+              {withdrawCategory === 'card' && !withdrawMethod && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                    <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
+                      <CreditCard className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Card / Bank Withdrawal</p>
+                      <p className="text-xs text-muted-foreground">Coming Soon</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                    <p className="text-xs text-amber-500">
+                      Card and bank withdrawals will be available soon. Please use M-Pesa for now.
+                    </p>
+                  </div>
+                  <Button disabled className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white font-semibold disabled:opacity-50">
+                    Coming Soon
+                  </Button>
+                </div>
+              )}
+
+              {/* Binance Withdraw (Coming Soon) */}
+              {withdrawMethod === 'binance' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+                    <div className="h-12 w-12 rounded-full bg-yellow-500 flex items-center justify-center">
+                      <span className="text-xl font-bold text-black">B</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Binance Pay</p>
+                      <p className="text-xs text-muted-foreground">Coming Soon</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                    <p className="text-xs text-amber-500">
+                      Binance Pay withdrawals will be available soon. Please use M-Pesa for now.
+                    </p>
+                  </div>
+                  <Button disabled className="w-full h-14 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold disabled:opacity-50">
+                    Coming Soon
+                  </Button>
+                </div>
+              )}
+
+              {/* Mobile Money Options */}
+              {withdrawCategory === 'mobile' && !withdrawMethod && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground">Select Provider</p>
+                  <button
+                    onClick={() => setWithdrawMethod('mpesa')}
+                    className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
+                  >
+                    <div className="flex items-center gap-3 p-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Smartphone className="h-5 w-5 text-success" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[15px] font-semibold text-foreground">M-Pesa</p>
+                        <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setWithdrawMethod('airtel')}
+                    className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
+                  >
+                    <div className="flex items-center gap-3 p-4">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Smartphone className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[15px] font-semibold text-foreground">Airtel Money</p>
+                        <p className="text-[13px] text-muted-foreground">Coming Soon</p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {/* M-Pesa Withdraw Form */}
+              {withdrawMethod === 'mpesa' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+                    <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
+                      <Smartphone className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">M-Pesa</p>
+                      <p className="text-xs text-muted-foreground">Safaricom Mobile Money</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                      M-Pesa Phone Number
+                    </label>
+                    <Input
+                      type="tel"
+                      placeholder="e.g., 0712345678"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="text-lg h-12 bg-input border-border"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter the phone number registered with M-Pesa
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                      Amount (USD)
+                    </label>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Enter amount"
+                      value={amount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setAmount(val);
+                        }
+                      }}
+                      className="text-lg h-12 bg-input border-border"
+                    />
+                    <div className="flex gap-2 mt-3">
+                      {quickAmounts.map((qa) => (
+                        <button
+                          key={qa}
+                          onClick={() => setAmount(qa.toString())}
+                          className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
+                        >
+                          ${qa}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleWithdraw}
+                    disabled={isLoading || !amount || !phoneNumber}
+                    className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center"
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : (
+                      <span>Withdraw ${amount ? parseFloat(amount).toFixed(2) : '0.00'}</span>
+                    )}
+                  </Button>
+
+                  <p className="text-xs text-center text-muted-foreground">
+                    Funds will be sent to your M-Pesa account within a few minutes
                   </p>
                 </div>
-              </div>
+              )}
+
+              {/* Airtel Money (Coming Soon) */}
+              {withdrawMethod === 'airtel' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                    <div className="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center">
+                      <Smartphone className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Airtel Money</p>
+                      <p className="text-xs text-muted-foreground">Coming Soon</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                    <p className="text-xs text-amber-500">
+                      Airtel Money withdrawals will be available soon. Please use M-Pesa for now.
+                    </p>
+                  </div>
+                  <Button disabled className="w-full h-14 bg-red-500 hover:bg-red-600 text-white font-semibold disabled:opacity-50">
+                    Coming Soon
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
-
-          {/* Current Balance */}
-          <div className="p-4 rounded-xl bg-secondary/50">
-            <p className="text-sm text-muted-foreground">Current Balance ({accountType})</p>
-            <p className="text-2xl font-bold text-foreground">
-              ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </p>
-          </div>
-
-          {/* Category Selection - Only show if Real account */}
-          {withdrawCategory === 'select' && accountType === 'real' && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">Select Withdrawal Method</p>
-
-              {/* Crypto Option */}
-              <button
-                onClick={() => setWithdrawCategory('crypto')}
-                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
-              >
-                <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Bitcoin className="h-5 w-5 text-success" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[15px] font-semibold text-foreground">Crypto Payments</p>
-                    <p className="text-[13px] text-muted-foreground">≈ 0.5% Fee</p>
-                  </div>
-                </div>
-              </button>
-
-              {/* Mobile Money Option */}
-              <button
-                onClick={() => setWithdrawCategory('mobile')}
-                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
-              >
-                <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Wallet className="h-5 w-5 text-success" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[15px] font-semibold text-foreground">Mobile Money</p>
-                    <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
-                  </div>
-                </div>
-              </button>
-
-              {/* Card Option */}
-              <button
-                onClick={() => setWithdrawCategory('card')}
-                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
-              >
-                <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[15px] font-semibold text-foreground">Card / Bank</p>
-                    <p className="text-[13px] text-muted-foreground">≈ 1.8% Fee</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          )}
-
-          {/* Crypto Options */}
-          {withdrawCategory === 'crypto' && !withdrawMethod && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">Select Crypto Provider</p>
-
-              <button
-                onClick={() => setWithdrawMethod('binance')}
-                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
-              >
-                <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <span className="text-lg font-bold text-primary">B</span>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[15px] font-semibold text-foreground">Binance</p>
-                    <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          )}
-
-          {/* Card Category */}
-          {withdrawCategory === 'card' && !withdrawMethod && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                <div className="h-12 w-12 rounded-full bg-purple-600 flex items-center justify-center">
-                  <CreditCard className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">Card / Bank Withdrawal</p>
-                  <p className="text-xs text-muted-foreground">Coming Soon</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                <p className="text-xs text-amber-500">
-                  Card and bank withdrawals will be available soon. Please use M-Pesa for now.
-                </p>
-              </div>
-
-              <Button
-                disabled
-                className="w-full h-14 bg-purple-600 hover:bg-purple-700 text-white font-semibold disabled:opacity-50"
-              >
-                Coming Soon
-              </Button>
-            </div>
-          )}
-
-          {/* Binance Withdraw (Coming Soon) */}
-          {withdrawMethod === 'binance' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-                <div className="h-12 w-12 rounded-full bg-yellow-500 flex items-center justify-center">
-                  <span className="text-xl font-bold text-black">B</span>
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">Binance Pay</p>
-                  <p className="text-xs text-muted-foreground">Coming Soon</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                <p className="text-xs text-amber-500">
-                  Binance Pay withdrawals will be available soon. Please use M-Pesa for now.
-                </p>
-              </div>
-
-              <Button
-                disabled
-                className="w-full h-14 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold disabled:opacity-50"
-              >
-                Coming Soon
-              </Button>
-            </div>
-          )}
-
-          {/* Mobile Money Options */}
-          {withdrawCategory === 'mobile' && !withdrawMethod && (
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-muted-foreground">Select Provider</p>
-
-              {/* M-Pesa */}
-              <button
-                onClick={() => setWithdrawMethod('mpesa')}
-                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
-              >
-                <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Smartphone className="h-5 w-5 text-success" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[15px] font-semibold text-foreground">M-Pesa</p>
-                    <p className="text-[13px] text-muted-foreground">≈ 0 Fee</p>
-                  </div>
-                </div>
-              </button>
-
-              {/* Airtel Money */}
-              <button
-                onClick={() => setWithdrawMethod('airtel')}
-                className="w-full relative bg-card border border-border rounded hover:-translate-y-0.5 hover:shadow-lg hover:border-primary transition-all"
-              >
-                <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Smartphone className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[15px] font-semibold text-foreground">Airtel Money</p>
-                    <p className="text-[13px] text-muted-foreground">Coming Soon</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          )}
-
-          {/* M-Pesa Withdraw Form */}
-          {withdrawMethod === 'mpesa' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
-                <div className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center">
-                  <Smartphone className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">M-Pesa</p>
-                  <p className="text-xs text-muted-foreground">Safaricom Mobile Money</p>
-                </div>
-              </div>
-
-              {/* Phone Number Input */}
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  M-Pesa Phone Number
-                </label>
-                <Input
-                  type="tel"
-                  placeholder="e.g., 0712345678"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="text-lg h-12 bg-input border-border"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enter the phone number registered with M-Pesa
-                </p>
-              </div>
-
-              {/* Amount Input */}
-              <div>
-                <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                  Amount (USD)
-                </label>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                      setAmount(val);
-                    }
-                  }}
-                  className="text-lg h-12 bg-input border-border"
-                />
-                <div className="flex gap-2 mt-3">
-                  {quickAmounts.map((qa) => (
-                    <button
-                      key={qa}
-                      onClick={() => setAmount(qa.toString())}
-                      className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
-                    >
-                      ${qa}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                onClick={handleWithdraw}
-                disabled={isLoading || !amount || !phoneNumber}
-                className="w-full h-14 bg-green-600 hover:bg-green-700 text-white font-semibold flex items-center justify-center"
-              >
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Processing...
-                  </span>
-                ) : (
-                  <span>Withdraw ${amount ? parseFloat(amount).toFixed(2) : '0.00'}</span>
-                )}
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground">
-                Funds will be sent to your M-Pesa account within a few minutes
-              </p>
-            </div>
-          )}
-
-          {/* Airtel Money (Coming Soon) */}
-          {withdrawMethod === 'airtel' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-                <div className="h-12 w-12 rounded-full bg-red-500 flex items-center justify-center">
-                  <Smartphone className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">Airtel Money</p>
-                  <p className="text-xs text-muted-foreground">Coming Soon</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                <p className="text-xs text-amber-500">
-                  Airtel Money withdrawals will be available soon. Please use M-Pesa for now.
-                </p>
-              </div>
-
-              <Button
-                disabled
-                className="w-full h-14 bg-red-500 hover:bg-red-600 text-white font-semibold disabled:opacity-50"
-              >
-                Coming Soon
-              </Button>
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
