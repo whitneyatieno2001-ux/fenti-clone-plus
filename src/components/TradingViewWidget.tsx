@@ -31,11 +31,22 @@ function TradingViewWidgetComponent({ symbol, theme = 'dark', height = 400 }: Tr
         'BTC/USD': 'BINANCE:BTCUSDT',
         'ETH/USD': 'BINANCE:ETHUSDT',
         'SOL/USD': 'BINANCE:SOLUSDT',
+        'BNB/USD': 'BINANCE:BNBUSDT',
         'XRP/USD': 'BINANCE:XRPUSDT',
         'ADA/USD': 'BINANCE:ADAUSDT',
         'DOGE/USD': 'BINANCE:DOGEUSDT',
         'DOT/USD': 'BINANCE:DOTUSDT',
         'LINK/USD': 'BINANCE:LINKUSDT',
+        'AVAX/USD': 'BINANCE:AVAXUSDT',
+        'MATIC/USD': 'BINANCE:MATICUSDT',
+        'UNI/USD': 'BINANCE:UNIUSDT',
+        'LTC/USD': 'BINANCE:LTCUSDT',
+        'NEAR/USD': 'BINANCE:NEARUSDT',
+        'APT/USD': 'BINANCE:APTUSDT',
+        'ATOM/USD': 'BINANCE:ATOMUSDT',
+        'FIL/USD': 'BINANCE:FILUSDT',
+        'ARB/USD': 'BINANCE:ARBUSDT',
+        'OP/USD': 'BINANCE:OPUSDT',
         'XAU/USD': 'TVC:GOLD',
         'XAG/USD': 'TVC:SILVER',
         'WTI/USD': 'TVC:USOIL',
@@ -55,7 +66,7 @@ function TradingViewWidgetComponent({ symbol, theme = 'dark', height = 400 }: Tr
         'NVDA': 'NASDAQ:NVDA',
         'META': 'NASDAQ:META',
       };
-      return symbolMap[sym] || 'FX:EURUSD';
+      return symbolMap[sym] || `BINANCE:${sym.replace('/', '')}USDT`;
     };
 
     const script = document.createElement('script');

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { TradingViewWidget } from '@/components/TradingViewWidget';
 import { useAccount } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
@@ -321,19 +322,12 @@ export default function SpotTrade() {
             </div>
 
             {/* Chart Area */}
-            <div className="bg-white border border-t-0 flex items-center justify-center" style={{ borderColor: '#eaecef', height: 400 }}>
-              <div className="w-full h-full flex items-center justify-center" style={{ color: '#b7bdc6' }}>
-                <div className="text-center">
-                  <div className="text-4xl mb-2">{selectedCrypto.icon}</div>
-                  <div className="text-lg font-semibold" style={{ color: '#1e2329' }}>{pairSymbol}</div>
-                  <div className={cn("text-2xl font-bold mt-1", change24h >= 0 ? "text-[#0ecb81]" : "text-[#f6465d]")}>
-                    {formatOBPrice(currentPrice)}
-                  </div>
-                  <div className={cn("text-sm", change24h >= 0 ? "text-[#0ecb81]" : "text-[#f6465d]")}>
-                    {change24h >= 0 ? '+' : ''}{change24h.toFixed(2)}%
-                  </div>
-                </div>
-              </div>
+            <div className="bg-white border border-t-0" style={{ borderColor: '#eaecef', height: 400 }}>
+              <TradingViewWidget 
+                symbol={`${selectedCrypto.symbol}/USD`} 
+                theme="light" 
+                height={400} 
+              />
             </div>
 
             {/* Trading Form */}
@@ -650,14 +644,12 @@ export default function SpotTrade() {
 
           {/* Mobile Content */}
           {mobileTab === 'chart' && (
-            <div className="bg-white mx-2 mt-2 rounded border flex items-center justify-center" style={{ borderColor: '#eaecef', height: 300 }}>
-              <div className="text-center">
-                <div className="text-4xl mb-2">{selectedCrypto.icon}</div>
-                <div className="text-lg font-semibold" style={{ color: '#1e2329' }}>{pairSymbol}</div>
-                <div className={cn("text-2xl font-bold mt-1", change24h >= 0 ? "text-[#0ecb81]" : "text-[#f6465d]")}>
-                  {formatOBPrice(currentPrice)}
-                </div>
-              </div>
+            <div className="bg-white mx-2 mt-2 rounded border overflow-hidden" style={{ borderColor: '#eaecef', height: 300 }}>
+              <TradingViewWidget 
+                symbol={`${selectedCrypto.symbol}/USD`} 
+                theme="light" 
+                height={300} 
+              />
             </div>
           )}
 
