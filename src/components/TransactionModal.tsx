@@ -42,6 +42,8 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [depositStatus, setDepositStatus] = useState<DepositStatus>('form');
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
+  const [lastDepositAmount, setLastDepositAmount] = useState('');
+  const [lastPaymentMethod, setLastPaymentMethod] = useState('');
   const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit } = useAccount();
   const { toast } = useToast();
 
@@ -63,6 +65,8 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       setDepositStatus('form');
       setFeedbackRating(0);
       setFeedbackText('');
+      setLastDepositAmount('');
+      setLastPaymentMethod('');
     }
   }, [isOpen]);
 
@@ -364,67 +368,72 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md bg-card border-border">
           {depositStatus === 'success' ? (
-            // Success Screen
-            <div className="flex flex-col items-center px-2 py-6">
-              {/* Checkmark Icon */}
-              <div className="w-16 h-16 rounded-full bg-success flex items-center justify-center mb-6 shadow-lg shadow-success/20">
-                <Check className="h-8 w-8 text-success-foreground" strokeWidth={3} />
+            <div className="flex flex-col items-center px-2 py-6" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}>
+              {/* Icon Composition */}
+              <div className="relative flex justify-center items-center mb-6" style={{ width: 90, height: 90 }}>
+                {/* Outer ring */}
+                <div className="absolute rounded-full" style={{ width: 80, height: 80, background: 'linear-gradient(180deg, rgba(14, 203, 129, 0.15) 0%, rgba(14, 203, 129, 0.05) 100%)' }} />
+                {/* Particles */}
+                <div className="absolute rounded-full" style={{ width: 4, height: 4, top: 15, left: 18, backgroundColor: '#0ECB81', opacity: 0.4 }} />
+                <div className="absolute rounded-full" style={{ width: 3, height: 3, top: 10, right: 20, backgroundColor: '#0ECB81', opacity: 0.6 }} />
+                <div className="absolute rounded-full" style={{ width: 4, height: 4, bottom: 15, right: 15, backgroundColor: '#0ECB81', opacity: 0.5 }} />
+                {/* Main circle */}
+                <div className="relative z-10 flex justify-center items-center rounded-full" style={{ width: 56, height: 56, backgroundColor: '#0ECB81', boxShadow: '0 4px 10px rgba(14, 203, 129, 0.25)' }}>
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                </div>
               </div>
 
-              <h2 className="text-xl font-semibold text-foreground mb-3">Deposit Successful</h2>
-              <p className="text-sm text-muted-foreground text-center max-w-[320px] leading-relaxed">
-                Your request has been confirmed. You can track its progress on the Transaction History page.
-              </p>
+              {/* Status text */}
+              <div className="text-base font-medium text-foreground mb-2">Payment Successful</div>
 
-              <div className="w-full h-px bg-border my-6" />
-
-              {/* Feedback Section */}
-              <p className="text-sm text-foreground mb-4">Rate your experience</p>
-              <div className="flex gap-3 mb-6">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setFeedbackRating(star)}
-                    className="transition-colors"
-                  >
-                    <Star
-                      className={`h-7 w-7 ${
-                        star <= feedbackRating
-                          ? 'fill-primary text-primary'
-                          : 'text-muted-foreground hover:text-primary'
-                      }`}
-                      strokeWidth={1.5}
-                    />
-                  </button>
-                ))}
+              {/* Amount */}
+              <div className="flex items-baseline justify-center mb-8">
+                <span className="text-[32px] font-bold text-foreground" style={{ letterSpacing: '-0.5px' }}>
+                  {lastDepositAmount || '0.00'}
+                </span>
+                <span className="text-lg font-medium text-foreground ml-0.5">USD</span>
               </div>
 
-              <textarea
-                placeholder="Tell us about your experience..."
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                className="w-full h-24 rounded-lg bg-secondary border-none p-4 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-1 focus:ring-primary mb-3"
-              />
-              <p className="text-xs text-muted-foreground mb-8 self-start">Your rating will be submitted automatically</p>
+              {/* Details Card */}
+              <div className="w-full rounded-lg p-5 mb-8" style={{ backgroundColor: 'var(--bg-alt, #F5F5F5)' }}>
+                <div className="flex justify-between items-start mb-4 text-[13px]">
+                  <span className="text-muted-foreground">Merchant Name</span>
+                  <span className="font-medium text-foreground">Crypto Wave</span>
+                </div>
+                <div className="flex justify-between items-start mb-4 text-[13px]">
+                  <span className="text-muted-foreground">Product Name</span>
+                  <span className="font-medium text-foreground">Deposit</span>
+                </div>
+                <div className="flex justify-between items-start mb-4 text-[13px]">
+                  <span className="text-muted-foreground">Date</span>
+                  <span className="font-medium text-foreground">{new Date().toLocaleTimeString('en-US', { hour12: false })}</span>
+                </div>
+                <div className="flex justify-between items-start mb-4 text-[13px]">
+                  <span className="text-muted-foreground">Payment Method</span>
+                  <span className="font-medium text-foreground">{lastPaymentMethod || 'Spot Wallet'}</span>
+                </div>
+                <div className="flex justify-between items-start text-[13px]">
+                  <span className="text-muted-foreground">Currency</span>
+                  <span className="font-medium text-foreground">{lastDepositAmount || '0.00'} USD</span>
+                </div>
+              </div>
 
-              {/* Buttons */}
-              <div className="grid grid-cols-2 gap-4 w-full">
-                <Button
-                  variant="secondary"
-                  onClick={onClose}
-                  className="h-12 font-medium"
-                >
-                  View Wallet
-                </Button>
-                <Button
-                  onClick={() => {
-                    onClose();
-                    window.location.href = '/transactions';
-                  }}
-                  className="h-12 font-medium bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  View History
-                </Button>
+              {/* Action Button */}
+              <button
+                onClick={onClose}
+                className="w-full py-4 rounded font-medium text-[15px] mb-6 transition-colors"
+                style={{ backgroundColor: '#FCD535', color: '#1E2329' }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#F0CA30')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#FCD535')}
+              >
+                Back to Wallet
+              </button>
+
+              {/* Footer */}
+              <div className="text-[13px] text-muted-foreground text-center">
+                Need help? <a href="/support" className="font-medium" style={{ color: '#C99400' }}>Contact Support</a>
               </div>
             </div>
           ) : (
@@ -836,7 +845,11 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                         Try Again
                       </Button>
                       <Button
-                        onClick={() => setDepositStatus('success')}
+                        onClick={() => {
+                          setLastDepositAmount(mpesaAmount ? (parseFloat(mpesaAmount) / 130).toFixed(2) : cryptoAmount || '0.00');
+                          setLastPaymentMethod(paymentMethod === 'mpesa' ? 'M-Pesa' : paymentMethod === 'binance' ? 'Crypto Wallet' : 'Spot Wallet');
+                          setDepositStatus('success');
+                        }}
                         className="h-12 font-semibold bg-success hover:bg-success/90 text-success-foreground"
                       >
                         Payment Done
