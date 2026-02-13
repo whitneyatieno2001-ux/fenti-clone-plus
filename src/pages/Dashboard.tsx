@@ -161,34 +161,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Security Card */}
-        <div className="card rounded-xl p-5 bg-card border border-border animate-slide-up" style={{ animationDelay: '0.15s' }}>
-          <h3 className="text-base font-semibold font-display text-foreground mb-3">
-            <Shield className="h-4 w-4 inline mr-1 text-primary" /> Account Security
-          </h3>
-          <div className="space-y-3">
-            {[
-              { label: 'Enable 2FA', done: false },
-              { label: 'Identity Verification', done: false },
-              { label: 'Anti-Phishing Code', done: false },
-              { label: 'Withdrawal Whitelist', done: false },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between py-1">
-                <div className="flex items-center gap-2 text-sm text-foreground">
-                  {item.done 
-                    ? <CheckCircle className="h-4 w-4 text-success" /> 
-                    : <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                  }
-                  {item.label}
-                </div>
-                <Link to="/security" className="text-sm text-primary font-medium">
-                  {item.done ? 'Enabled' : 'Enable'}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Recent Activity */}
         <div className="card rounded-xl p-5 bg-card border border-border animate-slide-up" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-center justify-between mb-3">
