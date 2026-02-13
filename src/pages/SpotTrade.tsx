@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TradingViewWidget } from '@/components/TradingViewWidget';
+import { PageLoader } from '@/components/PageLoader';
 import { useAccount } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { useCryptoPrices } from '@/hooks/useCryptoPrices';
 import { cryptoAssets, formatPrice as formatCryptoPrice } from '@/data/cryptoData';
+import { getCoinIcon } from '@/data/coinIcons';
 import { cn } from '@/lib/utils';
 import { BottomNav } from '@/components/BottomNav';
 import { ChevronLeft, Search, Star, MoreHorizontal } from 'lucide-react';
@@ -189,6 +191,7 @@ export default function SpotTrade() {
   const tvTheme = isDark ? 'dark' : 'light';
 
   return (
+    <PageLoader>
     <div className="h-screen flex flex-col bg-background text-foreground" style={{ fontFamily: "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: '12px' }}>
 
       {/* === HEADER === */}
@@ -591,7 +594,7 @@ export default function SpotTrade() {
                     style={{ gridTemplateColumns: '1.5fr 1fr 1fr' }}
                   >
                     <div className="flex items-center gap-1.5">
-                      <Star className="h-2.5 w-2.5 text-muted-foreground/50" />
+                      <img src={getCoinIcon(crypto.symbol)} alt={crypto.symbol} className="w-4 h-4 rounded-full" />
                       <span className="font-semibold text-foreground">{crypto.symbol}</span>
                       <span className="text-[10px] text-muted-foreground">/USDT</span>
                     </div>
@@ -803,5 +806,6 @@ export default function SpotTrade() {
 
       <BottomNav />
     </div>
+    </PageLoader>
   );
 }

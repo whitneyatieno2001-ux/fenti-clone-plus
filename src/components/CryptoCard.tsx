@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { formatPrice, formatChange, type CryptoAsset } from '@/data/cryptoData';
+import { getCoinIcon } from '@/data/coinIcons';
 
 interface CryptoCardProps {
   crypto: CryptoAsset;
@@ -31,11 +32,8 @@ export function CryptoCard({ crypto, onClick, variant = 'default' }: CryptoCardP
         )}
       >
         <div className="flex items-center gap-3">
-          <div 
-            className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
-            style={{ backgroundColor: `${crypto.color}20`, color: crypto.color }}
-          >
-            {crypto.icon}
+          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-muted">
+            <img src={getCoinIcon(crypto.symbol)} alt={crypto.symbol} className="w-full h-full object-cover" />
           </div>
           <div>
             {/* White text for better visibility */}
@@ -68,11 +66,8 @@ export function CryptoCard({ crypto, onClick, variant = 'default' }: CryptoCardP
       )}
     >
       <div className="flex items-start justify-between mb-3">
-        <div 
-          className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold shadow-sm"
-          style={{ backgroundColor: crypto.color, color: 'white' }}
-        >
-          {crypto.icon}
+        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-muted shadow-sm">
+          <img src={getCoinIcon(crypto.symbol)} alt={crypto.symbol} className="w-full h-full object-cover" />
         </div>
         <span className={cn(
           "text-sm font-semibold px-2 py-0.5 rounded",
