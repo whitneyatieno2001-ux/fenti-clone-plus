@@ -8,6 +8,7 @@ import { cryptoAssets, formatPrice as formatCryptoPrice } from '@/data/cryptoDat
 import { cn } from '@/lib/utils';
 import { BottomNav } from '@/components/BottomNav';
 import { ChevronLeft, Search, Star, MoreHorizontal } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 interface OrderBookEntry {
   price: number;
@@ -50,6 +51,8 @@ export default function SpotTrade() {
   const { currentBalance, deposit, withdraw, accountType } = useAccount();
   const { toast } = useToast();
   const { getCryptoWithPrice, getAllCryptosWithPrices } = useCryptoPrices();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   const [selectedPairId, setSelectedPairId] = useState('bitcoin');
   const [orderType, setOrderType] = useState<OrderType>('limit');
@@ -183,18 +186,20 @@ export default function SpotTrade() {
   const low24h = currentPrice * 0.98;
   const vol24h = parseFloat(selectedCrypto.volume24h?.replace(/[^0-9.]/g, '') || '0');
 
+  const tvTheme = isDark ? 'dark' : 'light';
+
   return (
-    <div className="h-screen flex flex-col" style={{ fontFamily: "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: '12px', background: '#fafafa', color: '#1e2329' }}>
+    <div className="h-screen flex flex-col bg-background text-foreground" style={{ fontFamily: "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: '12px' }}>
 
       {/* === HEADER === */}
-      <div className="bg-white border-b flex items-center justify-between px-4 sticky top-0 z-50" style={{ borderColor: '#eaecef', height: 56 }}>
+      <div className="bg-card border-b border-border flex items-center justify-between px-4 sticky top-0 z-50" style={{ height: 56 }}>
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/dashboard')} className="text-gray-600 hover:text-gray-900">
+          <button onClick={() => navigate('/dashboard')} className="text-muted-foreground hover:text-foreground">
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div>
-            <div className="font-semibold text-sm" style={{ color: '#1e2329' }}>{pairSymbol}</div>
-            <div className="text-xs" style={{ color: '#707a8a' }}>{selectedCrypto.name} Price</div>
+            <div className="font-semibold text-sm text-foreground">{pairSymbol}</div>
+            <div className="text-xs text-muted-foreground">{selectedCrypto.name} Price</div>
           </div>
         </div>
 
@@ -203,39 +208,39 @@ export default function SpotTrade() {
             <div className={cn("text-xl font-semibold", change24h >= 0 ? "text-[#0ecb81]" : "text-[#f6465d]")}>
               {formatOBPrice(currentPrice)}
             </div>
-            <div className="text-xs" style={{ color: '#707a8a' }}>= ${currentPrice.toFixed(2)}</div>
+            <div className="text-xs text-muted-foreground">= ${currentPrice.toFixed(2)}</div>
           </div>
           <div className="flex items-center gap-6 text-xs">
             <div>
-              <div style={{ color: '#707a8a' }}>24h Change</div>
+              <div className="text-muted-foreground">24h Change</div>
               <div className={change24h >= 0 ? "text-[#0ecb81]" : "text-[#f6465d]"}>
                 {change24h >= 0 ? '+' : ''}{change24h.toFixed(2)}%
               </div>
             </div>
             <div>
-              <div style={{ color: '#707a8a' }}>24h High</div>
-              <div style={{ color: '#1e2329', fontWeight: 500 }}>{formatOBPrice(high24h)}</div>
+              <div className="text-muted-foreground">24h High</div>
+              <div className="text-foreground font-medium">{formatOBPrice(high24h)}</div>
             </div>
             <div>
-              <div style={{ color: '#707a8a' }}>24h Low</div>
-              <div style={{ color: '#1e2329', fontWeight: 500 }}>{formatOBPrice(low24h)}</div>
+              <div className="text-muted-foreground">24h Low</div>
+              <div className="text-foreground font-medium">{formatOBPrice(low24h)}</div>
             </div>
             <div>
-              <div style={{ color: '#707a8a' }}>24h Vol({selectedCrypto.symbol})</div>
-              <div style={{ color: '#1e2329', fontWeight: 500 }}>{vol24h.toLocaleString()}</div>
+              <div className="text-muted-foreground">24h Vol({selectedCrypto.symbol})</div>
+              <div className="text-foreground font-medium">{vol24h.toLocaleString()}</div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-xs" style={{ color: '#707a8a' }}>Wallet</span>
-          <span className="text-xs" style={{ color: '#707a8a' }}>Orders</span>
-          <MoreHorizontal className="h-4 w-4" style={{ color: '#707a8a' }} />
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <span className="text-xs">Wallet</span>
+          <span className="text-xs">Orders</span>
+          <MoreHorizontal className="h-4 w-4" />
         </div>
       </div>
 
       {/* === MOBILE TABS === */}
-      <div className="md:hidden flex border-b bg-white sticky top-[56px] z-40" style={{ borderColor: '#eaecef' }}>
+      <div className="md:hidden flex border-b border-border bg-card sticky top-[56px] z-40">
         {(['chart', 'orderbook', 'trades', 'info'] as const).map(tab => (
           <button
             key={tab}
@@ -243,8 +248,8 @@ export default function SpotTrade() {
             className={cn(
               "flex-1 text-center py-3 text-sm capitalize border-b-2 font-medium",
               mobileTab === tab
-                ? "text-[#1e2329] font-semibold border-[#fcd535]"
-                : "text-[#707a8a] border-transparent"
+                ? "text-foreground font-semibold border-primary"
+                : "text-muted-foreground border-transparent"
             )}
           >
             {tab === 'orderbook' ? 'Order Book' : tab}
@@ -258,16 +263,16 @@ export default function SpotTrade() {
         <div className="hidden md:grid gap-px p-px" style={{ gridTemplateColumns: '288px 1fr 318px', maxWidth: 1920, margin: '0 auto' }}>
 
           {/* LEFT: Order Book */}
-          <div className="bg-white border" style={{ borderColor: '#eaecef' }}>
-            <div className="flex justify-between items-center px-3 py-2 border-b text-xs font-semibold" style={{ borderColor: '#eaecef', color: '#1e2329' }}>
+          <div className="bg-card border border-border">
+            <div className="flex justify-between items-center px-3 py-2 border-b border-border text-xs font-semibold text-foreground">
               <span>Order Book</span>
               <div className="flex gap-1">
-                <span className="w-4 h-4 bg-gray-200 rounded-sm" />
-                <span className="w-4 h-4 bg-gray-200 rounded-sm" />
-                <span className="w-4 h-4 bg-gray-200 rounded-sm" />
+                <span className="w-4 h-4 bg-muted rounded-sm" />
+                <span className="w-4 h-4 bg-muted rounded-sm" />
+                <span className="w-4 h-4 bg-muted rounded-sm" />
               </div>
             </div>
-            <div className="flex px-3 py-1 text-[11px]" style={{ color: '#707a8a' }}>
+            <div className="flex px-3 py-1 text-[11px] text-muted-foreground">
               <span className="flex-1">Price(USDT)</span>
               <span className="flex-1 text-right">Amount({selectedCrypto.symbol})</span>
               <span className="flex-1 text-right">Total</span>
@@ -276,31 +281,31 @@ export default function SpotTrade() {
             {/* Asks */}
             <div className="flex flex-col-reverse">
               {asks.map((a, i) => (
-                <div key={`ask-${i}`} className="flex px-3 relative cursor-pointer hover:bg-gray-50" style={{ height: 18, alignItems: 'center', fontSize: 12 }}>
-                  <div className="absolute top-0 bottom-0 right-0 opacity-10 bg-[#f6465d]" style={{ width: `${a.depth}%` }} />
+                <div key={`ask-${i}`} className="flex px-3 relative cursor-pointer hover:bg-muted/50" style={{ height: 18, alignItems: 'center', fontSize: 12 }}>
+                  <div className="absolute top-0 bottom-0 right-0 bg-[#f6465d]/10" style={{ width: `${a.depth}%` }} />
                   <span className="flex-1 relative z-10 font-medium text-[#f6465d]">{formatOBPrice(a.price)}</span>
-                  <span className="flex-1 text-right relative z-10" style={{ color: '#1e2329' }}>{a.amount.toFixed(5)}</span>
-                  <span className="flex-1 text-right relative z-10" style={{ color: '#1e2329' }}>{a.total}K</span>
+                  <span className="flex-1 text-right relative z-10 text-foreground">{a.amount.toFixed(5)}</span>
+                  <span className="flex-1 text-right relative z-10 text-foreground">{a.total}K</span>
                 </div>
               ))}
             </div>
 
             {/* Mid Price */}
-            <div className="flex items-center justify-between px-3 py-2 border-y" style={{ borderColor: '#f0f0f0', background: '#fafafa' }}>
+            <div className="flex items-center justify-between px-3 py-2 border-y border-border bg-muted/30">
               <span className={cn("text-lg font-semibold", change24h >= 0 ? "text-[#0ecb81]" : "text-[#f6465d]")}>
                 {formatOBPrice(currentPrice)}
               </span>
-              <span className="text-[11px] cursor-pointer" style={{ color: '#707a8a' }}>More</span>
+              <span className="text-[11px] cursor-pointer text-muted-foreground">More</span>
             </div>
 
             {/* Bids */}
             <div>
               {bids.map((b, i) => (
-                <div key={`bid-${i}`} className="flex px-3 relative cursor-pointer hover:bg-gray-50" style={{ height: 18, alignItems: 'center', fontSize: 12 }}>
-                  <div className="absolute top-0 bottom-0 right-0 opacity-10 bg-[#0ecb81]" style={{ width: `${b.depth}%` }} />
+                <div key={`bid-${i}`} className="flex px-3 relative cursor-pointer hover:bg-muted/50" style={{ height: 18, alignItems: 'center', fontSize: 12 }}>
+                  <div className="absolute top-0 bottom-0 right-0 bg-[#0ecb81]/10" style={{ width: `${b.depth}%` }} />
                   <span className="flex-1 relative z-10 font-medium text-[#0ecb81]">{formatOBPrice(b.price)}</span>
-                  <span className="flex-1 text-right relative z-10" style={{ color: '#1e2329' }}>{b.amount.toFixed(5)}</span>
-                  <span className="flex-1 text-right relative z-10" style={{ color: '#1e2329' }}>{b.total}K</span>
+                  <span className="flex-1 text-right relative z-10 text-foreground">{b.amount.toFixed(5)}</span>
+                  <span className="flex-1 text-right relative z-10 text-foreground">{b.total}K</span>
                 </div>
               ))}
             </div>
@@ -309,7 +314,7 @@ export default function SpotTrade() {
           {/* CENTER: Chart + Trading Form */}
           <div className="flex flex-col">
             {/* Chart Toolbar */}
-            <div className="bg-white border border-t-0 flex items-center gap-1 px-3 py-2 text-xs" style={{ borderColor: '#eaecef', color: '#707a8a' }}>
+            <div className="bg-card border border-border border-t-0 flex items-center gap-1 px-3 py-2 text-xs text-muted-foreground">
               <span className="mr-1">Time</span>
               {[
                 { label: '1m', value: '1' },
@@ -323,37 +328,36 @@ export default function SpotTrade() {
                 <span
                   key={tf.value}
                   onClick={() => setChartInterval(tf.value)}
-                  className={cn("cursor-pointer px-2 py-1 rounded transition-colors", chartInterval === tf.value ? "font-semibold" : "hover:text-[#1e2329]")}
-                  style={chartInterval === tf.value ? { color: '#f0b90b' } : {}}
+                  className={cn("cursor-pointer px-2 py-1 rounded transition-colors", chartInterval === tf.value ? "font-semibold text-primary" : "hover:text-foreground")}
                 >
                   {tf.label}
                 </span>
               ))}
-              <div className="w-px h-3.5 bg-gray-200 mx-1" />
-              <span className="font-semibold" style={{ color: '#f0b90b' }}>TradingView</span>
+              <div className="w-px h-3.5 bg-border mx-1" />
+              <span className="font-semibold text-primary">TradingView</span>
             </div>
 
             {/* Chart Area */}
-            <div className="bg-white border border-t-0" style={{ borderColor: '#eaecef', height: 400 }}>
+            <div className="bg-card border border-border border-t-0" style={{ height: 400 }}>
               <TradingViewWidget 
                 symbol={`${selectedCrypto.symbol}/USD`} 
-                theme="light" 
+                theme={tvTheme} 
                 height={400} 
                 interval={chartInterval}
               />
             </div>
 
             {/* Trading Form */}
-            <div className="bg-white border border-t-0" style={{ borderColor: '#eaecef' }}>
+            <div className="bg-card border border-border border-t-0">
               {/* Trade Tabs */}
-              <div className="flex gap-6 px-4 pt-3 border-b text-sm font-semibold" style={{ borderColor: '#eaecef' }}>
+              <div className="flex gap-6 px-4 pt-3 border-b border-border text-sm font-semibold">
                 {['Spot', 'Cross 3x', 'Isolated 10x', 'Grid'].map((t, i) => (
                   <span
                     key={t}
-                    className={cn("pb-3 cursor-pointer relative", i === 0 ? "text-[#f0b90b]" : "text-[#707a8a]")}
+                    className={cn("pb-3 cursor-pointer relative", i === 0 ? "text-primary" : "text-muted-foreground")}
                   >
                     {t}
-                    {i === 0 && <span className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[#f0b90b]" />}
+                    {i === 0 && <span className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-primary" />}
                   </span>
                 ))}
               </div>
@@ -362,38 +366,36 @@ export default function SpotTrade() {
                 {/* Buy Form */}
                 <div className="flex-1">
                   <div className="flex gap-4 text-xs font-semibold mb-3">
-                    <span className={cn("cursor-pointer", orderType === 'limit' ? "text-[#1e2329]" : "text-[#707a8a]")} onClick={() => setOrderType('limit')}>Limit</span>
-                    <span className={cn("cursor-pointer", orderType === 'market' ? "text-[#1e2329]" : "text-[#707a8a]")} onClick={() => setOrderType('market')}>Market</span>
+                    <span className={cn("cursor-pointer", orderType === 'limit' ? "text-foreground" : "text-muted-foreground")} onClick={() => setOrderType('limit')}>Limit</span>
+                    <span className={cn("cursor-pointer", orderType === 'market' ? "text-foreground" : "text-muted-foreground")} onClick={() => setOrderType('market')}>Market</span>
                   </div>
 
                   {orderType === 'limit' && (
-                    <div className="mb-2 flex items-center border rounded h-10 bg-white hover:border-[#fcd535] transition-colors" style={{ borderColor: '#eaecef' }}>
-                      <span className="px-3 text-sm" style={{ color: '#707a8a' }}>Price</span>
+                    <div className="mb-2 flex items-center border border-border rounded h-10 bg-card hover:border-primary transition-colors">
+                      <span className="px-3 text-sm text-muted-foreground">Price</span>
                       <input
                         type="number"
                         value={buyPrice}
                         onChange={e => setBuyPrice(e.target.value)}
-                        className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2"
-                        style={{ color: '#1e2329' }}
+                        className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2 text-foreground"
                       />
-                      <span className="px-3 text-xs" style={{ color: '#1e2329' }}>USDT</span>
+                      <span className="px-3 text-xs text-foreground">USDT</span>
                     </div>
                   )}
 
-                  <div className="mb-2 flex items-center border rounded h-10 bg-white hover:border-[#fcd535] transition-colors" style={{ borderColor: '#eaecef' }}>
-                    <span className="px-3 text-sm" style={{ color: '#707a8a' }}>Amount</span>
+                  <div className="mb-2 flex items-center border border-border rounded h-10 bg-card hover:border-primary transition-colors">
+                    <span className="px-3 text-sm text-muted-foreground">Amount</span>
                     <input
                       type="number"
                       value={buyAmount}
                       onChange={e => setBuyAmount(e.target.value)}
-                      className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2"
-                      style={{ color: '#1e2329' }}
+                      className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2 text-foreground"
                     />
-                    <span className="px-3 text-xs" style={{ color: '#1e2329' }}>{selectedCrypto.symbol}</span>
+                    <span className="px-3 text-xs text-foreground">{selectedCrypto.symbol}</span>
                   </div>
 
                   {/* Slider */}
-                  <div className="my-3 relative h-0.5" style={{ background: '#eaecef' }}>
+                  <div className="my-3 relative h-0.5 bg-border">
                     {[0, 25, 50, 75, 100].map(pct => (
                       <button
                         key={pct}
@@ -410,36 +412,32 @@ export default function SpotTrade() {
                           left: `${pct}%`,
                           top: '50%',
                           transform: 'translate(-50%, -50%) rotate(45deg)',
-                          background: sliderBuy >= pct ? '#fcd535' : '#fff',
-                          borderColor: sliderBuy >= pct ? '#fcd535' : '#b7bdc6',
+                          background: sliderBuy >= pct ? '#fcd535' : isDark ? '#181a20' : '#fff',
+                          borderColor: sliderBuy >= pct ? '#fcd535' : isDark ? '#474d57' : '#b7bdc6',
                         }}
                       />
                     ))}
                   </div>
 
                   <div className="flex justify-between text-xs my-3">
-                    <span style={{ color: '#707a8a' }}>Avbl</span>
-                    <span className="font-medium" style={{ color: '#1e2329' }}>{currentBalance.toFixed(2)} USDT</span>
+                    <span className="text-muted-foreground">Avbl</span>
+                    <span className="font-medium text-foreground">{currentBalance.toFixed(2)} USDT</span>
                   </div>
 
-                  <div className="mb-2 flex items-center border rounded h-10 bg-white" style={{ borderColor: '#eaecef' }}>
-                    <span className="px-3 text-sm" style={{ color: '#707a8a' }}>Total</span>
+                  <div className="mb-2 flex items-center border border-border rounded h-10 bg-card">
+                    <span className="px-3 text-sm text-muted-foreground">Total</span>
                     <input
                       type="text"
                       value={buyTotal !== '0.00' && buyTotal !== 'NaN' ? buyTotal : ''}
                       readOnly
-                      className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2"
-                      style={{ color: '#1e2329' }}
+                      className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2 text-foreground"
                     />
-                    <span className="px-3 text-xs" style={{ color: '#1e2329' }}>USDT</span>
+                    <span className="px-3 text-xs text-foreground">USDT</span>
                   </div>
 
                   <button
                     onClick={handleBuy}
-                    className="w-full h-10 rounded text-sm font-semibold text-white cursor-pointer transition-colors"
-                    style={{ background: '#0ecb81' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#0bb974')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#0ecb81')}
+                    className="w-full h-10 rounded text-sm font-semibold text-white cursor-pointer transition-colors bg-[#0ecb81] hover:bg-[#0bb974]"
                   >
                     Buy {selectedCrypto.symbol}
                   </button>
@@ -448,38 +446,36 @@ export default function SpotTrade() {
                 {/* Sell Form */}
                 <div className="flex-1">
                   <div className="flex gap-4 text-xs font-semibold mb-3">
-                    <span className={cn("cursor-pointer", orderType === 'limit' ? "text-[#1e2329]" : "text-[#707a8a]")} onClick={() => setOrderType('limit')}>Limit</span>
-                    <span className={cn("cursor-pointer", orderType === 'market' ? "text-[#1e2329]" : "text-[#707a8a]")} onClick={() => setOrderType('market')}>Market</span>
+                    <span className={cn("cursor-pointer", orderType === 'limit' ? "text-foreground" : "text-muted-foreground")} onClick={() => setOrderType('limit')}>Limit</span>
+                    <span className={cn("cursor-pointer", orderType === 'market' ? "text-foreground" : "text-muted-foreground")} onClick={() => setOrderType('market')}>Market</span>
                   </div>
 
                   {orderType === 'limit' && (
-                    <div className="mb-2 flex items-center border rounded h-10 bg-white hover:border-[#fcd535] transition-colors" style={{ borderColor: '#eaecef' }}>
-                      <span className="px-3 text-sm" style={{ color: '#707a8a' }}>Price</span>
+                    <div className="mb-2 flex items-center border border-border rounded h-10 bg-card hover:border-primary transition-colors">
+                      <span className="px-3 text-sm text-muted-foreground">Price</span>
                       <input
                         type="number"
                         value={sellPrice}
                         onChange={e => setSellPrice(e.target.value)}
-                        className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2"
-                        style={{ color: '#1e2329' }}
+                        className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2 text-foreground"
                       />
-                      <span className="px-3 text-xs" style={{ color: '#1e2329' }}>USDT</span>
+                      <span className="px-3 text-xs text-foreground">USDT</span>
                     </div>
                   )}
 
-                  <div className="mb-2 flex items-center border rounded h-10 bg-white hover:border-[#fcd535] transition-colors" style={{ borderColor: '#eaecef' }}>
-                    <span className="px-3 text-sm" style={{ color: '#707a8a' }}>Amount</span>
+                  <div className="mb-2 flex items-center border border-border rounded h-10 bg-card hover:border-primary transition-colors">
+                    <span className="px-3 text-sm text-muted-foreground">Amount</span>
                     <input
                       type="number"
                       value={sellAmount}
                       onChange={e => setSellAmount(e.target.value)}
-                      className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2"
-                      style={{ color: '#1e2329' }}
+                      className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2 text-foreground"
                     />
-                    <span className="px-3 text-xs" style={{ color: '#1e2329' }}>{selectedCrypto.symbol}</span>
+                    <span className="px-3 text-xs text-foreground">{selectedCrypto.symbol}</span>
                   </div>
 
                   {/* Slider */}
-                  <div className="my-3 relative h-0.5" style={{ background: '#eaecef' }}>
+                  <div className="my-3 relative h-0.5 bg-border">
                     {[0, 25, 50, 75, 100].map(pct => (
                       <button
                         key={pct}
@@ -489,36 +485,32 @@ export default function SpotTrade() {
                           left: `${pct}%`,
                           top: '50%',
                           transform: 'translate(-50%, -50%) rotate(45deg)',
-                          background: sliderSell >= pct ? '#fcd535' : '#fff',
-                          borderColor: sliderSell >= pct ? '#fcd535' : '#b7bdc6',
+                          background: sliderSell >= pct ? '#fcd535' : isDark ? '#181a20' : '#fff',
+                          borderColor: sliderSell >= pct ? '#fcd535' : isDark ? '#474d57' : '#b7bdc6',
                         }}
                       />
                     ))}
                   </div>
 
                   <div className="flex justify-between text-xs my-3">
-                    <span style={{ color: '#707a8a' }}>Avbl</span>
-                    <span className="font-medium" style={{ color: '#1e2329' }}>0.00000 {selectedCrypto.symbol}</span>
+                    <span className="text-muted-foreground">Avbl</span>
+                    <span className="font-medium text-foreground">0.00000 {selectedCrypto.symbol}</span>
                   </div>
 
-                  <div className="mb-2 flex items-center border rounded h-10 bg-white" style={{ borderColor: '#eaecef' }}>
-                    <span className="px-3 text-sm" style={{ color: '#707a8a' }}>Total</span>
+                  <div className="mb-2 flex items-center border border-border rounded h-10 bg-card">
+                    <span className="px-3 text-sm text-muted-foreground">Total</span>
                     <input
                       type="text"
                       value={sellTotal !== '0.00' && sellTotal !== 'NaN' ? sellTotal : ''}
                       readOnly
-                      className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2"
-                      style={{ color: '#1e2329' }}
+                      className="flex-1 border-none outline-none bg-transparent text-right text-sm font-medium px-2 text-foreground"
                     />
-                    <span className="px-3 text-xs" style={{ color: '#1e2329' }}>USDT</span>
+                    <span className="px-3 text-xs text-foreground">USDT</span>
                   </div>
 
                   <button
                     onClick={handleSell}
-                    className="w-full h-10 rounded text-sm font-semibold text-white cursor-pointer transition-colors"
-                    style={{ background: '#f6465d' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#e8364e')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#f6465d')}
+                    className="w-full h-10 rounded text-sm font-semibold text-white cursor-pointer transition-colors bg-[#f6465d] hover:bg-[#e8364e]"
                   >
                     Sell {selectedCrypto.symbol}
                   </button>
@@ -527,59 +519,57 @@ export default function SpotTrade() {
             </div>
 
             {/* Bottom Panel */}
-            <div className="bg-white border border-t-0" style={{ borderColor: '#eaecef' }}>
-              <div className="flex gap-6 px-4 pt-3 border-b text-sm font-semibold" style={{ borderColor: '#eaecef' }}>
+            <div className="bg-card border border-border border-t-0">
+              <div className="flex gap-6 px-4 pt-3 border-b border-border text-sm font-semibold">
                 {([['open', 'Open Orders(0)'], ['history', 'Order History'], ['funds', 'Funds']] as const).map(([key, label]) => (
                   <span
                     key={key}
                     onClick={() => setBottomTab(key)}
-                    className={cn("pb-3 cursor-pointer relative", bottomTab === key ? "text-[#f0b90b]" : "text-[#707a8a]")}
+                    className={cn("pb-3 cursor-pointer relative", bottomTab === key ? "text-primary" : "text-muted-foreground")}
                   >
                     {label}
-                    {bottomTab === key && <span className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[#f0b90b]" />}
+                    {bottomTab === key && <span className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-primary" />}
                   </span>
                 ))}
               </div>
-              <div className="flex flex-col items-center justify-center py-12" style={{ color: '#b7bdc6' }}>
-                <div className="text-3xl opacity-30 mb-3">📋</div>
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <div className="text-sm">No open orders</div>
               </div>
             </div>
           </div>
 
           {/* RIGHT: Watchlist + Market Trades */}
-          <div className="bg-white border" style={{ borderColor: '#eaecef' }}>
+          <div className="bg-card border border-border">
             {/* Search */}
-            <div className="p-2 border-b" style={{ borderColor: '#eaecef' }}>
-              <div className="flex items-center gap-2 rounded px-3 py-1.5" style={{ background: '#f5f5f5' }}>
-                <Search className="h-3.5 w-3.5" style={{ color: '#707a8a' }} />
+            <div className="p-2 border-b border-border">
+              <div className="flex items-center gap-2 rounded px-3 py-1.5 bg-muted">
+                <Search className="h-3.5 w-3.5 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Search"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="flex-1 border-none outline-none bg-transparent text-xs"
-                  style={{ color: '#1e2329' }}
+                  className="flex-1 border-none outline-none bg-transparent text-xs text-foreground"
                 />
               </div>
             </div>
 
             {/* WL Tabs */}
-            <div className="flex gap-5 px-3 py-2 border-b text-xs font-semibold" style={{ borderColor: '#eaecef' }}>
+            <div className="flex gap-5 px-3 py-2 border-b border-border text-xs font-semibold">
               {['USDT', 'BTC', 'FDUSD'].map(t => (
                 <span
                   key={t}
                   onClick={() => setWlTab(t)}
-                  className={cn("cursor-pointer pb-2 relative", wlTab === t ? "text-[#f0b90b]" : "text-[#707a8a]")}
+                  className={cn("cursor-pointer pb-2 relative", wlTab === t ? "text-primary" : "text-muted-foreground")}
                 >
                   {t}
-                  {wlTab === t && <span className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[#f0b90b]" />}
+                  {wlTab === t && <span className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-primary" />}
                 </span>
               ))}
             </div>
 
             {/* WL Header */}
-            <div className="grid px-3 py-1 text-[11px]" style={{ gridTemplateColumns: '1.5fr 1fr 1fr', color: '#707a8a' }}>
+            <div className="grid px-3 py-1 text-[11px] text-muted-foreground" style={{ gridTemplateColumns: '1.5fr 1fr 1fr' }}>
               <span>Pair</span>
               <span className="text-right">Price</span>
               <span className="text-right">Change</span>
@@ -595,17 +585,17 @@ export default function SpotTrade() {
                     key={wp.id}
                     onClick={() => setSelectedPairId(wp.id)}
                     className={cn(
-                      "grid px-3 py-1.5 text-xs items-center cursor-pointer border-b hover:bg-gray-50",
-                      selectedPairId === wp.id && "bg-gray-50"
+                      "grid px-3 py-1.5 text-xs items-center cursor-pointer border-b border-border/30 hover:bg-muted/50",
+                      selectedPairId === wp.id && "bg-muted/50"
                     )}
-                    style={{ gridTemplateColumns: '1.5fr 1fr 1fr', borderColor: '#fafafa' }}
+                    style={{ gridTemplateColumns: '1.5fr 1fr 1fr' }}
                   >
                     <div className="flex items-center gap-1.5">
-                      <Star className="h-2.5 w-2.5" style={{ color: '#d0d0d0' }} />
-                      <span className="font-semibold">{crypto.symbol}</span>
-                      <span className="text-[10px]" style={{ color: '#b7bdc6' }}>/USDT</span>
+                      <Star className="h-2.5 w-2.5 text-muted-foreground/50" />
+                      <span className="font-semibold text-foreground">{crypto.symbol}</span>
+                      <span className="text-[10px] text-muted-foreground">/USDT</span>
                     </div>
-                    <span className="text-right font-medium">{formatOBPrice(crypto.price)}</span>
+                    <span className="text-right font-medium text-foreground">{formatOBPrice(crypto.price)}</span>
                     <span className={cn("text-right font-medium", crypto.change24h >= 0 ? "text-[#0ecb81]" : "text-[#f6465d]")}>
                       {crypto.change24h >= 0 ? '+' : ''}{crypto.change24h.toFixed(2)}%
                     </span>
@@ -615,9 +605,9 @@ export default function SpotTrade() {
             </div>
 
             {/* Market Trades */}
-            <div className="border-t pt-3 px-3" style={{ borderColor: '#eaecef' }}>
-              <div className="text-sm font-semibold mb-2" style={{ color: '#1e2329' }}>Market Trades</div>
-              <div className="grid text-[11px] mb-1" style={{ gridTemplateColumns: '1fr 1fr 1fr', color: '#707a8a' }}>
+            <div className="border-t border-border pt-3 px-3">
+              <div className="text-sm font-semibold mb-2 text-foreground">Market Trades</div>
+              <div className="grid text-[11px] mb-1 text-muted-foreground" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                 <span>Price(USDT)</span>
                 <span className="text-right">Amount({selectedCrypto.symbol})</span>
                 <span className="text-right">Time</span>
@@ -626,8 +616,8 @@ export default function SpotTrade() {
                 {marketTrades.map((trade, i) => (
                   <div key={i} className="grid text-xs py-px" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                     <span className={trade.isBuy ? "text-[#0ecb81]" : "text-[#f6465d]"}>{formatOBPrice(trade.price)}</span>
-                    <span className="text-right" style={{ color: '#707a8a' }}>{trade.amount.toFixed(5)}</span>
-                    <span className="text-right" style={{ color: '#b7bdc6' }}>{trade.time}</span>
+                    <span className="text-right text-muted-foreground">{trade.amount.toFixed(5)}</span>
+                    <span className="text-right text-muted-foreground/60">{trade.time}</span>
                   </div>
                 ))}
               </div>
@@ -638,28 +628,28 @@ export default function SpotTrade() {
         {/* === MOBILE VIEW === */}
         <div className="md:hidden">
           {/* Mobile Price Bar */}
-          <div className="bg-white px-4 py-3 border-b" style={{ borderColor: '#eaecef' }}>
+          <div className="bg-card px-4 py-3 border-b border-border">
             <div className="flex items-center justify-between">
               <div>
                 <div className={cn("text-xl font-semibold", change24h >= 0 ? "text-[#0ecb81]" : "text-[#f6465d]")}>
                   {formatOBPrice(currentPrice)}
                 </div>
-                <div className="text-xs" style={{ color: '#707a8a' }}>= ${currentPrice.toFixed(2)}</div>
+                <div className="text-xs text-muted-foreground">= ${currentPrice.toFixed(2)}</div>
               </div>
               <div className="text-right text-xs">
                 <div className={change24h >= 0 ? "text-[#0ecb81]" : "text-[#f6465d]"}>
                   {change24h >= 0 ? '+' : ''}{change24h.toFixed(2)}%
                 </div>
-                <div style={{ color: '#707a8a' }}>Vol {vol24h.toLocaleString()}</div>
+                <div className="text-muted-foreground">Vol {vol24h.toLocaleString()}</div>
               </div>
             </div>
           </div>
 
           {/* Mobile Content */}
           {mobileTab === 'chart' && (
-            <div className="bg-white mx-2 mt-2 rounded border overflow-hidden" style={{ borderColor: '#eaecef' }}>
+            <div className="bg-card mx-2 mt-2 rounded border border-border overflow-hidden">
               {/* Mobile timeframe selector */}
-              <div className="flex items-center gap-1 px-3 py-2 text-xs border-b" style={{ borderColor: '#eaecef', color: '#707a8a' }}>
+              <div className="flex items-center gap-1 px-3 py-2 text-xs border-b border-border text-muted-foreground">
                 {[
                   { label: '1m', value: '1' },
                   { label: '5m', value: '5' },
@@ -672,8 +662,7 @@ export default function SpotTrade() {
                   <span
                     key={tf.value}
                     onClick={() => setChartInterval(tf.value)}
-                    className={cn("cursor-pointer px-2 py-1 rounded", chartInterval === tf.value ? "font-semibold" : "")}
-                    style={chartInterval === tf.value ? { color: '#f0b90b' } : {}}
+                    className={cn("cursor-pointer px-2 py-1 rounded", chartInterval === tf.value ? "font-semibold text-primary" : "")}
                   >
                     {tf.label}
                   </span>
@@ -682,7 +671,7 @@ export default function SpotTrade() {
               <div style={{ height: 280 }}>
                 <TradingViewWidget 
                   symbol={`${selectedCrypto.symbol}/USD`} 
-                  theme="light" 
+                  theme={tvTheme} 
                   height={280} 
                   interval={chartInterval}
                 />
@@ -691,17 +680,18 @@ export default function SpotTrade() {
           )}
 
           {mobileTab === 'orderbook' && (
-            <div className="bg-white mx-2 mt-2 rounded border p-3" style={{ borderColor: '#eaecef' }}>
-              <div className="flex text-[11px] mb-2" style={{ color: '#707a8a' }}>
+            <div className="bg-card mx-2 mt-2 rounded border border-border p-3">
+              <div className="flex text-[11px] mb-2 text-muted-foreground">
                 <span className="flex-1">Price(USDT)</span>
                 <span className="flex-1 text-right">Amount</span>
                 <span className="flex-1 text-right">Total</span>
               </div>
               {asks.slice(-10).map((a, i) => (
-                <div key={`ma-${i}`} className="flex text-xs py-px">
-                  <span className="flex-1 text-[#f6465d] font-medium">{formatOBPrice(a.price)}</span>
-                  <span className="flex-1 text-right">{a.amount.toFixed(5)}</span>
-                  <span className="flex-1 text-right">{a.total}K</span>
+                <div key={`ma-${i}`} className="flex text-xs py-px relative">
+                  <div className="absolute top-0 bottom-0 right-0 bg-[#f6465d]/10" style={{ width: `${a.depth}%` }} />
+                  <span className="flex-1 text-[#f6465d] font-medium relative z-10">{formatOBPrice(a.price)}</span>
+                  <span className="flex-1 text-right text-foreground relative z-10">{a.amount.toFixed(5)}</span>
+                  <span className="flex-1 text-right text-foreground relative z-10">{a.total}K</span>
                 </div>
               ))}
               <div className="py-2 text-center">
@@ -710,18 +700,19 @@ export default function SpotTrade() {
                 </span>
               </div>
               {bids.slice(0, 10).map((b, i) => (
-                <div key={`mb-${i}`} className="flex text-xs py-px">
-                  <span className="flex-1 text-[#0ecb81] font-medium">{formatOBPrice(b.price)}</span>
-                  <span className="flex-1 text-right">{b.amount.toFixed(5)}</span>
-                  <span className="flex-1 text-right">{b.total}K</span>
+                <div key={`mb-${i}`} className="flex text-xs py-px relative">
+                  <div className="absolute top-0 bottom-0 right-0 bg-[#0ecb81]/10" style={{ width: `${b.depth}%` }} />
+                  <span className="flex-1 text-[#0ecb81] font-medium relative z-10">{formatOBPrice(b.price)}</span>
+                  <span className="flex-1 text-right text-foreground relative z-10">{b.amount.toFixed(5)}</span>
+                  <span className="flex-1 text-right text-foreground relative z-10">{b.total}K</span>
                 </div>
               ))}
             </div>
           )}
 
           {mobileTab === 'trades' && (
-            <div className="bg-white mx-2 mt-2 rounded border p-3" style={{ borderColor: '#eaecef' }}>
-              <div className="grid text-[11px] mb-2" style={{ gridTemplateColumns: '1fr 1fr 1fr', color: '#707a8a' }}>
+            <div className="bg-card mx-2 mt-2 rounded border border-border p-3">
+              <div className="grid text-[11px] mb-2 text-muted-foreground" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                 <span>Price</span>
                 <span className="text-right">Amount</span>
                 <span className="text-right">Time</span>
@@ -729,39 +720,39 @@ export default function SpotTrade() {
               {marketTrades.map((trade, i) => (
                 <div key={i} className="grid text-xs py-0.5" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
                   <span className={trade.isBuy ? "text-[#0ecb81]" : "text-[#f6465d]"}>{formatOBPrice(trade.price)}</span>
-                  <span className="text-right" style={{ color: '#707a8a' }}>{trade.amount.toFixed(5)}</span>
-                  <span className="text-right" style={{ color: '#b7bdc6' }}>{trade.time}</span>
+                  <span className="text-right text-muted-foreground">{trade.amount.toFixed(5)}</span>
+                  <span className="text-right text-muted-foreground/60">{trade.time}</span>
                 </div>
               ))}
             </div>
           )}
 
           {mobileTab === 'info' && (
-            <div className="bg-white mx-2 mt-2 rounded border p-4" style={{ borderColor: '#eaecef' }}>
+            <div className="bg-card mx-2 mt-2 rounded border border-border p-4">
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span style={{ color: '#707a8a' }}>24h High</span>
-                  <span className="font-medium">{formatOBPrice(high24h)}</span>
+                  <span className="text-muted-foreground">24h High</span>
+                  <span className="font-medium text-foreground">{formatOBPrice(high24h)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span style={{ color: '#707a8a' }}>24h Low</span>
-                  <span className="font-medium">{formatOBPrice(low24h)}</span>
+                  <span className="text-muted-foreground">24h Low</span>
+                  <span className="font-medium text-foreground">{formatOBPrice(low24h)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span style={{ color: '#707a8a' }}>24h Volume</span>
-                  <span className="font-medium">{vol24h.toLocaleString()}</span>
+                  <span className="text-muted-foreground">24h Volume</span>
+                  <span className="font-medium text-foreground">{vol24h.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span style={{ color: '#707a8a' }}>Market Cap</span>
-                  <span className="font-medium">{selectedCrypto.marketCap}</span>
+                  <span className="text-muted-foreground">Market Cap</span>
+                  <span className="font-medium text-foreground">{selectedCrypto.marketCap}</span>
                 </div>
               </div>
             </div>
           )}
 
           {/* Watchlist on mobile */}
-          <div className="bg-white mx-2 mt-2 rounded border p-3" style={{ borderColor: '#eaecef' }}>
-            <div className="text-sm font-semibold mb-2" style={{ color: '#1e2329' }}>Pairs</div>
+          <div className="bg-card mx-2 mt-2 rounded border border-border p-3">
+            <div className="text-sm font-semibold mb-2 text-foreground">Pairs</div>
             <div className="flex gap-2 overflow-x-auto pb-2">
               {WATCHLIST_PAIRS.slice(0, 8).map(wp => {
                 const crypto = allCryptos.find(c => c.id === wp.id);
@@ -773,8 +764,8 @@ export default function SpotTrade() {
                     className={cn(
                       "flex-shrink-0 px-3 py-1.5 rounded text-xs font-medium border",
                       selectedPairId === wp.id
-                        ? "border-[#fcd535] bg-[#fcd535]/10 text-[#1e2329]"
-                        : "border-[#eaecef] text-[#707a8a]"
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border text-muted-foreground"
                     )}
                   >
                     {crypto.symbol}
@@ -785,15 +776,14 @@ export default function SpotTrade() {
           </div>
 
           {/* Mobile Buy/Sell Footer */}
-          <div className="fixed bottom-16 left-0 right-0 h-14 bg-white border-t flex gap-3 px-4 py-2 z-50" style={{ borderColor: '#eaecef' }}>
+          <div className="fixed bottom-16 left-0 right-0 h-14 bg-card border-t border-border flex gap-3 px-4 py-2 z-50">
             <button
               onClick={() => {
                 const amt = parseFloat(buyAmount || '0.001');
                 setBuyAmount(amt.toString());
                 handleBuy();
               }}
-              className="flex-1 rounded font-semibold text-base text-white"
-              style={{ background: '#0ecb81' }}
+              className="flex-1 rounded font-semibold text-base text-white bg-[#0ecb81]"
             >
               Buy
             </button>
@@ -803,8 +793,7 @@ export default function SpotTrade() {
                 setSellAmount(amt.toString());
                 handleSell();
               }}
-              className="flex-1 rounded font-semibold text-base text-white"
-              style={{ background: '#f6465d' }}
+              className="flex-1 rounded font-semibold text-base text-white bg-[#f6465d]"
             >
               Sell
             </button>

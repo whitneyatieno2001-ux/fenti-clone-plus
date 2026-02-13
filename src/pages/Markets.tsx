@@ -115,28 +115,28 @@ export default function Markets() {
           <div className="eczex-market-cards" ref={sliderRef}>
             <div className="eczex-market-card">
               <div className="eczex-card-header">
-                <span>🔥 Hot</span>
+                <span>Hot</span>
                 <span className="eczex-more-link">More →</span>
               </div>
               {renderCardRows(hot)}
             </div>
             <div className="eczex-market-card">
               <div className="eczex-card-header">
-                <span>🆕 New Listing</span>
+                <span>New Listing</span>
                 <span className="eczex-more-link">More →</span>
               </div>
               {renderCardRows(newest)}
             </div>
             <div className="eczex-market-card">
               <div className="eczex-card-header">
-                <span>📈 Top Gainer</span>
+                <span>Top Gainer</span>
                 <span className="eczex-more-link">More →</span>
               </div>
               {renderCardRows(gainers)}
             </div>
             <div className="eczex-market-card">
               <div className="eczex-card-header">
-                <span>📊 Top Volume</span>
+                <span>Top Volume</span>
                 <span className="eczex-more-link">More →</span>
               </div>
               {renderCardRows(losers)}
