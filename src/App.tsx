@@ -13,9 +13,9 @@ import AssetTrade from "./pages/AssetTrade";
 import ActivePositions from "./pages/ActivePositions";
 import Futures from "./pages/Futures";
 import Bot from "./pages/Bot";
-// BotSelection removed - redirects to /bot
 import BotTrade from "./pages/BotTrade";
 import CreateBot from "./pages/CreateBot";
+import DeployedBot from "./pages/DeployedBot";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -51,6 +51,7 @@ const App = () => (
               <Route path="/bot" element={<Bot />} />
               <Route path="/bot/:botId" element={<BotTrade />} />
               <Route path="/create-bot" element={<CreateBot />} />
+              <Route path="/deployed-bot" element={<DeployedBot />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/history" element={<TransactionHistory />} />
@@ -62,7 +63,6 @@ const App = () => (
               <Route path="/settings" element={<Settings />} />
               <Route path="/kyc" element={<KycVerification />} />
               <Route path="/trading-risk-policy" element={<TradingRiskPolicy />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
