@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAccount } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
-import { useTradingSound } from '@/hooks/useTradingSound';
 import { cn } from '@/lib/utils';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,7 +80,6 @@ export default function BotPage() {
   const navigate = useNavigate();
   const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
   const { toast } = useToast();
-  const { playTradeSound } = useTradingSound();
 
   const [tradeAmount, setTradeAmount] = useState('10');
   const [selectedInterval, setSelectedInterval] = useState(tradeIntervals[1]);
@@ -92,6 +90,19 @@ export default function BotPage() {
   const [tradeLogs, setTradeLogs] = useState<TradeLog[]>([]);
   const botIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Use refs to avoid stale closures in executeTrade
+  const myBotsRef = useRef<MyBot[]>([]);
+  const balanceRef = useRef(currentBalance);
+  const accountTypeRef = useRef(accountType);
+  const userEmailRef = useRef(userEmail);
+  const userRef = useRef(user);
+
+  useEffect(() => { myBotsRef.current = myBots; }, [myBots]);
+  useEffect(() => { balanceRef.current = currentBalance; }, [currentBalance]);
+  useEffect(() => { accountTypeRef.current = accountType; }, [accountType]);
+  useEffect(() => { userEmailRef.current = userEmail; }, [userEmail]);
+  useEffect(() => { userRef.current = user; }, [user]);
 
   useEffect(() => {
     return () => {
@@ -137,24 +148,33 @@ export default function BotPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const stopBot = useCallback((botId: string) => {
+    const interval = botIntervalsRef.current.get(botId);
+    if (interval) { clearInterval(interval); botIntervalsRef.current.delete(botId); }
+    setMyBots(prev => prev.map(b => b.id === botId ? { ...b, status: 'idle' as const } : b));
+  }, []);
+
   const executeTrade = useCallback(async (botId: string) => {
-    const bot = myBots.find(b => b.id === botId);
+    // Use refs for fresh values
+    const bot = myBotsRef.current.find(b => b.id === botId);
     if (!bot || bot.status !== 'running') return;
 
-    if (currentBalance < bot.tradeAmount) {
+    const bal = balanceRef.current;
+    if (bal < bot.tradeAmount) {
       stopBot(botId);
       toast({ title: 'Insufficient Balance', description: 'Bot stopped due to low balance', variant: 'destructive' });
       return;
     }
 
-    const outcome = getTradeOutcome({ accountType, userEmail });
+    const outcome = getTradeOutcome({ accountType: accountTypeRef.current, userEmail: userEmailRef.current });
     const isWin = outcome === 'win';
     const payoutAmount = bot.tradeAmount * (bot.payoutPercent / 100);
     const actualProfit = isWin ? payoutAmount : -payoutAmount;
 
-    if (user) {
+    const currentUser = userRef.current;
+    if (currentUser) {
       const operation = actualProfit > 0 ? 'add' : 'subtract';
-      const ok = await updateBalance(accountType, Math.abs(actualProfit), operation as 'add' | 'subtract');
+      const ok = await updateBalance(accountTypeRef.current, Math.abs(actualProfit), operation as 'add' | 'subtract');
       if (!ok) {
         stopBot(botId);
         toast({ title: 'Balance update failed', description: 'Bot stopped', variant: 'destructive' });
@@ -163,15 +183,13 @@ export default function BotPage() {
 
       try {
         await supabase.from('transactions').insert({
-          user_id: user.id, type: 'bot_trade', amount: Math.abs(actualProfit),
+          user_id: currentUser.id, type: 'bot_trade', amount: Math.abs(actualProfit),
           currency: 'USD', status: 'completed',
           description: `${bot.name} - ${isWin ? 'WIN' : 'LOSS'}: ${actualProfit >= 0 ? '+' : ''}$${actualProfit.toFixed(2)} on ${bot.asset.symbol}`,
-          account_type: accountType, profit_loss: actualProfit,
+          account_type: accountTypeRef.current, profit_loss: actualProfit,
         });
       } catch (err) { console.error(err); }
     }
-
-    playTradeSound(isWin);
 
     const log: TradeLog = {
       id: Date.now().toString(), time: new Date(), asset: bot.asset.symbol,
@@ -185,7 +203,7 @@ export default function BotPage() {
         ? { ...b, totalPL: b.totalPL + actualProfit, trades: b.trades + 1, wins: b.wins + (isWin ? 1 : 0) }
         : b
     ));
-  }, [myBots, currentBalance, accountType, userEmail, user, updateBalance, toast, playTradeSound]);
+  }, [stopBot, updateBalance, toast]);
 
   const startBot = useCallback((botId: string) => {
     const bot = myBots.find(b => b.id === botId);
@@ -200,12 +218,6 @@ export default function BotPage() {
     botIntervalsRef.current.set(botId, interval);
     toast({ title: 'Bot Started', description: `${bot.name} is now trading continuously` });
   }, [myBots, currentBalance, executeTrade, toast]);
-
-  const stopBot = useCallback((botId: string) => {
-    const interval = botIntervalsRef.current.get(botId);
-    if (interval) { clearInterval(interval); botIntervalsRef.current.delete(botId); }
-    setMyBots(prev => prev.map(b => b.id === botId ? { ...b, status: 'idle' as const } : b));
-  }, []);
 
   const deleteBot = useCallback((botId: string) => {
     stopBot(botId);
@@ -344,7 +356,6 @@ export default function BotPage() {
                   </span>
                 </div>
 
-                {/* Stats like screenshot 1 */}
                 {bot.trades > 0 && (
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
