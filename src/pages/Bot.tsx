@@ -155,7 +155,6 @@ export default function BotPage() {
   }, []);
 
   const executeTrade = useCallback(async (botId: string) => {
-    // Use refs for fresh values
     const bot = myBotsRef.current.find(b => b.id === botId);
     if (!bot || bot.status !== 'running') return;
 
@@ -168,13 +167,20 @@ export default function BotPage() {
 
     const outcome = getTradeOutcome({ accountType: accountTypeRef.current, userEmail: userEmailRef.current });
     const isWin = outcome === 'win';
-    const payoutAmount = bot.tradeAmount * (bot.payoutPercent / 100);
-    const actualProfit = isWin ? payoutAmount : -payoutAmount;
+
+    // Realistic profit: Profit = (Sell - Buy) × TradeSize - Fees
+    const buyPrice = bot.asset.basePrice * (1 + (Math.random() - 0.5) * 0.01);
+    const priceMove = buyPrice * (0.001 + Math.random() * 0.005);
+    const sellPrice = isWin ? buyPrice + priceMove : buyPrice - priceMove;
+    const tradeSize = bot.tradeAmount / buyPrice;
+    const fee = bot.tradeAmount * 0.001;
+    const actualProfit = (sellPrice - buyPrice) * tradeSize - fee;
 
     const currentUser = userRef.current;
-    if (currentUser) {
+    const acctType = accountTypeRef.current;
+    if (currentUser && acctType !== 'binance') {
       const operation = actualProfit > 0 ? 'add' : 'subtract';
-      const ok = await updateBalance(accountTypeRef.current, Math.abs(actualProfit), operation as 'add' | 'subtract');
+      const ok = await updateBalance(acctType, Math.abs(actualProfit), operation as 'add' | 'subtract');
       if (!ok) {
         stopBot(botId);
         toast({ title: 'Balance update failed', description: 'Bot stopped', variant: 'destructive' });
@@ -185,15 +191,15 @@ export default function BotPage() {
         await supabase.from('transactions').insert({
           user_id: currentUser.id, type: 'bot_trade', amount: Math.abs(actualProfit),
           currency: 'USD', status: 'completed',
-          description: `${bot.name} - ${isWin ? 'WIN' : 'LOSS'}: ${actualProfit >= 0 ? '+' : ''}$${actualProfit.toFixed(2)} on ${bot.asset.symbol}`,
-          account_type: accountTypeRef.current, profit_loss: actualProfit,
+          description: `${bot.name} - ${isWin ? 'WIN' : 'LOSS'}: ${actualProfit >= 0 ? '+' : ''}$${actualProfit.toFixed(4)} on ${bot.asset.symbol}`,
+          account_type: acctType, profit_loss: actualProfit,
         });
       } catch (err) { console.error(err); }
     }
 
     const log: TradeLog = {
       id: Date.now().toString(), time: new Date(), asset: bot.asset.symbol,
-      direction: Math.random() > 0.5 ? 'BUY' : 'SELL', stake: bot.tradeAmount,
+      direction: isWin ? 'BUY' : 'SELL', stake: bot.tradeAmount,
       result: isWin ? 'WIN' : 'LOSS', profit: actualProfit, botName: bot.name,
     };
     setTradeLogs(prev => [log, ...prev].slice(0, 100));

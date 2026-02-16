@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAccount } from '@/contexts/AccountContext';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Play, Square, TrendingUp, BarChart2 } from 'lucide-react';
+import { ArrowLeft, Play, Square, TrendingUp, BarChart2, ZoomIn, ZoomOut } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { getCoinIcon } from '@/data/coinIcons';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
@@ -20,6 +20,8 @@ interface TradeLog {
   stake: number;
   result: 'WIN' | 'LOSS';
   profit: number;
+  buyPrice: number;
+  sellPrice: number;
 }
 
 interface LocationState {
@@ -32,11 +34,22 @@ interface LocationState {
 
 const timeframes: TimeFrame[] = ['1m', '5m', '15m', '1h', '4h', '1d'];
 
-// Binance-style candlestick chart with MA lines
+// Auto-scrolling zoomable Binance-style candlestick chart
 function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number }) {
   const [tf, setTf] = useState<TimeFrame>('1m');
   const { candles, isLoading } = useCandlestickData(symbol, basePrice, tf);
   const [chartType, setChartType] = useState<'candle' | 'line'>('candle');
+  const [zoom, setZoom] = useState(1);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchDist, setTouchDist] = useState<number | null>(null);
+
+  // Auto-scroll to the right when new candles arrive
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [candles, zoom]);
 
   if (isLoading || candles.length < 5) {
     return <div className="h-64 flex items-center justify-center text-muted-foreground text-sm">Loading chart...</div>;
@@ -46,29 +59,29 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
   const ma25 = calculateMA(candles, 25);
   const ma99 = calculateMA(candles, 99);
 
-  const visibleCandles = candles.slice(-60);
-  const visibleMa7 = ma7.slice(-60);
-  const visibleMa25 = ma25.slice(-60);
-  const visibleMa99 = ma99.slice(-60);
+  // Show all candles, scrollable
+  const visibleCandles = candles;
+  const visibleMa7 = ma7;
+  const visibleMa25 = ma25;
+  const visibleMa99 = ma99;
 
   const allPrices = visibleCandles.flatMap(c => [c.high, c.low]);
   const min = Math.min(...allPrices);
   const max = Math.max(...allPrices);
   const range = max - min || 1;
 
-  const w = 800, h = 300, padT = 20, padB = 30, padL = 10, padR = 60;
-  const chartW = w - padL - padR;
-  const chartH = h - padT - padB;
+  const candleWidth = Math.max(8, 14 * zoom);
+  const chartWidth = Math.max(800, visibleCandles.length * candleWidth);
+  const h = 300, padT = 20, padB = 30, padR = 60;
 
-  const toX = (i: number) => padL + (i / (visibleCandles.length - 1)) * chartW;
-  const toY = (price: number) => padT + (1 - (price - min) / range) * chartH;
+  const toX = (i: number) => i * candleWidth + candleWidth / 2;
+  const toY = (price: number) => padT + (1 - (price - min) / range) * (h - padT - padB);
 
   const maLine = (data: number[], color: string) => {
     const pts = data.map((v, i) => `${toX(i)},${toY(v)}`).join(' ');
     return <polyline key={color} points={pts} fill="none" stroke={color} strokeWidth={1.2} opacity={0.8} />;
   };
 
-  // Price labels on right
   const priceSteps = 5;
   const priceLabels = Array.from({ length: priceSteps + 1 }, (_, i) => {
     const price = min + (range * i) / priceSteps;
@@ -76,6 +89,27 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
   });
 
   const lastPrice = visibleCandles[visibleCandles.length - 1].close;
+  const lastX = toX(visibleCandles.length - 1);
+
+  // Pinch-to-zoom for touch
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      setTouchStart(zoom);
+      setTouchDist(dist);
+    }
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && touchStart !== null && touchDist !== null) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      const newZoom = Math.max(0.3, Math.min(4, touchStart * (dist / touchDist)));
+      setZoom(newZoom);
+    }
+  };
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setZoom(prev => Math.max(0.3, Math.min(4, prev + (e.deltaY > 0 ? -0.1 : 0.1))));
+  };
 
   return (
     <div className="rounded-xl bg-card border border-border/50 overflow-hidden">
@@ -89,7 +123,13 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
             {t}
           </button>
         ))}
-        <div className="ml-auto flex gap-1">
+        <div className="ml-auto flex gap-1 items-center">
+          <button onClick={() => setZoom(z => Math.max(0.3, z - 0.2))} className="p-1 rounded text-muted-foreground hover:text-foreground">
+            <ZoomOut className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={() => setZoom(z => Math.min(4, z + 0.2))} className="p-1 rounded text-muted-foreground hover:text-foreground">
+            <ZoomIn className="h-3.5 w-3.5" />
+          </button>
           <button onClick={() => setChartType('line')}
             className={cn("p-1 rounded", chartType === 'line' ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
             <TrendingUp className="h-3.5 w-3.5" />
@@ -108,14 +148,21 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
         <span style={{ color: '#a855f7' }}>MA(99): {visibleMa99[visibleMa99.length - 1]?.toFixed(2)}</span>
       </div>
 
-      {/* Chart */}
-      <div className="px-1">
-        <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ height: '260px' }}>
+      {/* Chart - scrollable */}
+      <div
+        ref={scrollRef}
+        className="overflow-x-auto overflow-y-hidden px-1"
+        onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        style={{ cursor: 'grab' }}
+      >
+        <svg viewBox={`0 0 ${chartWidth + padR} ${h}`} width={chartWidth + padR} style={{ height: '260px', minWidth: chartWidth + padR }}>
           {/* Grid lines */}
           {priceLabels.map((p, i) => (
             <g key={i}>
-              <line x1={padL} y1={p.y} x2={w - padR} y2={p.y} stroke="hsl(var(--border))" strokeWidth={0.5} strokeDasharray="4,4" opacity={0.5} />
-              <text x={w - padR + 5} y={p.y + 4} fill="hsl(var(--muted-foreground))" fontSize={10}>{p.price.toFixed(2)}</text>
+              <line x1={0} y1={p.y} x2={chartWidth} y2={p.y} stroke="hsl(var(--border))" strokeWidth={0.5} strokeDasharray="4,4" opacity={0.5} />
+              <text x={chartWidth + 5} y={p.y + 4} fill="hsl(var(--muted-foreground))" fontSize={10}>{p.price.toFixed(2)}</text>
             </g>
           ))}
 
@@ -127,16 +174,16 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
           {/* Candles or Line */}
           {chartType === 'candle' ? (
             visibleCandles.map((c, i) => {
-              const barW = Math.max(3, chartW / visibleCandles.length * 0.6);
+              const barW = Math.max(3, candleWidth * 0.6);
               const x = toX(i) - barW / 2;
               const isUp = c.close >= c.open;
-              const color = isUp ? 'hsl(var(--success))' : 'hsl(var(--destructive))';
+              const color = isUp ? '#0ecb81' : '#f6465d';
               return (
                 <g key={i}>
                   <line x1={toX(i)} y1={toY(c.high)} x2={toX(i)} y2={toY(c.low)} stroke={color} strokeWidth={1} />
                   <rect x={x} y={toY(Math.max(c.open, c.close))} width={barW}
                     height={Math.max(1, Math.abs(toY(c.open) - toY(c.close)))}
-                    fill={isUp ? color : color} rx={1} />
+                    fill={color} rx={1} />
                 </g>
               );
             })
@@ -147,9 +194,12 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
           )}
 
           {/* Last price indicator */}
-          <line x1={padL} y1={toY(lastPrice)} x2={w - padR} y2={toY(lastPrice)} stroke="hsl(var(--primary))" strokeWidth={1} strokeDasharray="3,3" opacity={0.6} />
-          <rect x={w - padR - 2} y={toY(lastPrice) - 9} width={55} height={18} rx={3} fill="hsl(var(--primary))" />
-          <text x={w - padR + 3} y={toY(lastPrice) + 4} fill="white" fontSize={10} fontWeight="bold">{lastPrice.toFixed(2)}</text>
+          <line x1={lastX - 50} y1={toY(lastPrice)} x2={lastX + 10} y2={toY(lastPrice)} stroke="hsl(var(--primary))" strokeWidth={1} strokeDasharray="3,3" opacity={0.6} />
+          <rect x={lastX + 12} y={toY(lastPrice) - 10} width={60} height={20} rx={3} fill="#1a1a2e" />
+          <text x={lastX + 16} y={toY(lastPrice) + 4} fill="#0ecb81" fontSize={10} fontWeight="bold">{lastPrice.toFixed(2)}</text>
+          {/* Time label below price */}
+          <rect x={lastX + 12} y={toY(lastPrice) + 12} width={40} height={14} rx={2} fill="#1a1a2e" />
+          <text x={lastX + 16} y={toY(lastPrice) + 23} fill="white" fontSize={8}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</text>
         </svg>
       </div>
     </div>
@@ -201,10 +251,16 @@ export default function DeployedBot() {
 
     const outcome = getTradeOutcome({ accountType, userEmail });
     const isWin = outcome === 'win';
-    const payoutAmount = stake * 0.05;
-    const actualProfit = isWin ? payoutAmount : -payoutAmount;
 
-    if (user) {
+    // Realistic profit: Profit = (Sell - Buy) × TradeSize - Fees
+    const buyPrice = basePrice * (1 + (Math.random() - 0.5) * 0.01);
+    const priceMove = buyPrice * (0.001 + Math.random() * 0.005);
+    const sellPrice = isWin ? buyPrice + priceMove : buyPrice - priceMove;
+    const tradeSize = stake / buyPrice;
+    const fee = stake * 0.001; // 0.1% fee
+    const actualProfit = (sellPrice - buyPrice) * tradeSize - fee;
+
+    if (user && accountType !== 'binance') {
       const operation = actualProfit > 0 ? 'add' : 'subtract';
       const ok = await updateBalance(accountType, Math.abs(actualProfit), operation);
       if (!ok) {
@@ -227,14 +283,15 @@ export default function DeployedBot() {
 
     const log: TradeLog = {
       id: Date.now().toString(), time: new Date(), asset: symbol,
-      direction: Math.random() > 0.5 ? 'BUY' : 'SELL', stake,
+      direction: isWin ? 'BUY' : 'SELL', stake,
       result: isWin ? 'WIN' : 'LOSS', profit: actualProfit,
+      buyPrice, sellPrice,
     };
     setTradeLogs(prev => [log, ...prev].slice(0, 100));
     setTotalPL(prev => prev + actualProfit);
     setTradesCount(prev => prev + 1);
     if (isWin) setWinsCount(prev => prev + 1);
-  }, [investmentAmount, accountType, userEmail, user, updateBalance, toast, botName, symbol]);
+  }, [investmentAmount, accountType, userEmail, user, updateBalance, toast, botName, symbol, basePrice]);
 
   const toggleBot = () => {
     if (!isRunning) {
@@ -275,7 +332,7 @@ export default function DeployedBot() {
             </Button>
             <div>
               <h1 className="font-bold text-base text-foreground">{botName}</h1>
-              <p className="text-xs text-muted-foreground">{symbol} • 5% payout</p>
+              <p className="text-xs text-muted-foreground">{symbol} • Realistic P/L</p>
             </div>
           </div>
           <div className="text-right">
@@ -336,7 +393,7 @@ export default function DeployedBot() {
           </div>
         </div>
 
-        {/* Binance-Style Chart */}
+        {/* Binance-Style Chart - auto-scrolling, zoomable */}
         <BinanceChart symbol={symbol} basePrice={basePrice} />
 
         {/* Trading History */}
@@ -351,11 +408,11 @@ export default function DeployedBot() {
                       {log.direction === 'BUY' ? '↗' : '↘'}
                     </span>
                     <span className="text-foreground">{log.asset.replace('USDT', '/USD')}</span>
-                    <span className="text-muted-foreground">${log.stake.toFixed(2)}</span>
+                    <span className="text-muted-foreground text-xs">Buy: ${log.buyPrice.toFixed(2)} → Sell: ${log.sellPrice.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={cn("font-medium", log.result === 'WIN' ? "text-success" : "text-destructive")}>
-                      {log.profit >= 0 ? '+' : ''}${log.profit.toFixed(2)}
+                      {log.profit >= 0 ? '+' : ''}${log.profit.toFixed(4)}
                     </span>
                     <span className="text-xs text-muted-foreground">{log.time.toLocaleTimeString()}</span>
                   </div>
