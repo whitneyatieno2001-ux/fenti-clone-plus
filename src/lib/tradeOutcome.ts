@@ -4,7 +4,7 @@
 // Real (other emails): mostly losses with only 2 wins per session
 
 interface TradeOutcomeConfig {
-  accountType: 'demo' | 'real';
+  accountType: string;
   userEmail: string | null;
 }
 
@@ -55,7 +55,7 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
   return result;
 }
 
-export function resetSessionTracker(accountType: 'demo' | 'real', userEmail: string | null) {
+export function resetSessionTracker(accountType: string, userEmail: string | null) {
   const sessionKey = `${accountType}-${userEmail || 'guest'}`;
   sessionTracker.delete(sessionKey);
 }
