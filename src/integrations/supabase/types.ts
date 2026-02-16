@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      binance_connections: {
+        Row: {
+          api_key_masked: string
+          connected_at: string
+          id: string
+          is_connected: boolean
+          permissions: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key_masked: string
+          connected_at?: string
+          id?: string
+          is_connected?: boolean
+          permissions?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key_masked?: string
+          connected_at?: string
+          id?: string
+          is_connected?: boolean
+          permissions?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bot_purchases: {
         Row: {
           bot_id: string
