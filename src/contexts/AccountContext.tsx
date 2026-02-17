@@ -75,8 +75,15 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       const { data } = await supabase.from('binance_connections').select('*').eq('user_id', userId).maybeSingle();
       if (data?.is_connected) {
         setIsBinanceConnected(true);
-        // Simulate fetching Binance balance (in production this would call the Binance API via edge function)
-        setBinanceBalance(0); // Will show 0 until real API integration
+        // Fetch real Binance balance via edge function
+        try {
+          const { data: balanceData, error } = await supabase.functions.invoke('binance-balance');
+          if (!error && balanceData?.balance) {
+            setBinanceBalance(Number(balanceData.balance) || 0);
+          }
+        } catch (err) {
+          console.error('Error fetching Binance balance:', err);
+        }
       }
     } catch (err) { console.error('Error loading binance:', err); }
   };

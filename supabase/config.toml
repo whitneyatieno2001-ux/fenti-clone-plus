@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.payhero-webhook]
 verify_jwt = false
+
+[functions.binance-balance]
+verify_jwt = false
