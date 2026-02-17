@@ -74,7 +74,9 @@ export default function Settings() {
         api_key_masked: masked,
         is_connected: true,
         permissions: ['read'],
-      });
+        api_key_encrypted: apiKey,
+        api_secret_encrypted: apiSecret,
+      } as any);
 
       if (error) throw error;
 

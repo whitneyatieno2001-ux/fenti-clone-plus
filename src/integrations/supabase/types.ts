@@ -16,7 +16,9 @@ export type Database = {
     Tables: {
       binance_connections: {
         Row: {
+          api_key_encrypted: string | null
           api_key_masked: string
+          api_secret_encrypted: string | null
           connected_at: string
           id: string
           is_connected: boolean
@@ -25,7 +27,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          api_key_encrypted?: string | null
           api_key_masked: string
+          api_secret_encrypted?: string | null
           connected_at?: string
           id?: string
           is_connected?: boolean
@@ -34,7 +38,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          api_key_encrypted?: string | null
           api_key_masked?: string
+          api_secret_encrypted?: string | null
           connected_at?: string
           id?: string
           is_connected?: boolean
