@@ -14,6 +14,7 @@ import {
   Bot, Upload, Settings2, Play, Square, Trash2,
   ChevronDown, Plus, ScrollText
 } from 'lucide-react';
+import { useTradingSound } from '@/hooks/useTradingSound';
 
 const tradingAssets = [
   { symbol: 'BTCUSDT', name: 'BTC/USD', basePrice: 98000 },
@@ -80,6 +81,7 @@ export default function BotPage() {
   const navigate = useNavigate();
   const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
   const { toast } = useToast();
+  const { playTradeSound } = useTradingSound();
 
   const [tradeAmount, setTradeAmount] = useState('10');
   const [selectedInterval, setSelectedInterval] = useState(tradeIntervals[1]);
@@ -138,7 +140,7 @@ export default function BotPage() {
         totalPL: 0,
         trades: 0,
         wins: 0,
-        payoutPercent: 50,
+        payoutPercent: 55,
         source: 'upload',
       };
       setMyBots(prev => [...prev, newBot]);
@@ -168,13 +170,17 @@ export default function BotPage() {
     const outcome = getTradeOutcome({ accountType: accountTypeRef.current, userEmail: userEmailRef.current });
     const isWin = outcome === 'win';
 
-    // Realistic profit: Profit = (Sell - Buy) × TradeSize - Fees
+    // XML bots use payout percentage of stake (55%)
+    const payoutAmount = bot.tradeAmount * (bot.payoutPercent / 100);
+    const actualProfit = isWin ? payoutAmount : -payoutAmount;
+
+    // Generate display prices
     const buyPrice = bot.asset.basePrice * (1 + (Math.random() - 0.5) * 0.01);
     const priceMove = buyPrice * (0.001 + Math.random() * 0.005);
     const sellPrice = isWin ? buyPrice + priceMove : buyPrice - priceMove;
-    const tradeSize = bot.tradeAmount / buyPrice;
-    const fee = bot.tradeAmount * 0.001;
-    const actualProfit = (sellPrice - buyPrice) * tradeSize - fee;
+
+    // Play trading sound
+    playTradeSound(isWin);
 
     const currentUser = userRef.current;
     const acctType = accountTypeRef.current;
@@ -209,7 +215,7 @@ export default function BotPage() {
         ? { ...b, totalPL: b.totalPL + actualProfit, trades: b.trades + 1, wins: b.wins + (isWin ? 1 : 0) }
         : b
     ));
-  }, [stopBot, updateBalance, toast]);
+  }, [stopBot, updateBalance, toast, playTradeSound]);
 
   const startBot = useCallback((botId: string) => {
     const bot = myBots.find(b => b.id === botId);
