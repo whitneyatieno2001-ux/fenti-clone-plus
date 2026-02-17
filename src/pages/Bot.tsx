@@ -108,7 +108,7 @@ export default function BotPage() {
 
   useEffect(() => {
     return () => {
-      botIntervalsRef.current.forEach((interval) => clearInterval(interval));
+      botIntervalsRef.current.forEach((timeout) => clearTimeout(timeout));
     };
   }, []);
 
@@ -151,14 +151,14 @@ export default function BotPage() {
   };
 
   const stopBot = useCallback((botId: string) => {
-    const interval = botIntervalsRef.current.get(botId);
-    if (interval) { clearInterval(interval); botIntervalsRef.current.delete(botId); }
+    const timeout = botIntervalsRef.current.get(botId);
+    if (timeout) { clearTimeout(timeout); botIntervalsRef.current.delete(botId); }
     setMyBots(prev => prev.map(b => b.id === botId ? { ...b, status: 'idle' as const } : b));
   }, []);
 
   const executeTrade = useCallback(async (botId: string) => {
     const bot = myBotsRef.current.find(b => b.id === botId);
-    if (!bot || bot.status !== 'running') return;
+    if (!bot) return;
 
     const bal = balanceRef.current;
     if (bal < bot.tradeAmount) {
@@ -225,9 +225,23 @@ export default function BotPage() {
       return;
     }
     setMyBots(prev => prev.map(b => b.id === botId ? { ...b, status: 'running' as const } : b));
-    setTimeout(() => executeTrade(botId), 500);
-    const interval = setInterval(() => executeTrade(botId), bot.interval);
-    botIntervalsRef.current.set(botId, interval);
+    // Use a recursive setTimeout for continuous trading with varied delays
+    const scheduleNext = () => {
+      const timeout = setTimeout(async () => {
+        const currentBot = myBotsRef.current.find(b => b.id === botId);
+        if (!currentBot || currentBot.status !== 'running') return;
+        await executeTrade(botId);
+        // Schedule next trade only if still running
+        const stillRunning = myBotsRef.current.find(b => b.id === botId);
+        if (stillRunning?.status === 'running') {
+          scheduleNext();
+        }
+      }, 3000 + Math.random() * 2000);
+      botIntervalsRef.current.set(botId, timeout);
+    };
+    // Execute first trade immediately
+    executeTrade(botId);
+    scheduleNext();
     toast({ title: 'Bot Started', description: `${bot.name} is now trading continuously` });
   }, [myBots, currentBalance, executeTrade, toast]);
 
@@ -406,29 +420,69 @@ export default function BotPage() {
           </div>
         )}
 
-        {/* Trade Logs */}
+        {/* Positions Panel - like screenshot 3 */}
         {tradeLogs.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <ScrollText className="h-5 w-5 text-primary" />
-              <h2 className="text-base font-semibold text-foreground">Trade Logs</h2>
+          <div className="rounded-xl bg-card border border-border/50 overflow-hidden">
+            {/* Tabs */}
+            <div className="flex border-b border-border/30">
+              <button className="flex-1 py-3 text-sm font-medium text-foreground bg-muted/30">
+                All ({tradeLogs.length})
+              </button>
+              <button className="flex-1 py-3 text-sm font-medium text-muted-foreground">
+                Positions ({tradeLogs.length})
+              </button>
+              <button className="flex-1 py-3 text-sm font-medium text-muted-foreground">
+                Orders (0)
+              </button>
             </div>
-            <div className="rounded-xl bg-card border border-border/50 overflow-hidden max-h-64 overflow-y-auto">
+
+            {/* Total P&L */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-muted-foreground">$</span>
+                <span className="text-sm font-medium text-foreground">Total P&L</span>
+              </div>
+              {(() => {
+                const totalPL = tradeLogs.reduce((sum, l) => sum + l.profit, 0);
+                const wins = tradeLogs.filter(l => l.result === 'WIN').length;
+                const losses = tradeLogs.filter(l => l.result === 'LOSS').length;
+                return (
+                  <span className={cn("text-lg font-bold", totalPL >= 0 ? "text-success" : "text-destructive")}>
+                    {totalPL >= 0 ? '' : '-'}${Math.abs(totalPL).toFixed(2)}
+                  </span>
+                );
+              })()}
+            </div>
+            <div className="px-4 pb-2">
+              <span className="text-xs text-muted-foreground">
+                {tradeLogs.filter(l => l.result === 'WIN').length} winning /{tradeLogs.filter(l => l.result === 'LOSS').length} losing trades
+              </span>
+            </div>
+
+            {/* Position rows */}
+            <div className="max-h-64 overflow-y-auto">
               {tradeLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between px-4 py-2.5 border-b border-border/30 last:border-0 text-sm">
-                  <div className="flex items-center gap-2">
-                    <img src={getCoinIcon(log.asset.replace('USDT', ''))} alt="" className="w-5 h-5 rounded-full" />
-                    <span className="text-foreground font-medium">{log.asset.replace('USDT', '/USD')}</span>
-                    <span className={cn("text-xs px-1.5 py-0.5 rounded", log.direction === 'BUY' ? "bg-success/20 text-success" : "bg-destructive/20 text-destructive")}>
-                      {log.direction}
-                    </span>
-                  </div>
+                <div key={log.id} className="flex items-center justify-between px-4 py-3 border-b border-border/20 last:border-0">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground">${log.stake}</span>
-                    <span className={cn("font-medium", log.result === 'WIN' ? "text-success" : "text-destructive")}>
-                      {log.profit >= 0 ? '+' : ''}${log.profit.toFixed(2)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{log.time.toLocaleTimeString()}</span>
+                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center",
+                      log.direction === 'BUY' ? "bg-success/10" : "bg-destructive/10")}>
+                      <span className={cn("text-sm font-bold", log.direction === 'BUY' ? "text-success" : "text-destructive")}>
+                        {log.direction === 'BUY' ? '↗' : '↘'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{log.asset.replace('USDT', 'USD')}</p>
+                      <p className="text-xs text-muted-foreground">0.01 • {log.direction}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <p className={cn("text-sm font-semibold", log.profit >= 0 ? "text-success" : "text-destructive")}>
+                        {log.profit >= 0 ? '+' : '-'}${Math.abs(log.profit).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">@ {log.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
               ))}
@@ -436,25 +490,6 @@ export default function BotPage() {
           </div>
         )}
 
-        {/* Trading History */}
-        {tradeLogs.length > 0 && (
-          <div className="space-y-3">
-            <span className="text-base font-semibold text-foreground">Trading History</span>
-            <div className="rounded-xl bg-card border border-border/50 overflow-hidden max-h-60 overflow-y-auto">
-              {tradeLogs.map((log) => (
-                <div key={`hist-${log.id}`} className="flex items-center justify-between px-4 py-2.5 border-b border-border/30 last:border-0 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-primary" />
-                    <span className="text-foreground">{log.asset.replace('USDT', '/USD')}</span>
-                  </div>
-                  <span className={cn("font-medium", log.result === 'WIN' ? "text-success" : "text-destructive")}>
-                    {log.profit >= 0 ? '+' : ''}${log.profit.toFixed(2)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </main>
       <BottomNav />
     </div>

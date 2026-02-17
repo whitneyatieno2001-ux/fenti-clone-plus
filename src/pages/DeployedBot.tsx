@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAccount } from '@/contexts/AccountContext';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Play, Square, TrendingUp, BarChart2, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, Play, Square, TrendingUp, BarChart2, ZoomIn, ZoomOut, ChevronDown, LinkIcon } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { getCoinIcon } from '@/data/coinIcons';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
 import { supabase } from '@/integrations/supabase/client';
 import { useCandlestickData, calculateMA } from '@/hooks/useCandlestickData';
+import { useTradingSound } from '@/hooks/useTradingSound';
 import type { TimeFrame } from '@/hooks/useCandlestickData';
 
 interface TradeLog {
@@ -22,6 +23,7 @@ interface TradeLog {
   profit: number;
   buyPrice: number;
   sellPrice: number;
+  entryPrice: number;
 }
 
 interface LocationState {
@@ -34,17 +36,17 @@ interface LocationState {
 
 const timeframes: TimeFrame[] = ['1m', '5m', '15m', '1h', '4h', '1d'];
 
-// Auto-scrolling zoomable Binance-style candlestick chart
-function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number }) {
+// Chart with SL/TP lines and predictor zones
+function BinanceChart({ symbol, basePrice, tradeLogs }: { symbol: string; basePrice: number; tradeLogs: TradeLog[] }) {
   const [tf, setTf] = useState<TimeFrame>('1m');
   const { candles, isLoading } = useCandlestickData(symbol, basePrice, tf);
   const [chartType, setChartType] = useState<'candle' | 'line'>('candle');
+  const [showPredictor, setShowPredictor] = useState(true);
   const [zoom, setZoom] = useState(1);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchDist, setTouchDist] = useState<number | null>(null);
 
-  // Auto-scroll to the right when new candles arrive
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
@@ -59,12 +61,7 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
   const ma25 = calculateMA(candles, 25);
   const ma99 = calculateMA(candles, 99);
 
-  // Show all candles, scrollable
   const visibleCandles = candles;
-  const visibleMa7 = ma7;
-  const visibleMa25 = ma25;
-  const visibleMa99 = ma99;
-
   const allPrices = visibleCandles.flatMap(c => [c.high, c.low]);
   const min = Math.min(...allPrices);
   const max = Math.max(...allPrices);
@@ -72,7 +69,7 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
 
   const candleWidth = Math.max(8, 14 * zoom);
   const chartWidth = Math.max(800, visibleCandles.length * candleWidth);
-  const h = 300, padT = 20, padB = 30, padR = 60;
+  const h = 340, padT = 20, padB = 30, padR = 80;
 
   const toX = (i: number) => i * candleWidth + candleWidth / 2;
   const toY = (price: number) => padT + (1 - (price - min) / range) * (h - padT - padB);
@@ -82,7 +79,7 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
     return <polyline key={color} points={pts} fill="none" stroke={color} strokeWidth={1.2} opacity={0.8} />;
   };
 
-  const priceSteps = 5;
+  const priceSteps = 8;
   const priceLabels = Array.from({ length: priceSteps + 1 }, (_, i) => {
     const price = min + (range * i) / priceSteps;
     return { price, y: toY(price) };
@@ -91,7 +88,17 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
   const lastPrice = visibleCandles[visibleCandles.length - 1].close;
   const lastX = toX(visibleCandles.length - 1);
 
-  // Pinch-to-zoom for touch
+  // SL and TP levels based on last price
+  const slPrice = lastPrice * 1.003; // Stop Loss above (for sell)
+  const tpPrice = lastPrice * 0.993; // Take Profit below (for sell)
+  const entryPrice = lastPrice;
+
+  // Predictor zones
+  const predictorStartIdx = Math.max(0, visibleCandles.length - 15);
+  const predictorEndIdx = visibleCandles.length - 1;
+  const recentHigh = Math.max(...visibleCandles.slice(predictorStartIdx).map(c => c.high));
+  const recentLow = Math.min(...visibleCandles.slice(predictorStartIdx).map(c => c.low));
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
@@ -102,8 +109,7 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
   const handleTouchMove = (e: React.TouchEvent) => {
     if (e.touches.length === 2 && touchStart !== null && touchDist !== null) {
       const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      const newZoom = Math.max(0.3, Math.min(4, touchStart * (dist / touchDist)));
-      setZoom(newZoom);
+      setZoom(Math.max(0.3, Math.min(4, touchStart * (dist / touchDist))));
     }
   };
   const handleWheel = (e: React.WheelEvent) => {
@@ -124,6 +130,11 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
           </button>
         ))}
         <div className="ml-auto flex gap-1 items-center">
+          <button onClick={() => setShowPredictor(!showPredictor)}
+            className={cn("px-2 py-1 text-xs rounded font-medium transition-colors",
+              showPredictor ? "bg-cyan-500/20 text-cyan-400" : "text-muted-foreground")}>
+            Predict
+          </button>
           <button onClick={() => setZoom(z => Math.max(0.3, z - 0.2))} className="p-1 rounded text-muted-foreground hover:text-foreground">
             <ZoomOut className="h-3.5 w-3.5" />
           </button>
@@ -143,12 +154,12 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
 
       {/* MA Legend */}
       <div className="flex items-center gap-3 px-3 py-1 text-xs">
-        <span style={{ color: '#eab308' }}>MA(7): {visibleMa7[visibleMa7.length - 1]?.toFixed(2)}</span>
-        <span style={{ color: '#ec4899' }}>MA(25): {visibleMa25[visibleMa25.length - 1]?.toFixed(2)}</span>
-        <span style={{ color: '#a855f7' }}>MA(99): {visibleMa99[visibleMa99.length - 1]?.toFixed(2)}</span>
+        <span style={{ color: '#eab308' }}>MA(7): {ma7[ma7.length - 1]?.toFixed(2)}</span>
+        <span style={{ color: '#ec4899' }}>MA(25): {ma25[ma25.length - 1]?.toFixed(2)}</span>
+        <span style={{ color: '#a855f7' }}>MA(99): {ma99[ma99.length - 1]?.toFixed(2)}</span>
       </div>
 
-      {/* Chart - scrollable */}
+      {/* Chart */}
       <div
         ref={scrollRef}
         className="overflow-x-auto overflow-y-hidden px-1"
@@ -157,19 +168,44 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
         onTouchMove={handleTouchMove}
         style={{ cursor: 'grab' }}
       >
-        <svg viewBox={`0 0 ${chartWidth + padR} ${h}`} width={chartWidth + padR} style={{ height: '260px', minWidth: chartWidth + padR }}>
+        <svg viewBox={`0 0 ${chartWidth + padR} ${h}`} width={chartWidth + padR} style={{ height: '300px', minWidth: chartWidth + padR }}>
           {/* Grid lines */}
           {priceLabels.map((p, i) => (
             <g key={i}>
-              <line x1={0} y1={p.y} x2={chartWidth} y2={p.y} stroke="hsl(var(--border))" strokeWidth={0.5} strokeDasharray="4,4" opacity={0.5} />
-              <text x={chartWidth + 5} y={p.y + 4} fill="hsl(var(--muted-foreground))" fontSize={10}>{p.price.toFixed(2)}</text>
+              <line x1={0} y1={p.y} x2={chartWidth} y2={p.y} stroke="hsl(var(--border))" strokeWidth={0.5} strokeDasharray="4,4" opacity={0.3} />
+              <text x={chartWidth + 5} y={p.y + 4} fill="hsl(var(--muted-foreground))" fontSize={9}>{p.price.toFixed(3)}</text>
             </g>
           ))}
 
+          {/* Predictor zones - colored bands */}
+          {showPredictor && (
+            <>
+              {/* Resistance zone (magenta/red) */}
+              <rect x={toX(predictorStartIdx)} y={toY(recentHigh)} 
+                width={toX(predictorEndIdx) - toX(predictorStartIdx)} 
+                height={Math.abs(toY(recentHigh) - toY(recentHigh - range * 0.02))}
+                fill="rgba(236, 72, 153, 0.15)" />
+              {/* Support zone (green) */}
+              <rect x={toX(predictorStartIdx)} y={toY(recentLow + range * 0.02)} 
+                width={toX(predictorEndIdx) - toX(predictorStartIdx)} 
+                height={Math.abs(toY(recentLow + range * 0.02) - toY(recentLow))}
+                fill="rgba(14, 203, 129, 0.15)" />
+              {/* Entry zone (blue highlight) */}
+              <rect x={toX(Math.max(0, visibleCandles.length - 8))} y={toY(lastPrice + range * 0.01)} 
+                width={toX(visibleCandles.length - 1) - toX(Math.max(0, visibleCandles.length - 8))} 
+                height={Math.abs(toY(lastPrice + range * 0.01) - toY(lastPrice - range * 0.01))}
+                fill="rgba(59, 130, 246, 0.12)" stroke="rgba(59, 130, 246, 0.3)" strokeWidth={0.5} />
+              {/* Cyan prediction column */}
+              <rect x={toX(visibleCandles.length - 2) - 3} y={toY(lastPrice)} 
+                width={candleWidth * 1.5} height={Math.abs(toY(lastPrice) - toY(recentLow))}
+                fill="rgba(6, 182, 212, 0.2)" />
+            </>
+          )}
+
           {/* MA lines */}
-          {maLine(visibleMa99, '#a855f7')}
-          {maLine(visibleMa25, '#ec4899')}
-          {maLine(visibleMa7, '#eab308')}
+          {maLine(ma99, '#a855f7')}
+          {maLine(ma25, '#ec4899')}
+          {maLine(ma7, '#eab308')}
 
           {/* Candles or Line */}
           {chartType === 'candle' ? (
@@ -193,15 +229,101 @@ function BinanceChart({ symbol, basePrice }: { symbol: string; basePrice: number
               fill="none" stroke="hsl(var(--primary))" strokeWidth={1.5} />
           )}
 
-          {/* Last price indicator */}
-          <line x1={lastX - 50} y1={toY(lastPrice)} x2={lastX + 10} y2={toY(lastPrice)} stroke="hsl(var(--primary))" strokeWidth={1} strokeDasharray="3,3" opacity={0.6} />
-          <rect x={lastX + 12} y={toY(lastPrice) - 10} width={60} height={20} rx={3} fill="#1a1a2e" />
-          <text x={lastX + 16} y={toY(lastPrice) + 4} fill="#0ecb81" fontSize={10} fontWeight="bold">{lastPrice.toFixed(2)}</text>
-          {/* Time label below price */}
-          <rect x={lastX + 12} y={toY(lastPrice) + 12} width={40} height={14} rx={2} fill="#1a1a2e" />
-          <text x={lastX + 16} y={toY(lastPrice) + 23} fill="white" fontSize={8}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</text>
+          {/* SL line (dashed, red label) */}
+          <line x1={0} y1={toY(slPrice)} x2={chartWidth} y2={toY(slPrice)} stroke="#f6465d" strokeWidth={1} strokeDasharray="6,4" opacity={0.7} />
+          <text x={4} y={toY(slPrice) - 4} fill="#f6465d" fontSize={9} fontWeight="bold">SL</text>
+          <rect x={chartWidth + 2} y={toY(slPrice) - 8} width={72} height={16} rx={2} fill="#f6465d" />
+          <text x={chartWidth + 6} y={toY(slPrice) + 4} fill="white" fontSize={9} fontWeight="bold">{slPrice.toFixed(3)}</text>
+
+          {/* Entry line (dotted, blue) */}
+          <line x1={0} y1={toY(entryPrice)} x2={chartWidth} y2={toY(entryPrice)} stroke="#3b82f6" strokeWidth={1} strokeDasharray="3,3" opacity={0.8} />
+          <rect x={chartWidth + 2} y={toY(entryPrice) - 8} width={72} height={16} rx={2} fill="#3b82f6" />
+          <text x={chartWidth + 6} y={toY(entryPrice) + 4} fill="white" fontSize={9} fontWeight="bold">{entryPrice.toFixed(3)}</text>
+          <text x={4} y={toY(entryPrice) - 4} fill="#3b82f6" fontSize={8}>SELL 0.01</text>
+
+          {/* TP line (dashed, green label) */}
+          <line x1={0} y1={toY(tpPrice)} x2={chartWidth} y2={toY(tpPrice)} stroke="#0ecb81" strokeWidth={1} strokeDasharray="6,4" opacity={0.7} />
+          <text x={4} y={toY(tpPrice) - 4} fill="#0ecb81" fontSize={9} fontWeight="bold">TP</text>
+          <rect x={chartWidth + 2} y={toY(tpPrice) - 8} width={72} height={16} rx={2} fill="#0ecb81" />
+          <text x={chartWidth + 6} y={toY(tpPrice) + 4} fill="white" fontSize={9} fontWeight="bold">{tpPrice.toFixed(3)}</text>
         </svg>
       </div>
+    </div>
+  );
+}
+
+// Positions panel like screenshot 3
+function PositionsPanel({ tradeLogs, totalPL, winsCount, tradesCount }: { 
+  tradeLogs: TradeLog[]; totalPL: number; winsCount: number; tradesCount: number 
+}) {
+  const [activeTab, setActiveTab] = useState<'all' | 'positions' | 'orders'>('all');
+  const losesCount = tradesCount - winsCount;
+
+  return (
+    <div className="rounded-xl bg-card border border-border/50 overflow-hidden">
+      {/* Tabs */}
+      <div className="flex border-b border-border/30">
+        {(['all', 'positions', 'orders'] as const).map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
+            className={cn("flex-1 py-3 text-sm font-medium transition-colors",
+              activeTab === tab ? "text-foreground bg-muted/30" : "text-muted-foreground hover:text-foreground")}>
+            {tab === 'all' ? `All (${tradeLogs.length})` : tab === 'positions' ? `Positions (${tradeLogs.length})` : 'Orders (0)'}
+          </button>
+        ))}
+      </div>
+
+      {/* Total P&L */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-muted-foreground">$</span>
+          <span className="text-sm font-medium text-foreground">Total P&L</span>
+        </div>
+        <span className={cn("text-lg font-bold", totalPL >= 0 ? "text-success" : "text-destructive")}>
+          {totalPL >= 0 ? '+' : ''}{totalPL < 0 ? '-' : ''}${Math.abs(totalPL).toFixed(2)}
+        </span>
+      </div>
+      <div className="px-4 pb-2">
+        <span className="text-xs text-muted-foreground">{winsCount} winning /{losesCount} losing trades</span>
+      </div>
+
+      {/* Trade positions list */}
+      {activeTab !== 'orders' && (
+        <div className="max-h-64 overflow-y-auto">
+          {tradeLogs.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">No positions yet</div>
+          ) : (
+            tradeLogs.map((log) => (
+              <div key={log.id} className="flex items-center justify-between px-4 py-3 border-b border-border/20 last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center",
+                    log.direction === 'BUY' ? "bg-success/10" : "bg-destructive/10")}>
+                    <span className={cn("text-sm font-bold", log.direction === 'BUY' ? "text-success" : "text-destructive")}>
+                      {log.direction === 'BUY' ? '↗' : '↘'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{log.asset.replace('USDT', 'USD')}</p>
+                    <p className="text-xs text-muted-foreground">0.01 • {log.direction}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className={cn("text-sm font-semibold", log.profit >= 0 ? "text-success" : "text-destructive")}>
+                      {log.profit >= 0 ? '+' : '-'}${Math.abs(log.profit).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">@ {log.entryPrice.toFixed(2)}</p>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === 'orders' && (
+        <div className="text-center py-8 text-muted-foreground text-sm">No pending orders</div>
+      )}
     </div>
   );
 }
@@ -212,6 +334,7 @@ export default function DeployedBot() {
   const state = location.state as LocationState | null;
   const { toast } = useToast();
   const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
+  const { playTradeSound } = useTradingSound();
 
   const botName = state?.botName || 'Custom Bot';
   const symbol = state?.symbol || 'BTCUSDT';
@@ -227,12 +350,14 @@ export default function DeployedBot() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const durationRef = useRef<NodeJS.Timeout | null>(null);
   const balanceRef = useRef(currentBalance);
+  const isRunningRef = useRef(false);
 
   useEffect(() => { balanceRef.current = currentBalance; }, [currentBalance]);
+  useEffect(() => { isRunningRef.current = isRunning; }, [isRunning]);
 
   useEffect(() => {
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) clearTimeout(intervalRef.current);
       if (durationRef.current) clearInterval(durationRef.current);
     };
   }, []);
@@ -243,7 +368,6 @@ export default function DeployedBot() {
     const stake = parseFloat(investmentAmount) || 10;
     if (balanceRef.current < stake) {
       setIsRunning(false);
-      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
       if (durationRef.current) { clearInterval(durationRef.current); durationRef.current = null; }
       toast({ title: 'Insufficient Balance', description: 'Bot stopped due to low balance', variant: 'destructive' });
       return;
@@ -252,20 +376,20 @@ export default function DeployedBot() {
     const outcome = getTradeOutcome({ accountType, userEmail });
     const isWin = outcome === 'win';
 
-    // Realistic profit: Profit = (Sell - Buy) × TradeSize - Fees
     const buyPrice = basePrice * (1 + (Math.random() - 0.5) * 0.01);
     const priceMove = buyPrice * (0.001 + Math.random() * 0.005);
     const sellPrice = isWin ? buyPrice + priceMove : buyPrice - priceMove;
     const tradeSize = stake / buyPrice;
-    const fee = stake * 0.001; // 0.1% fee
+    const fee = stake * 0.001;
     const actualProfit = (sellPrice - buyPrice) * tradeSize - fee;
+
+    playTradeSound(isWin);
 
     if (user && accountType !== 'binance') {
       const operation = actualProfit > 0 ? 'add' : 'subtract';
       const ok = await updateBalance(accountType, Math.abs(actualProfit), operation);
       if (!ok) {
         setIsRunning(false);
-        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
         if (durationRef.current) { clearInterval(durationRef.current); durationRef.current = null; }
         toast({ title: 'Balance update failed', variant: 'destructive' });
         return;
@@ -285,13 +409,23 @@ export default function DeployedBot() {
       id: Date.now().toString(), time: new Date(), asset: symbol,
       direction: isWin ? 'BUY' : 'SELL', stake,
       result: isWin ? 'WIN' : 'LOSS', profit: actualProfit,
-      buyPrice, sellPrice,
+      buyPrice, sellPrice, entryPrice: buyPrice,
     };
     setTradeLogs(prev => [log, ...prev].slice(0, 100));
     setTotalPL(prev => prev + actualProfit);
     setTradesCount(prev => prev + 1);
     if (isWin) setWinsCount(prev => prev + 1);
-  }, [investmentAmount, accountType, userEmail, user, updateBalance, toast, botName, symbol, basePrice]);
+  }, [investmentAmount, accountType, userEmail, user, updateBalance, toast, botName, symbol, basePrice, playTradeSound]);
+
+  const scheduleNextTrade = useCallback(() => {
+    intervalRef.current = setTimeout(async () => {
+      if (!isRunningRef.current) return;
+      await executeTrade();
+      if (isRunningRef.current) {
+        scheduleNextTrade();
+      }
+    }, 3000 + Math.random() * 2000);
+  }, [executeTrade]);
 
   const toggleBot = () => {
     if (!isRunning) {
@@ -302,11 +436,11 @@ export default function DeployedBot() {
       }
       setIsRunning(true);
       executeTrade();
-      intervalRef.current = setInterval(executeTrade, 3000 + Math.random() * 2000);
+      scheduleNextTrade();
       durationRef.current = setInterval(() => setActiveDuration(prev => prev + 1), 1000);
       toast({ title: 'Bot Started', description: `${botName} is now trading` });
     } else {
-      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+      if (intervalRef.current) { clearTimeout(intervalRef.current); intervalRef.current = null; }
       if (durationRef.current) { clearInterval(durationRef.current); durationRef.current = null; }
       setIsRunning(false);
       toast({ title: 'Bot Stopped' });
@@ -393,33 +527,18 @@ export default function DeployedBot() {
           </div>
         </div>
 
-        {/* Binance-Style Chart - auto-scrolling, zoomable */}
-        <BinanceChart symbol={symbol} basePrice={basePrice} />
+        {/* Chart with SL/TP lines and predictor zones */}
+        <BinanceChart symbol={symbol} basePrice={basePrice} tradeLogs={tradeLogs} />
 
-        {/* Trading History */}
+        {/* Positions Panel - like screenshot 3 */}
+        <PositionsPanel tradeLogs={tradeLogs} totalPL={totalPL} winsCount={winsCount} tradesCount={tradesCount} />
+
+        {/* Disconnect button */}
         {tradeLogs.length > 0 && (
-          <div className="space-y-2">
-            <span className="text-sm font-semibold text-foreground">Trading History</span>
-            <div className="rounded-xl bg-card border border-border/50 overflow-hidden max-h-60 overflow-y-auto">
-              {tradeLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between px-4 py-2.5 border-b border-border/30 last:border-0 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className={cn("text-xs", log.direction === 'BUY' ? "text-success" : "text-destructive")}>
-                      {log.direction === 'BUY' ? '↗' : '↘'}
-                    </span>
-                    <span className="text-foreground">{log.asset.replace('USDT', '/USD')}</span>
-                    <span className="text-muted-foreground text-xs">Buy: ${log.buyPrice.toFixed(2)} → Sell: ${log.sellPrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={cn("font-medium", log.result === 'WIN' ? "text-success" : "text-destructive")}>
-                      {log.profit >= 0 ? '+' : ''}${log.profit.toFixed(4)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{log.time.toLocaleTimeString()}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <Button variant="outline" className="w-full border-destructive/30 text-destructive hover:bg-destructive/10" onClick={toggleBot} disabled={!isRunning}>
+            <LinkIcon className="h-4 w-4 mr-2" />
+            Disconnect
+          </Button>
         )}
       </main>
       <BottomNav />
