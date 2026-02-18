@@ -10,7 +10,7 @@ import { getCoinIcon } from '@/data/coinIcons';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
 import { supabase } from '@/integrations/supabase/client';
 import { useCandlestickData, calculateMA } from '@/hooks/useCandlestickData';
-import { useTradingSound } from '@/hooks/useTradingSound';
+// No sounds for custom bots - sounds only on XML bots
 import type { TimeFrame } from '@/hooks/useCandlestickData';
 
 interface TradeLog {
@@ -334,7 +334,7 @@ export default function DeployedBot() {
   const state = location.state as LocationState | null;
   const { toast } = useToast();
   const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
-  const { playTradeSound } = useTradingSound();
+  // No sounds for custom bots
 
   const botName = state?.botName || 'Custom Bot';
   const symbol = state?.symbol || 'BTCUSDT';
@@ -379,11 +379,10 @@ export default function DeployedBot() {
     const buyPrice = basePrice * (1 + (Math.random() - 0.5) * 0.01);
     const priceMove = buyPrice * (0.001 + Math.random() * 0.005);
     const sellPrice = isWin ? buyPrice + priceMove : buyPrice - priceMove;
-    const tradeSize = stake / buyPrice;
-    const fee = stake * 0.001;
-    const actualProfit = (sellPrice - buyPrice) * tradeSize - fee;
-
-    playTradeSound(isWin);
+    // Over/Under style payout like Deriv over1/under8
+    // Payout ranges from 10-95% depending on volatility
+    const payoutPercent = 15 + Math.random() * 30; // 15-45% payout similar to over/under
+    const actualProfit = isWin ? stake * (payoutPercent / 100) : -stake;
 
     if (user && accountType !== 'binance') {
       const operation = actualProfit > 0 ? 'add' : 'subtract';
@@ -415,7 +414,7 @@ export default function DeployedBot() {
     setTotalPL(prev => prev + actualProfit);
     setTradesCount(prev => prev + 1);
     if (isWin) setWinsCount(prev => prev + 1);
-  }, [investmentAmount, accountType, userEmail, user, updateBalance, toast, botName, symbol, basePrice, playTradeSound]);
+  }, [investmentAmount, accountType, userEmail, user, updateBalance, toast, botName, symbol, basePrice]);
 
   const scheduleNextTrade = useCallback(() => {
     intervalRef.current = setTimeout(async () => {

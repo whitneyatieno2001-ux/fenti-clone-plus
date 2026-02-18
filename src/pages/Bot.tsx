@@ -140,7 +140,7 @@ export default function BotPage() {
         totalPL: 0,
         trades: 0,
         wins: 0,
-        payoutPercent: 55,
+        payoutPercent: 90,
         source: 'upload',
       };
       setMyBots(prev => [...prev, newBot]);
@@ -170,9 +170,9 @@ export default function BotPage() {
     const outcome = getTradeOutcome({ accountType: accountTypeRef.current, userEmail: userEmailRef.current });
     const isWin = outcome === 'win';
 
-    // XML bots use payout percentage of stake (55%)
+    // Deriv even/odd style payout (90% of stake)
     const payoutAmount = bot.tradeAmount * (bot.payoutPercent / 100);
-    const actualProfit = isWin ? payoutAmount : -payoutAmount;
+    const actualProfit = isWin ? payoutAmount : -bot.tradeAmount;
 
     // Generate display prices
     const buyPrice = bot.asset.basePrice * (1 + (Math.random() - 0.5) * 0.01);
