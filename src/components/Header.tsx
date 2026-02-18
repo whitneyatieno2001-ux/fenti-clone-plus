@@ -8,6 +8,7 @@ import usFlag from '@/assets/us-flag.png';
 import keFlag from '@/assets/ke-flag.png';
 import zaFlag from '@/assets/za-flag.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import cryptoWaveBadge from '@/assets/crypto-wave-badge.png';
 
 // Country phone prefixes to flag mapping
 const getCountryFlagFromPhone = (phoneNumber: string | null): string => {
@@ -34,24 +35,7 @@ export function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const countryFlag = usFlag;
 
-  const getTitle = () => {
-    switch (location.pathname) {
-      case '/dashboard':
-        return 'Crypto Wave';
-      case '/markets':
-        return 'Markets';
-      case '/trade':
-        return 'Trade';
-      case '/futures':
-        return 'Futures';
-      case '/bot':
-        return 'Trading Bot';
-      case '/profile':
-        return 'Profile';
-      default:
-        return 'Crypto Wave';
-    }
-  };
+  const showBadge = location.pathname === '/dashboard' || location.pathname === '/';
 
   const toggleAccount = (type: 'demo' | 'real') => {
     setAccountType(type);
@@ -164,8 +148,10 @@ export function Header() {
           )}
         </div>
 
-        {/* Center - Empty space for balance */}
-        <div className="flex-1" />
+        {/* Center - Logo badge */}
+        <div className="flex-1 flex justify-center">
+          <img src={cryptoWaveBadge} alt="Crypto Wave" className="h-8 object-contain" style={{ background: 'transparent' }} />
+        </div>
 
         {/* Right - Theme Toggle + Profile */}
         <div className="flex items-center gap-1">
