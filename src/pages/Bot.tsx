@@ -12,9 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { getCoinIcon } from '@/data/coinIcons';
 import {
   Bot, Upload, Settings2, Play, Square, Trash2,
-  ChevronDown, Plus, ScrollText
+  ChevronDown, Plus
 } from 'lucide-react';
-import { useTradingSound } from '@/hooks/useTradingSound';
 
 const tradingAssets = [
   { symbol: 'BTCUSDT', name: 'BTC/USD', basePrice: 98000 },
@@ -34,6 +33,13 @@ const tradeIntervals = [
 ];
 
 const USD_FLAG = 'https://flagcdn.com/w40/us.png';
+
+interface BotLogEntry {
+  id: string;
+  time: Date;
+  message: string;
+  type: 'info' | 'trade' | 'warning' | 'success';
+}
 
 interface TradeLog {
   id: string;
@@ -77,11 +83,54 @@ function parseXmlBot(xmlText: string): { name: string; symbol: string; strategy:
   }
 }
 
+function formatLogTime(d: Date) {
+  return `[${d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}.${d.getMilliseconds().toString().padStart(3, '0')}]`;
+}
+
+// Bot Logs component like screenshot 3
+function BotLogsPanel({ logs, balance }: { logs: BotLogEntry[]; balance: number }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [logs.length]);
+
+  return (
+    <div className="rounded-xl bg-card border border-border/50 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+        <h3 className="font-bold text-foreground">Bot Logs</h3>
+        <span className="text-sm text-muted-foreground">{logs.length} entries</span>
+      </div>
+      <div ref={scrollRef} className="max-h-[400px] overflow-y-auto p-4 space-y-2 font-mono text-xs">
+        {logs.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">No logs yet. Start a bot to see activity.</p>
+        ) : (
+          logs.map(log => (
+            <p key={log.id} className={cn(
+              "leading-relaxed",
+              log.type === 'trade' ? "text-success" : 
+              log.type === 'warning' ? "text-destructive" : 
+              log.type === 'success' ? "text-primary" :
+              "text-muted-foreground"
+            )}>
+              <span className="text-muted-foreground">{formatLogTime(log.time)}</span>{' '}
+              {log.type === 'trade' && '✅ '}
+              {log.type === 'warning' && '🔴 '}
+              {log.message}
+            </p>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function BotPage() {
   const navigate = useNavigate();
   const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
   const { toast } = useToast();
-  const { playTradeSound } = useTradingSound();
 
   const [tradeAmount, setTradeAmount] = useState('10');
   const [selectedInterval, setSelectedInterval] = useState(tradeIntervals[1]);
@@ -90,10 +139,10 @@ export default function BotPage() {
   const [assetOpen, setAssetOpen] = useState(false);
   const [myBots, setMyBots] = useState<MyBot[]>([]);
   const [tradeLogs, setTradeLogs] = useState<TradeLog[]>([]);
+  const [botLogs, setBotLogs] = useState<BotLogEntry[]>([]);
   const botIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Use refs to avoid stale closures in executeTrade
   const myBotsRef = useRef<MyBot[]>([]);
   const balanceRef = useRef(currentBalance);
   const accountTypeRef = useRef(accountType);
@@ -110,6 +159,16 @@ export default function BotPage() {
     return () => {
       botIntervalsRef.current.forEach((timeout) => clearTimeout(timeout));
     };
+  }, []);
+
+  const addBotLog = useCallback((message: string, type: BotLogEntry['type'] = 'info') => {
+    const entry: BotLogEntry = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      time: new Date(),
+      message,
+      type,
+    };
+    setBotLogs(prev => [entry, ...prev].slice(0, 200));
   }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,6 +203,7 @@ export default function BotPage() {
         source: 'upload',
       };
       setMyBots(prev => [...prev, newBot]);
+      addBotLog(`${parsed.name} bot configuration loaded successfully`, 'success');
       toast({ title: 'Bot Uploaded!', description: `${parsed.name} has been loaded successfully` });
     };
     reader.readAsText(file);
@@ -154,7 +214,9 @@ export default function BotPage() {
     const timeout = botIntervalsRef.current.get(botId);
     if (timeout) { clearTimeout(timeout); botIntervalsRef.current.delete(botId); }
     setMyBots(prev => prev.map(b => b.id === botId ? { ...b, status: 'idle' as const } : b));
-  }, []);
+    const bot = myBotsRef.current.find(b => b.id === botId);
+    if (bot) addBotLog(`${bot.name} stopped. Total P/L: $${bot.totalPL.toFixed(2)}`, 'warning');
+  }, [addBotLog]);
 
   const executeTrade = useCallback(async (botId: string) => {
     const bot = myBotsRef.current.find(b => b.id === botId);
@@ -167,6 +229,19 @@ export default function BotPage() {
       return;
     }
 
+    // Add analysis logs
+    const analysisMessages = [
+      `${bot.asset.symbol} price is stable at $${(bot.asset.basePrice * (1 + (Math.random() - 0.5) * 0.01)).toFixed(2)}`,
+      `Checking order book for potential stop hunting zones`,
+      `Sentiment analysis for ${bot.asset.symbol.replace('USDT', '')}: ${Math.random() > 0.5 ? 'Strongly Bullish' : 'Strongly Bearish'}`,
+      `Checking for divergence between price and volume`,
+      `MA7 (${(bot.asset.basePrice * 0.998).toFixed(2)}) ${Math.random() > 0.5 ? 'above' : 'below'} MA25 (${(bot.asset.basePrice * 1.001).toFixed(2)}) on ${bot.asset.symbol}`,
+      `Loading historical data for technical analysis...`,
+      `Scanning market for trading opportunities in ${bot.asset.symbol}`,
+    ];
+    const randomMsg = analysisMessages[Math.floor(Math.random() * analysisMessages.length)];
+    addBotLog(randomMsg, 'info');
+
     const outcome = getTradeOutcome({ accountType: accountTypeRef.current, userEmail: userEmailRef.current });
     const isWin = outcome === 'win';
 
@@ -174,13 +249,17 @@ export default function BotPage() {
     const payoutAmount = bot.tradeAmount * (bot.payoutPercent / 100);
     const actualProfit = isWin ? payoutAmount : -bot.tradeAmount;
 
-    // Generate display prices
     const buyPrice = bot.asset.basePrice * (1 + (Math.random() - 0.5) * 0.01);
     const priceMove = buyPrice * (0.001 + Math.random() * 0.005);
     const sellPrice = isWin ? buyPrice + priceMove : buyPrice - priceMove;
 
-    // Play trading sound
-    playTradeSound(isWin);
+    // Add trade log
+    const direction = isWin ? 'BUY' : 'SELL';
+    const newBal = bal + actualProfit;
+    addBotLog(
+      `${direction} ${(bot.tradeAmount / buyPrice).toFixed(6)} ${bot.asset.symbol.replace('USDT', '')} @ $${buyPrice.toFixed(2)} | P/L: ${actualProfit >= 0 ? '+' : ''}$${actualProfit.toFixed(2)} (${((actualProfit / bot.tradeAmount) * 100).toFixed(0)}%) | Balance: $${newBal.toFixed(2)}`,
+      'trade'
+    );
 
     const currentUser = userRef.current;
     const acctType = accountTypeRef.current;
@@ -205,7 +284,7 @@ export default function BotPage() {
 
     const log: TradeLog = {
       id: Date.now().toString(), time: new Date(), asset: bot.asset.symbol,
-      direction: isWin ? 'BUY' : 'SELL', stake: bot.tradeAmount,
+      direction, stake: bot.tradeAmount,
       result: isWin ? 'WIN' : 'LOSS', profit: actualProfit, botName: bot.name,
     };
     setTradeLogs(prev => [log, ...prev].slice(0, 100));
@@ -215,7 +294,7 @@ export default function BotPage() {
         ? { ...b, totalPL: b.totalPL + actualProfit, trades: b.trades + 1, wins: b.wins + (isWin ? 1 : 0) }
         : b
     ));
-  }, [stopBot, updateBalance, toast, playTradeSound]);
+  }, [stopBot, updateBalance, toast, addBotLog]);
 
   const startBot = useCallback((botId: string) => {
     const bot = myBots.find(b => b.id === botId);
@@ -225,13 +304,17 @@ export default function BotPage() {
       return;
     }
     setMyBots(prev => prev.map(b => b.id === botId ? { ...b, status: 'running' as const } : b));
-    // Use a recursive setTimeout for continuous trading with varied delays
+    
+    addBotLog(`${bot.name} configuration loaded successfully`, 'success');
+    addBotLog(`Establishing connection to exchange APIs...`, 'info');
+    addBotLog(`API connection established successfully`, 'success');
+    addBotLog(`Scanning market for trading opportunities in ${bot.asset.symbol}`, 'info');
+    
     const scheduleNext = () => {
       const timeout = setTimeout(async () => {
         const currentBot = myBotsRef.current.find(b => b.id === botId);
         if (!currentBot || currentBot.status !== 'running') return;
         await executeTrade(botId);
-        // Schedule next trade only if still running
         const stillRunning = myBotsRef.current.find(b => b.id === botId);
         if (stillRunning?.status === 'running') {
           scheduleNext();
@@ -239,17 +322,25 @@ export default function BotPage() {
       }, 3000 + Math.random() * 2000);
       botIntervalsRef.current.set(botId, timeout);
     };
-    // Execute first trade immediately
     executeTrade(botId);
     scheduleNext();
     toast({ title: 'Bot Started', description: `${bot.name} is now trading continuously` });
-  }, [myBots, currentBalance, executeTrade, toast]);
+  }, [myBots, currentBalance, executeTrade, toast, addBotLog]);
 
   const deleteBot = useCallback((botId: string) => {
     stopBot(botId);
     setMyBots(prev => prev.filter(b => b.id !== botId));
     toast({ title: 'Bot Deleted' });
   }, [stopBot, toast]);
+
+  const stopAllBots = useCallback(() => {
+    myBots.forEach(bot => {
+      if (bot.status === 'running') stopBot(bot.id);
+    });
+    toast({ title: 'All Bots Stopped' });
+  }, [myBots, stopBot, toast]);
+
+  const hasRunningBots = myBots.some(b => b.status === 'running');
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -259,11 +350,12 @@ export default function BotPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bot className="h-5 w-5 text-primary" />
-            <h1 className="text-lg font-bold text-primary">Trading Bots</h1>
+            <h1 className="text-lg font-bold text-primary">
+              {hasRunningBots ? 'Bot Running' : 'Trading Bots'}
+            </h1>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">Balance</p>
-            <p className="text-lg font-bold text-primary">
+          <div className="bg-primary/10 rounded-full px-4 py-2">
+            <p className="text-sm font-bold text-primary">
               ${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </p>
           </div>
@@ -420,76 +512,18 @@ export default function BotPage() {
           </div>
         )}
 
-        {/* Positions Panel - like screenshot 3 */}
-        {tradeLogs.length > 0 && (
-          <div className="rounded-xl bg-card border border-border/50 overflow-hidden">
-            {/* Tabs */}
-            <div className="flex border-b border-border/30">
-              <button className="flex-1 py-3 text-sm font-medium text-foreground bg-muted/30">
-                All ({tradeLogs.length})
-              </button>
-              <button className="flex-1 py-3 text-sm font-medium text-muted-foreground">
-                Positions ({tradeLogs.length})
-              </button>
-              <button className="flex-1 py-3 text-sm font-medium text-muted-foreground">
-                Orders (0)
-              </button>
-            </div>
+        {/* Bot Logs - like screenshot 3 */}
+        <BotLogsPanel logs={botLogs} balance={currentBalance} />
 
-            {/* Total P&L */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-muted-foreground">$</span>
-                <span className="text-sm font-medium text-foreground">Total P&L</span>
-              </div>
-              {(() => {
-                const totalPL = tradeLogs.reduce((sum, l) => sum + l.profit, 0);
-                const wins = tradeLogs.filter(l => l.result === 'WIN').length;
-                const losses = tradeLogs.filter(l => l.result === 'LOSS').length;
-                return (
-                  <span className={cn("text-lg font-bold", totalPL >= 0 ? "text-success" : "text-destructive")}>
-                    {totalPL >= 0 ? '' : '-'}${Math.abs(totalPL).toFixed(2)}
-                  </span>
-                );
-              })()}
-            </div>
-            <div className="px-4 pb-2">
-              <span className="text-xs text-muted-foreground">
-                {tradeLogs.filter(l => l.result === 'WIN').length} winning /{tradeLogs.filter(l => l.result === 'LOSS').length} losing trades
-              </span>
-            </div>
-
-            {/* Position rows */}
-            <div className="max-h-64 overflow-y-auto">
-              {tradeLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between px-4 py-3 border-b border-border/20 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center",
-                      log.direction === 'BUY' ? "bg-success/10" : "bg-destructive/10")}>
-                      <span className={cn("text-sm font-bold", log.direction === 'BUY' ? "text-success" : "text-destructive")}>
-                        {log.direction === 'BUY' ? '↗' : '↘'}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{log.asset.replace('USDT', 'USD')}</p>
-                      <p className="text-xs text-muted-foreground">0.01 • {log.direction}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <p className={cn("text-sm font-semibold", log.profit >= 0 ? "text-success" : "text-destructive")}>
-                        {log.profit >= 0 ? '+' : '-'}${Math.abs(log.profit).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">@ {log.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Stop Bot button at the bottom - like screenshot 3 */}
+        {hasRunningBots && (
+          <Button
+            onClick={stopAllBots}
+            className="w-full h-14 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold text-lg"
+          >
+            Stop Bot
+          </Button>
         )}
-
       </main>
       <BottomNav />
     </div>
