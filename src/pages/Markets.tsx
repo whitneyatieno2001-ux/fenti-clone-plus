@@ -170,7 +170,7 @@ export default function Markets() {
             </thead>
             <tbody>
               {paginated.map(crypto => (
-                <tr key={crypto.id}>
+                <tr key={crypto.id} onClick={() => navigate(`/trade/${crypto.id}`)} style={{ cursor: 'pointer' }}>
                   <td style={{ textAlign: 'left' }}>
                     <div className="eczex-coin-cell">
                       <div className="eczex-coin-icon-img">
