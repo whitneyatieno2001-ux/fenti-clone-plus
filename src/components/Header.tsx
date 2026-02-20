@@ -148,10 +148,8 @@ export function Header() {
           )}
         </div>
 
-        {/* Center - Logo badge */}
-        <div className="flex-1 flex justify-center">
-          <img src={cryptoWaveBadge} alt="Crypto Wave" className="h-8 object-contain" style={{ background: 'transparent' }} />
-        </div>
+        {/* Center - empty space (badge only on Landing page) */}
+        <div className="flex-1" />
 
         {/* Right - Theme Toggle + Profile */}
         <div className="flex items-center gap-1">

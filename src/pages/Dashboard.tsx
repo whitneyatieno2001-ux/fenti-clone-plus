@@ -125,15 +125,14 @@ export default function Dashboard() {
             <span className="text-right pr-1">24h Change</span>
           </div>
 
-          {/* Market Rows */}
+          {/* Market Rows - not clickable */}
           <div>
             {displayList.map((crypto) => {
               const isPositive = crypto.change24h >= 0;
               return (
                 <div
                   key={crypto.id}
-                  onClick={() => navigate(`/trade/${crypto.id}`)}
-                  className="grid grid-cols-[2fr_1fr_1fr] items-center py-3 border-b border-border/50 cursor-pointer hover:bg-secondary/50 transition-colors"
+                  className="grid grid-cols-[2fr_1fr_1fr] items-center py-3 border-b border-border/50 transition-colors"
                 >
                   <div className="flex items-center gap-2 pl-1">
                     <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-muted">
