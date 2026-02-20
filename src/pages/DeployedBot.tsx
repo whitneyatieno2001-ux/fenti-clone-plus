@@ -449,8 +449,7 @@ export default function DeployedBot() {
           </div>
         </div>
 
-        {/* Chart - full width, touches edges, blends with theme */}
-        <DeployedChart symbol={symbol} basePrice={basePrice} />
+        {/* No chart for custom bots */}
 
         {/* Positions Panel */}
         {tradeLogs.length > 0 && (

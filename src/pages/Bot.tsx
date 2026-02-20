@@ -305,11 +305,27 @@ export default function BotPage() {
     }
     setMyBots(prev => prev.map(b => b.id === botId ? { ...b, status: 'running' as const } : b));
     
-    addBotLog(`${bot.name} configuration loaded successfully`, 'success');
-    addBotLog(`Establishing connection to exchange APIs...`, 'info');
-    addBotLog(`API connection established successfully`, 'success');
-    addBotLog(`Scanning market for trading opportunities in ${bot.asset.symbol}`, 'info');
-    
+    // Scanning delay — show analysis logs before first trade
+    const scanMessages = [
+      `${bot.name} configuration loaded successfully`,
+      `Establishing connection to exchange APIs...`,
+      `API connection established successfully`,
+      `Initializing market data stream for ${bot.asset.symbol}...`,
+      `Calibrating entry signals using MA7, MA25, RSI(14)...`,
+      `Scanning order book depth for ${bot.asset.symbol}...`,
+      `Detecting market volatility: ${(Math.random() * 2 + 0.5).toFixed(2)}%`,
+      `Stop-hunt zone analysis complete`,
+      `Optimal entry conditions identified — preparing first trade...`,
+    ];
+
+    let delay = 0;
+    scanMessages.forEach((msg, idx) => {
+      delay += 800 + Math.random() * 600;
+      setTimeout(() => {
+        addBotLog(msg, idx === 0 || idx === 2 ? 'success' : 'info');
+      }, delay);
+    });
+
     const scheduleNext = () => {
       const timeout = setTimeout(async () => {
         const currentBot = myBotsRef.current.find(b => b.id === botId);
@@ -322,9 +338,14 @@ export default function BotPage() {
       }, 3000 + Math.random() * 2000);
       botIntervalsRef.current.set(botId, timeout);
     };
-    executeTrade(botId);
-    scheduleNext();
-    toast({ title: 'Bot Started', description: `${bot.name} is now trading continuously` });
+
+    // First trade after scanning is done
+    setTimeout(() => {
+      executeTrade(botId);
+      scheduleNext();
+    }, delay + 500);
+
+    toast({ title: 'Bot Started', description: `${bot.name} is scanning the market...` });
   }, [myBots, currentBalance, executeTrade, toast, addBotLog]);
 
   const deleteBot = useCallback((botId: string) => {

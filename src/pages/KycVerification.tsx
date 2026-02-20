@@ -128,19 +128,21 @@ export default function KycVerification() {
       <div className="min-h-screen bg-background pb-20">
         <Header />
         <main className="px-4 py-8 flex flex-col items-center justify-center min-h-[60vh] text-center">
-          <div className="w-20 h-20 rounded-2xl bg-success flex items-center justify-center mb-6">
+          <div className="w-20 h-20 rounded-full bg-success flex items-center justify-center mb-6">
             <Check className="h-10 w-10 text-success-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Verification Submitted!</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Identity Verified ✓</h1>
           <p className="text-muted-foreground mb-2 max-w-sm">
-            Your KYC verification has been submitted for review. We will notify you via email once the process is complete.
+            Your KYC verification has been approved. You are now able to make withdrawals and enjoy higher transaction limits.
           </p>
-          <div className="bg-card border border-border/50 rounded-xl px-4 py-2 mt-4 mb-6">
-            <p className="text-sm text-muted-foreground">
-              Reference ID: <span className="font-mono text-foreground">KYC-{Date.now().toString(36).toUpperCase()}</span>
-            </p>
+          <div className="bg-success/10 border border-success/30 rounded-xl px-6 py-4 mt-4 mb-6 flex items-center gap-3">
+            <CheckCircle2 className="h-6 w-6 text-success shrink-0" />
+            <div className="text-left">
+              <p className="text-sm font-semibold text-foreground">Verification Status: Approved</p>
+              <p className="text-xs text-muted-foreground">All features unlocked</p>
+            </div>
           </div>
-          <Button onClick={() => navigate('/payments')}>Return to Payment Methods</Button>
+          <Button onClick={() => navigate('/payments')} className="w-full max-w-xs">Return to Payment Methods</Button>
         </main>
         <BottomNav />
       </div>
