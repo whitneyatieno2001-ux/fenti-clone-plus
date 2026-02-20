@@ -9,8 +9,6 @@ import { BottomNav } from '@/components/BottomNav';
 import { getCoinIcon } from '@/data/coinIcons';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
 import { supabase } from '@/integrations/supabase/client';
-import { useCandlestickData, calculateMA, calculateEMA, calculateBollingerBands } from '@/hooks/useCandlestickData';
-import type { TimeFrame } from '@/hooks/useCandlestickData';
 
 interface TradeLog {
   id: string;
