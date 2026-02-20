@@ -31,21 +31,8 @@ interface LocationState {
   investmentAmount: string;
 }
 
-const timeframes: TimeFrame[] = ['1m', '5m', '15m', '1h', '4h', '1d'];
 
-type IndicatorKey = 'ma7' | 'ma25' | 'ma99' | 'ema12' | 'ema26' | 'bollinger';
 
-const availableIndicators: { key: IndicatorKey; label: string; color: string }[] = [
-  { key: 'ma7', label: 'MA(7)', color: '#eab308' },
-  { key: 'ma25', label: 'MA(25)', color: '#ec4899' },
-  { key: 'ma99', label: 'MA(99)', color: '#a855f7' },
-  { key: 'ema12', label: 'EMA(12)', color: '#06b6d4' },
-  { key: 'ema26', label: 'EMA(26)', color: '#f97316' },
-  { key: 'bollinger', label: 'Bollinger', color: '#6366f1' },
-];
-
-// Full-width chart that blends with theme
-function DeployedChart({ symbol, basePrice }: { symbol: string; basePrice: number }) {
   const [tf, setTf] = useState<TimeFrame>('1m');
   const { candles, isLoading } = useCandlestickData(symbol, basePrice, tf);
   const [zoom, setZoom] = useState(1);
