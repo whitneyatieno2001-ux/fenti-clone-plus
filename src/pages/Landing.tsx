@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAccount } from '@/contexts/AccountContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import cryptoWaveBadge from '@/assets/crypto-wave-badge.png';
 
 export default function Landing() {
   const navigate = useNavigate();
