@@ -132,62 +132,82 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     else setWithdrawMethodState('select');
   };
 
-  // Success screen
+  // Full-page success screen matching the screenshot exactly
   const SuccessScreen = ({ label }: { label: string }) => {
     const isDeposit = label.toLowerCase().includes('payment') || label.toLowerCase().includes('deposit');
     return (
-      <div className="flex flex-col items-center px-2 py-6">
-        {/* Green check circle */}
-        <div className="relative flex justify-center items-center mb-6" style={{ width: 80, height: 80 }}>
-          <div className="absolute rounded-full" style={{ width: 70, height: 70, background: 'linear-gradient(180deg, rgba(14, 203, 129, 0.2) 0%, rgba(14, 203, 129, 0.05) 100%)' }} />
-          <div className="relative z-10 flex justify-center items-center rounded-full" style={{ width: 50, height: 50, backgroundColor: '#0ECB81' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-          </div>
+      <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
+        {/* Close button */}
+        <div className="flex justify-end p-4">
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted/50 transition-colors text-foreground text-2xl">
+            ×
+          </button>
         </div>
 
-        {isDeposit ? (
-          <>
-            {/* Deposit: screenshot 3 style */}
-            <div className="flex items-baseline justify-center mb-2">
-              <span className="text-[36px] font-bold text-foreground">{lastAmount || '0.00'}</span>
-              <span className="text-lg font-medium text-muted-foreground ml-2">USDT</span>
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          {/* Green check circle */}
+          <div className="relative flex justify-center items-center mb-8" style={{ width: 90, height: 90 }}>
+            <div className="absolute rounded-full" style={{ width: 80, height: 80, background: 'radial-gradient(circle, rgba(14,203,129,0.25) 0%, rgba(14,203,129,0.05) 100%)' }} />
+            <div className="relative z-10 flex justify-center items-center rounded-full" style={{ width: 60, height: 60, backgroundColor: '#0ECB81' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
             </div>
-            <p className="text-base text-muted-foreground mb-6">Deposited into your Funding Account</p>
-            <button onClick={onClose} className="text-[#fcd535] font-semibold text-base mb-8">Check Assets</button>
-            <p className="text-sm text-muted-foreground mb-4">Review Counterparty</p>
-            <div className="flex gap-4 w-full">
-              <button onClick={onClose} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border border-border text-foreground hover:bg-muted/50 transition-colors">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-                Positive
-              </button>
-              <button onClick={onClose} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border border-border text-foreground hover:bg-muted/50 transition-colors">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 15V19a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
-                Negative
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Withdrawal: screenshot 4 style */}
-            <div className="flex items-baseline justify-center mb-2">
-              <span className="text-base text-muted-foreground mr-1">KSh</span>
-              <span className="text-[32px] font-bold text-foreground">{(parseFloat(lastAmount || '0') * 130).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6">Successfully sold {lastAmount} USDT</p>
-            <button onClick={onClose} className="text-[#fcd535] font-semibold text-sm mb-8">Check Asset</button>
-            <p className="text-sm text-muted-foreground mb-4">Review Counterparty</p>
-            <div className="flex gap-4 w-full">
-              <button onClick={onClose} className="flex items-center gap-2 text-sm text-foreground">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-                Positive
-              </button>
-              <button onClick={onClose} className="flex items-center gap-2 text-sm text-foreground">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 15V19a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
-                Negative
-              </button>
-            </div>
-          </>
-        )}
+          </div>
+
+          {isDeposit ? (
+            <>
+              <div className="flex items-baseline justify-center mb-2">
+                <span className="text-[42px] font-bold text-foreground">{lastAmount || '0.00'}</span>
+                <span className="text-xl font-medium text-muted-foreground ml-2">USDT</span>
+              </div>
+              <p className="text-base text-muted-foreground mb-6 text-center">Deposited into your Funding Account</p>
+              <button onClick={onClose} className="text-[#fcd535] font-semibold text-lg mb-12 hover:opacity-80 transition-opacity">Check Assets</button>
+              
+              <p className="text-base text-foreground mb-5">Review Counterparty</p>
+              <div className="flex gap-4 w-full max-w-sm">
+                <button onClick={onClose} className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl border border-border text-foreground hover:bg-muted/50 transition-all duration-200 text-base font-medium">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                  Positive
+                </button>
+                <button onClick={onClose} className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl border border-border text-foreground hover:bg-muted/50 transition-all duration-200 text-base font-medium">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 15V19a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
+                  Negative
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-baseline justify-center mb-2">
+                <span className="text-2xl font-semibold text-foreground mr-1">KSh</span>
+                <span className="text-[40px] font-bold text-foreground">
+                  {(parseFloat(lastAmount || '0') * 130).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <p className="text-base text-muted-foreground mb-6 text-center">Successfully sold {lastAmount} USDT</p>
+              <button onClick={onClose} className="text-[#fcd535] font-semibold text-lg mb-12 hover:opacity-80 transition-opacity">Check Asset</button>
+              
+              <p className="text-base text-foreground mb-5">Review Counterparty</p>
+              <div className="flex gap-4 w-full max-w-sm">
+                <button onClick={onClose} className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl border border-border text-foreground hover:bg-muted/50 transition-all duration-200 text-base font-medium">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                  Positive
+                </button>
+                <button onClick={onClose} className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl border border-border text-foreground hover:bg-muted/50 transition-all duration-200 text-base font-medium">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 15V19a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
+                  Negative
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Rate Your P2P Experience at bottom */}
+        <div className="p-8 text-center">
+          <button onClick={onClose} className="text-[#fcd535] font-semibold text-base hover:opacity-80 transition-opacity">
+            Rate Your P2P Experience
+          </button>
+        </div>
       </div>
     );
   };
