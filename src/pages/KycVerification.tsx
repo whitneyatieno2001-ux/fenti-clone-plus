@@ -48,7 +48,8 @@ export default function KycVerification() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
+  // KYC is pre-approved/verified — show success immediately
+  const [submitted, setSubmitted] = useState(true);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
