@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAccount } from '@/contexts/AccountContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import cryptoWaveBadge from '@/assets/crypto-wave-badge.png';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export default function Landing() {
       {/* Navbar */}
       <header className="h-[72px] border-b border-border sticky top-0 bg-background/90 backdrop-blur-xl z-50">
         <div className="max-w-[1200px] mx-auto px-6 md:px-10 h-full flex items-center justify-between">
-          <span className="text-primary font-bold text-xl cursor-pointer" onClick={() => navigate('/')}>CryptoWave</span>
+          <img src={cryptoWaveBadge} alt="Crypto Wave" className="h-10 object-contain" style={{ background: 'transparent' }} />
 
           <nav className="hidden md:flex gap-8">
             {['Buy Crypto', 'Markets', 'Trade', 'Futures', 'Earn', 'Web3 Wallet'].map((item, i) => (
@@ -70,7 +71,10 @@ export default function Landing() {
       {/* Hero */}
       <section className="px-6 md:px-10 py-16 md:py-24 flex flex-col md:flex-row items-center justify-between max-w-[1200px] mx-auto min-h-[80vh] gap-12">
         <div className="max-w-full md:max-w-[50%] text-center md:text-left z-10">
-          <span className="text-primary font-semibold text-lg md:text-xl mb-4 inline-block">CryptoWave Wallet</span>
+          {/* Big badge */}
+          <div className="flex justify-center md:justify-start mb-6">
+            <img src={cryptoWaveBadge} alt="Crypto Wave" className="h-20 md:h-28 object-contain" style={{ background: 'transparent' }} />
+          </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-8 text-gradient">
             Secure.<br />Your World of Web3.
           </h1>

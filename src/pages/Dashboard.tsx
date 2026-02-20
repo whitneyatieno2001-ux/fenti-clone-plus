@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { PageLoader } from '@/components/PageLoader';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { TransactionModal } from '@/components/TransactionModal';
@@ -10,10 +9,10 @@ import { getCoinIcon } from '@/data/coinIcons';
 import { cn } from '@/lib/utils';
 import { 
   Eye, EyeOff, ArrowDownToLine, ArrowUpFromLine, 
-  ChevronRight, Shield, CheckCircle, Clock,
-  TrendingUp, TrendingDown, Star
+  ChevronRight, Clock,
+  TrendingUp, Star
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
@@ -21,8 +20,7 @@ export default function Dashboard() {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [marketTab, setMarketTab] = useState<'favorites' | 'gainers' | 'losers'>('favorites');
   const { getAllCryptosWithPrices } = useCryptoPrices();
-  const { accountType, currentBalance, userEmail, transactions } = useAccount();
-  const navigate = useNavigate();
+  const { accountType, currentBalance, transactions } = useAccount();
 
   const cryptoAssets = getAllCryptosWithPrices();
   const favorites = cryptoAssets.filter(c => ['bitcoin', 'ethereum', 'solana', 'binancecoin'].includes(c.id));
@@ -41,7 +39,6 @@ export default function Dashboard() {
   ];
 
   return (
-    <PageLoader>
     <div className="min-h-screen bg-background pb-20">
       <Header />
       
@@ -125,15 +122,14 @@ export default function Dashboard() {
             <span className="text-right pr-1">24h Change</span>
           </div>
 
-          {/* Market Rows */}
+          {/* Market Rows - not clickable */}
           <div>
             {displayList.map((crypto) => {
               const isPositive = crypto.change24h >= 0;
               return (
                 <div
                   key={crypto.id}
-                  onClick={() => navigate(`/trade/${crypto.id}`)}
-                  className="grid grid-cols-[2fr_1fr_1fr] items-center py-3 border-b border-border/50 cursor-pointer hover:bg-secondary/50 transition-colors"
+                  className="grid grid-cols-[2fr_1fr_1fr] items-center py-3 border-b border-border/50 transition-colors"
                 >
                   <div className="flex items-center gap-2 pl-1">
                     <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-muted">
@@ -227,6 +223,5 @@ export default function Dashboard() {
         type={modalType || 'deposit'}
       />
     </div>
-    </PageLoader>
   );
 }
