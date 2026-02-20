@@ -223,6 +223,5 @@ export default function Dashboard() {
         type={modalType || 'deposit'}
       />
     </div>
-    </PageLoader>
   );
 }
