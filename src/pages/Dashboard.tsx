@@ -39,7 +39,6 @@ export default function Dashboard() {
   ];
 
   return (
-    <PageLoader>
     <div className="min-h-screen bg-background pb-20">
       <Header />
       
