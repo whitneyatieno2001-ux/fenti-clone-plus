@@ -20,8 +20,7 @@ export default function Dashboard() {
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [marketTab, setMarketTab] = useState<'favorites' | 'gainers' | 'losers'>('favorites');
   const { getAllCryptosWithPrices } = useCryptoPrices();
-  const { accountType, currentBalance, userEmail, transactions } = useAccount();
-  const navigate = useNavigate();
+  const { accountType, currentBalance, transactions } = useAccount();
 
   const cryptoAssets = getAllCryptosWithPrices();
   const favorites = cryptoAssets.filter(c => ['bitcoin', 'ethereum', 'solana', 'binancecoin'].includes(c.id));
