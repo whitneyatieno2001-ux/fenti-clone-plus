@@ -35,7 +35,7 @@ export function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const countryFlag = usFlag;
 
-  const showBadge = location.pathname === '/dashboard' || location.pathname === '/';
+  // Badge is NOT shown in the header - only on Landing page
 
   const toggleAccount = (type: 'demo' | 'real') => {
     setAccountType(type);
