@@ -421,7 +421,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border-border max-h-[90vh] overflow-y-auto">
-        {flowStatus === 'success' ? <SuccessScreen label="Withdrawal" /> : (
+        {false ? null : (
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-foreground">
