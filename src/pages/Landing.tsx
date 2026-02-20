@@ -34,7 +34,7 @@ export default function Landing() {
       {/* Navbar */}
       <header className="h-[72px] border-b border-border sticky top-0 bg-background/90 backdrop-blur-xl z-50">
         <div className="max-w-[1200px] mx-auto px-6 md:px-10 h-full flex items-center justify-between">
-          <span className="text-primary font-bold text-xl cursor-pointer" onClick={() => navigate('/')}>CryptoWave</span>
+          <img src={cryptoWaveBadge} alt="Crypto Wave" className="h-10 object-contain" style={{ background: 'transparent' }} />
 
           <nav className="hidden md:flex gap-8">
             {['Buy Crypto', 'Markets', 'Trade', 'Futures', 'Earn', 'Web3 Wallet'].map((item, i) => (
