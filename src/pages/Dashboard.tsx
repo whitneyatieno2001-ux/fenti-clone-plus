@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { PageLoader } from '@/components/PageLoader';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { TransactionModal } from '@/components/TransactionModal';
@@ -10,10 +9,10 @@ import { getCoinIcon } from '@/data/coinIcons';
 import { cn } from '@/lib/utils';
 import { 
   Eye, EyeOff, ArrowDownToLine, ArrowUpFromLine, 
-  ChevronRight, Shield, CheckCircle, Clock,
-  TrendingUp, TrendingDown, Star
+  ChevronRight, Clock,
+  TrendingUp, Star
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 export default function Dashboard() {
