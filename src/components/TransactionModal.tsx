@@ -230,12 +230,17 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     </div>
   );
 
+  // Full-page success (outside Dialog)
+  if (flowStatus === 'success') {
+    return <SuccessScreen label={type === 'deposit' ? 'Payment' : 'Withdrawal'} />;
+  }
+
   // DEPOSIT
   if (type === 'deposit') {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md bg-card border-border max-h-[90vh] overflow-y-auto">
-          {flowStatus === 'success' ? <SuccessScreen label="Payment" /> : (
+          {false ? null : (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-foreground">
