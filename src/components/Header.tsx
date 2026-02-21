@@ -1,14 +1,11 @@
-import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAccount } from '@/contexts/AccountContext';
 import { Button } from '@/components/ui/button';
-import { User, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { User } from 'lucide-react';
 import usFlag from '@/assets/us-flag.png';
 import keFlag from '@/assets/ke-flag.png';
 import zaFlag from '@/assets/za-flag.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import cryptoWaveBadge from '@/assets/crypto-wave-badge.png';
 
 // Country phone prefixes to flag mapping
 const getCountryFlagFromPhone = (phoneNumber: string | null): string => {
