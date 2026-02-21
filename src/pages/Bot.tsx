@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
 import { supabase } from '@/integrations/supabase/client';
 import { getCoinIcon } from '@/data/coinIcons';
+import { useTradingSound } from '@/hooks/useTradingSound';
 import {
   Bot, Upload, Settings2, Play, Square, Trash2,
   ChevronDown, Plus
@@ -131,6 +132,7 @@ export default function BotPage() {
   const navigate = useNavigate();
   const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
   const { toast } = useToast();
+  const { playProfitSound } = useTradingSound();
 
   const [tradeAmount, setTradeAmount] = useState('10');
   const [selectedInterval, setSelectedInterval] = useState(tradeIntervals[1]);
@@ -288,6 +290,7 @@ export default function BotPage() {
       result: isWin ? 'WIN' : 'LOSS', profit: actualProfit, botName: bot.name,
     };
     setTradeLogs(prev => [log, ...prev].slice(0, 100));
+    if (isWin) playProfitSound();
 
     setMyBots(prev => prev.map(b =>
       b.id === botId
@@ -486,7 +489,7 @@ export default function BotPage() {
                     <img src={getCoinIcon(bot.asset.symbol.replace('USDT', ''))} alt="" className="w-10 h-10 rounded-full" />
                     <div>
                       <h3 className="font-semibold text-foreground">{bot.name}</h3>
-                      <p className="text-xs text-muted-foreground">{bot.asset.name} • {bot.payoutPercent}% payout</p>
+                      <p className="text-xs text-muted-foreground">{bot.asset.name}</p>
                     </div>
                   </div>
                   <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium",

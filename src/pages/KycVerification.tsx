@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
@@ -61,10 +61,59 @@ export default function KycVerification() {
   const [backId, setBackId] = useState<File | null>(null);
   const [selfie, setSelfie] = useState<File | null>(null);
   const [consent, setConsent] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   const frontIdRef = useRef<HTMLInputElement>(null);
   const backIdRef = useRef<HTMLInputElement>(null);
   const selfieRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' },
+        audio: false,
+      });
+      setCameraStream(stream);
+      setCameraActive(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'NotAllowedError') {
+        toast({ title: 'Camera Denied', description: 'Please grant camera permission in your browser settings.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Camera Error', description: 'Could not access camera. Please try uploading a photo instead.', variant: 'destructive' });
+      }
+    }
+  }, [toast]);
+
+  const capturePhoto = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')?.drawImage(video, 0, 0);
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+        setSelfie(file);
+        stopCamera();
+      }
+    }, 'image/jpeg', 0.9);
+  }, []);
+
+  const stopCamera = useCallback(() => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setCameraActive(false);
+  }, [cameraStream]);
 
   const validateStep = (step: number): boolean => {
     switch (step) {
@@ -266,25 +315,63 @@ export default function KycVerification() {
             <>
               <div>
                 <h2 className="text-lg font-semibold text-foreground">Facial Recognition</h2>
-                <p className="text-sm text-muted-foreground">We need to verify that you are the person in the ID document.</p>
+                <p className="text-sm text-muted-foreground">Take a live selfie to verify your identity.</p>
               </div>
-              <div className="w-full aspect-square max-w-[240px] mx-auto bg-secondary rounded-2xl flex flex-col items-center justify-center gap-3 text-muted-foreground">
-                <Camera className="h-12 w-12" /><span className="text-sm">Camera preview</span>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Upload a Selfie</Label>
-                <input type="file" ref={selfieRef} accept="image/*" className="hidden" onChange={e => handleFileChange(e, setSelfie)} />
-                {selfie ? (
-                  <div className="flex items-center gap-2 p-3 bg-success/10 border border-success/30 rounded-xl text-sm text-success">
-                    <CheckCircle2 className="h-4 w-4 shrink-0" /><span className="truncate">{selfie.name}</span>
-                    <button onClick={() => setSelfie(null)} className="ml-auto text-muted-foreground hover:text-destructive text-xs">Remove</button>
+
+              {/* Camera preview */}
+              <div className="w-full aspect-square max-w-[280px] mx-auto rounded-2xl overflow-hidden relative bg-secondary">
+                {cameraActive ? (
+                  <>
+                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                    <canvas ref={canvasRef} className="hidden" />
+                    <button onClick={capturePhoto}
+                      className="absolute bottom-4 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-white border-4 border-primary shadow-lg flex items-center justify-center hover:scale-105 transition-transform">
+                      <div className="w-12 h-12 rounded-full bg-primary" />
+                    </button>
+                  </>
+                ) : selfie ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+                    <CheckCircle2 className="h-16 w-16 text-success" />
+                    <span className="text-sm text-success font-medium">Photo captured!</span>
+                    <p className="text-xs text-muted-foreground">{selfie.name}</p>
                   </div>
                 ) : (
-                  <button onClick={() => selfieRef.current?.click()} className="w-full p-6 border-2 border-dashed border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center gap-2 text-muted-foreground">
-                    <Camera className="h-8 w-8" /><span className="text-sm">Click to upload or take a photo</span><span className="text-xs">JPG or PNG (Max 5MB)</span>
-                  </button>
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                    <Camera className="h-12 w-12" />
+                    <span className="text-sm">Tap below to open camera</span>
+                  </div>
                 )}
               </div>
+
+              <div className="flex gap-3">
+                {!cameraActive && !selfie && (
+                  <Button onClick={startCamera} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Camera className="h-4 w-4 mr-2" />Take Selfie
+                  </Button>
+                )}
+                {cameraActive && (
+                  <Button onClick={stopCamera} variant="outline" className="flex-1">
+                    Cancel
+                  </Button>
+                )}
+                {selfie && (
+                  <>
+                    <Button onClick={() => { setSelfie(null); startCamera(); }} variant="outline" className="flex-1">
+                      Retake
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {/* Or upload option */}
+              <div className="text-center text-sm text-muted-foreground">— or upload a photo —</div>
+              <div className="space-y-1.5">
+                <input type="file" ref={selfieRef} accept="image/*" className="hidden" onChange={e => handleFileChange(e, setSelfie)} />
+                <button onClick={() => selfieRef.current?.click()} className="w-full p-4 border-2 border-dashed border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-colors flex flex-col items-center gap-2 text-muted-foreground">
+                  <Upload className="h-6 w-6" /><span className="text-sm">Click to upload photo</span>
+                </button>
+              </div>
+
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl text-sm space-y-2">
                 <div className="flex items-center gap-2 font-medium text-foreground"><AlertCircle className="h-4 w-4 text-primary" />Guidelines for a good selfie</div>
                 <ul className="list-disc list-inside text-muted-foreground space-y-1 text-xs">

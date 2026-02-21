@@ -66,45 +66,45 @@
   }
 
   .light {
-    --background: 0 0% 100%;
-    --foreground: 220 20% 15%;
-    --card: 0 0% 99%;
-    --card-foreground: 220 20% 15%;
+    --background: 0 0% 98%;
+    --foreground: 0 0% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
-    --primary: 43 99% 65%;
-    --primary-foreground: 220 20% 10%;
-    --secondary: 220 15% 94%;
-    --secondary-foreground: 220 20% 15%;
-    --muted: 220 15% 96%;
-    --muted-foreground: 220 10% 45%;
-    --accent: 43 99% 65%;
-    --accent-foreground: 220 20% 10%;
+    --popover-foreground: 0 0% 15%;
+    --primary: 43 96% 56%;
+    --primary-foreground: 0 0% 10%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 15%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 43 96% 56%;
+    --accent-foreground: 0 0% 10%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --success: 142 71% 35%;
+    --success: 152 69% 41%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --border: 220 15% 90%;
-    --input: 220 15% 94%;
-    --ring: 43 99% 65%;
+    --border: 0 0% 90%;
+    --input: 0 0% 96%;
+    --ring: 43 96% 56%;
 
-    --crypto-positive: 142 71% 35%;
+    --crypto-positive: 152 69% 41%;
     --crypto-negative: 0 72% 51%;
-    --crypto-card-green: 142 71% 95%;
+    --crypto-card-green: 152 69% 95%;
     --crypto-card-red: 0 72% 95%;
-    --crypto-card-green-border: 142 71% 50%;
+    --crypto-card-green-border: 152 69% 50%;
     --crypto-card-red-border: 0 72% 50%;
 
-    --sidebar-background: 0 0% 99%;
-    --sidebar-foreground: 220 20% 15%;
-    --sidebar-primary: 43 99% 65%;
-    --sidebar-primary-foreground: 220 20% 10%;
-    --sidebar-accent: 220 15% 94%;
-    --sidebar-accent-foreground: 220 20% 15%;
-    --sidebar-border: 220 15% 90%;
-    --sidebar-ring: 43 99% 65%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-primary: 43 96% 56%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 43 96% 56%;
   }
 
   .dark {
