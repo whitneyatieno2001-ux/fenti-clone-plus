@@ -61,10 +61,59 @@ export default function KycVerification() {
   const [backId, setBackId] = useState<File | null>(null);
   const [selfie, setSelfie] = useState<File | null>(null);
   const [consent, setConsent] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   const frontIdRef = useRef<HTMLInputElement>(null);
   const backIdRef = useRef<HTMLInputElement>(null);
   const selfieRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const startCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' },
+        audio: false,
+      });
+      setCameraStream(stream);
+      setCameraActive(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'NotAllowedError') {
+        toast({ title: 'Camera Denied', description: 'Please grant camera permission in your browser settings.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Camera Error', description: 'Could not access camera. Please try uploading a photo instead.', variant: 'destructive' });
+      }
+    }
+  }, [toast]);
+
+  const capturePhoto = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')?.drawImage(video, 0, 0);
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+        setSelfie(file);
+        stopCamera();
+      }
+    }, 'image/jpeg', 0.9);
+  }, []);
+
+  const stopCamera = useCallback(() => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setCameraActive(false);
+  }, [cameraStream]);
 
   const validateStep = (step: number): boolean => {
     switch (step) {
