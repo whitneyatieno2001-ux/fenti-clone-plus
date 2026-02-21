@@ -290,6 +290,7 @@ export default function BotPage() {
       result: isWin ? 'WIN' : 'LOSS', profit: actualProfit, botName: bot.name,
     };
     setTradeLogs(prev => [log, ...prev].slice(0, 100));
+    if (isWin) playProfitSound();
 
     setMyBots(prev => prev.map(b =>
       b.id === botId
