@@ -486,7 +486,7 @@ export default function BotPage() {
                     <img src={getCoinIcon(bot.asset.symbol.replace('USDT', ''))} alt="" className="w-10 h-10 rounded-full" />
                     <div>
                       <h3 className="font-semibold text-foreground">{bot.name}</h3>
-                      <p className="text-xs text-muted-foreground">{bot.asset.name} • {bot.payoutPercent}% payout</p>
+                      <p className="text-xs text-muted-foreground">{bot.asset.name}</p>
                     </div>
                   </div>
                   <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium",
