@@ -21,76 +21,38 @@ export function useTradingSound() {
     return ctxRef.current;
   }, []);
 
-  // Entry: quick cash register "ka-ching" blip
-  const playEntrySound = useCallback(() => {
+  // iPhone message popup sound - short ascending chime
+  const playProfitSound = useCallback(() => {
     const ctx = getCtx();
     const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(2400, now);
-    osc.frequency.exponentialRampToValueAtTime(3200, now + 0.03);
-    osc.frequency.exponentialRampToValueAtTime(2000, now + 0.06);
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.1);
+    
+    // First tone - short bright pop
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(1200, now);
+    osc1.frequency.exponentialRampToValueAtTime(1800, now + 0.06);
+    gain1.gain.setValueAtTime(0.12, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.15);
+
+    // Second tone - higher follow-up
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1600, now + 0.08);
+    osc2.frequency.exponentialRampToValueAtTime(2200, now + 0.14);
+    gain2.gain.setValueAtTime(0, now);
+    gain2.gain.linearRampToValueAtTime(0.1, now + 0.09);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.08);
+    osc2.stop(now + 0.25);
   }, [getCtx]);
 
-  // Win: bright coin-drop / slot-win sparkle
-  const playWinSound = useCallback(() => {
-    const ctx = getCtx();
-    const now = ctx.currentTime;
-    const notes = [880, 1108.73, 1318.51, 1760]; // A5, C#6, E6, A6
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      const t = now + i * 0.06;
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.12, t + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + 0.3);
-    });
-  }, [getCtx]);
-
-  // Loss: short low buzz / dull thud
-  const playLossSound = useCallback(() => {
-    const ctx = getCtx();
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(180, now);
-    osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
-    filter.type = 'lowpass';
-    filter.frequency.value = 400;
-    gain.gain.setValueAtTime(0.1, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.25);
-  }, [getCtx]);
-
-  const playTradeSound = useCallback(
-    (isWin: boolean) => {
-      playEntrySound();
-      setTimeout(() => {
-        if (isWin) playWinSound();
-        else playLossSound();
-      }, 120);
-    },
-    [playEntrySound, playWinSound, playLossSound]
-  );
-
-  return { playEntrySound, playWinSound, playLossSound, playTradeSound };
+  return { playProfitSound };
 }
