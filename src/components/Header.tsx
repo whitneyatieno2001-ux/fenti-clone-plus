@@ -28,16 +28,8 @@ const getCountryFlagFromPhone = (phoneNumber: string | null): string => {
 
 export function Header() {
   const location = useLocation();
-  const { accountType, setAccountType, demoBalance, realBalance, currentBalance, user } = useAccount();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { accountType, setAccountType, currentBalance } = useAccount();
   const countryFlag = usFlag;
-
-  // Badge is NOT shown in the header - only on Landing page
-
-  const toggleAccount = (type: 'demo' | 'real') => {
-    setAccountType(type);
-    setDropdownOpen(false);
-  };
 
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border/50">
