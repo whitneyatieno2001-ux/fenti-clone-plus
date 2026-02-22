@@ -138,6 +138,8 @@ export default function BotPage() {
   const [takeProfit, setTakeProfit] = useState('');
   const [stopLoss, setStopLoss] = useState('');
   const [selectedInterval, setSelectedInterval] = useState(tradeIntervals[1]);
+  const [selectedAsset, setSelectedAsset] = useState(tradingAssets[0]);
+  const [intervalOpen, setIntervalOpen] = useState(false);
   const [assetOpen, setAssetOpen] = useState(false);
   const [myBots, setMyBots] = useState<MyBot[]>([]);
   const [tradeLogs, setTradeLogs] = useState<TradeLog[]>([]);
