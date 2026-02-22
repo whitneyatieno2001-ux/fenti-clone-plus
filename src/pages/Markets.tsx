@@ -362,9 +362,8 @@ const marketsCSS = `
 
 .eczex-action-cell { white-space: nowrap; text-align: right; }
 .eczex-trade-btn {
-  color: hsl(var(--primary)); font-weight: 600; font-size: 13px; cursor: pointer;
+  color: hsl(var(--primary)); font-weight: 600; font-size: 13px;
 }
-.eczex-trade-btn:hover { text-decoration: underline; }
 
 /* Pagination */
 .eczex-pagination {
