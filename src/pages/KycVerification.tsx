@@ -6,6 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAccount } from '@/contexts/AccountContext';
+import { cn } from '@/lib/utils';
+import { BottomNav } from '@/components/BottomNav';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft, Check, Upload, Camera, User, FileText, ScanFace, ClipboardCheck,
