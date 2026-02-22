@@ -191,7 +191,7 @@ export default function Markets() {
                   <td className="eczex-col-mcap">{crypto.marketCap}</td>
                   <td className="eczex-col-actions">
                     <div className="eczex-action-cell">
-                      <span className="eczex-trade-btn" onClick={() => navigate(`/trade/${crypto.id}`)}>Trade</span>
+                      <span className="eczex-trade-btn">Trade</span>
                     </div>
                   </td>
                 </tr>
