@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
 import { supabase } from '@/integrations/supabase/client';
 import { getCoinIcon } from '@/data/coinIcons';
-import { useTradingSound } from '@/hooks/useTradingSound';
+
 import {
   Bot, Upload, Settings2, Play, Square, Trash2,
   ChevronDown, Plus
