@@ -201,8 +201,6 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
             </>
           )}
         </div>
-
-        </div>
       </div>
     );
   };
