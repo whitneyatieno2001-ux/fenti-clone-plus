@@ -77,9 +77,9 @@ export default function Landing() {
       {/* Hero */}
       <section className="px-6 md:px-10 py-16 md:py-24 flex flex-col md:flex-row items-center justify-between max-w-[1200px] mx-auto min-h-[80vh] gap-12">
         <div className="max-w-full md:max-w-[50%] text-center md:text-left z-10">
-          {/* Big badge */}
+          {/* Big inbuilt badge text */}
           <div className="flex justify-center md:justify-start mb-6">
-            <img src={cryptoWaveBadge} alt="Crypto Wave" className="h-20 md:h-28 object-contain" style={{ background: 'transparent' }} />
+            <span className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">Crypto Wave</span>
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-8 text-gradient">
             Secure.<br />Your World of Web3.
