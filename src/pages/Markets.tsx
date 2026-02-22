@@ -282,7 +282,7 @@ const marketsCSS = `
 
 .eczex-top-card-row {
   display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
-  font-size: 14px; font-weight: 500; cursor: pointer;
+  font-size: 14px; font-weight: 500;
 }
 .eczex-top-card-row:last-child { margin-bottom: 0; }
 .eczex-top-card-row:hover .eczex-tc-name { color: hsl(var(--primary)); }
