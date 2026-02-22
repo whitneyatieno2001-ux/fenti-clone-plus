@@ -294,12 +294,33 @@ export default function BotPage() {
     setTradeLogs(prev => [log, ...prev].slice(0, 100));
     // Sound removed
 
-    setMyBots(prev => prev.map(b =>
-      b.id === botId
-        ? { ...b, totalPL: b.totalPL + actualProfit, trades: b.trades + 1, wins: b.wins + (isWin ? 1 : 0) }
-        : b
-    ));
-  }, [stopBot, updateBalance, toast, addBotLog]);
+    setMyBots(prev => {
+      const updated = prev.map(b =>
+        b.id === botId
+          ? { ...b, totalPL: b.totalPL + actualProfit, trades: b.trades + 1, wins: b.wins + (isWin ? 1 : 0) }
+          : b
+      );
+      // Check TP/SL
+      const updatedBot = updated.find(b => b.id === botId);
+      if (updatedBot) {
+        const tp = parseFloat(takeProfit);
+        const sl = parseFloat(stopLoss);
+        if (!isNaN(tp) && tp > 0 && updatedBot.totalPL >= tp) {
+          setTimeout(() => {
+            stopBot(botId);
+            toast({ title: '🎯 Take Profit Reached!', description: `${updatedBot.name} hit TP at +$${updatedBot.totalPL.toFixed(2)}` });
+          }, 100);
+        }
+        if (!isNaN(sl) && sl > 0 && updatedBot.totalPL <= -sl) {
+          setTimeout(() => {
+            stopBot(botId);
+            toast({ title: '🛑 Stop Loss Hit!', description: `${updatedBot.name} hit SL at -$${Math.abs(updatedBot.totalPL).toFixed(2)}`, variant: 'destructive' });
+          }, 100);
+        }
+      }
+      return updated;
+    });
+  }, [stopBot, updateBalance, toast, addBotLog, takeProfit, stopLoss]);
 
   const startBot = useCallback((botId: string) => {
     const bot = myBots.find(b => b.id === botId);
