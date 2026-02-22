@@ -170,7 +170,7 @@ export default function Markets() {
             </thead>
             <tbody>
               {paginated.map(crypto => (
-                <tr key={crypto.id} onClick={() => navigate(`/trade/${crypto.id}`)} style={{ cursor: 'pointer' }}>
+                <tr key={crypto.id}>
                   <td style={{ textAlign: 'left' }}>
                     <div className="eczex-coin-cell">
                       <div className="eczex-coin-icon-img">
@@ -191,7 +191,7 @@ export default function Markets() {
                   <td className="eczex-col-mcap">{crypto.marketCap}</td>
                   <td className="eczex-col-actions">
                     <div className="eczex-action-cell">
-                      <span className="eczex-trade-btn" onClick={() => navigate(`/trade/${crypto.id}`)}>Trade</span>
+                      <span className="eczex-trade-btn">Trade</span>
                     </div>
                   </td>
                 </tr>
@@ -282,10 +282,10 @@ const marketsCSS = `
 
 .eczex-top-card-row {
   display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
-  font-size: 14px; font-weight: 500; cursor: pointer;
+  font-size: 14px; font-weight: 500;
 }
 .eczex-top-card-row:last-child { margin-bottom: 0; }
-.eczex-top-card-row:hover .eczex-tc-name { color: hsl(var(--primary)); }
+
 .eczex-tc-name { font-weight: 600; color: hsl(var(--foreground)); transition: color 0.2s; }
 .eczex-tc-price { font-weight: 500; color: hsl(var(--foreground)); }
 .eczex-tc-change { font-weight: 500; text-align: right; min-width: 60px; }
@@ -349,7 +349,7 @@ const marketsCSS = `
   font-size: 14px; color: hsl(var(--foreground)); vertical-align: middle;
 }
 .eczex-market-table td:first-child { text-align: left; }
-.eczex-market-table tr:hover td { background: hsl(var(--muted)); }
+
 
 .eczex-coin-cell { display: flex; align-items: center; gap: 12px; }
 .eczex-coin-icon-img {
@@ -362,9 +362,8 @@ const marketsCSS = `
 
 .eczex-action-cell { white-space: nowrap; text-align: right; }
 .eczex-trade-btn {
-  color: hsl(var(--primary)); font-weight: 600; font-size: 13px; cursor: pointer;
+  color: hsl(var(--primary)); font-weight: 600; font-size: 13px;
 }
-.eczex-trade-btn:hover { text-decoration: underline; }
 
 /* Pagination */
 .eczex-pagination {

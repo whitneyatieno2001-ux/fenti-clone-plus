@@ -37,8 +37,9 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [flowStatus, setFlowStatus] = useState<FlowStatus>('form');
   const [lastAmount, setLastAmount] = useState('');
   const [lastMethod, setLastMethod] = useState('');
-  const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit } = useAccount();
+  const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit, userEmail } = useAccount();
   const { toast } = useToast();
+  const isKycVerified = userEmail === 'whitneyatieno86@gmail.com';
 
   useEffect(() => {
     if (!isOpen) {
@@ -200,13 +201,6 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
               </div>
             </>
           )}
-        </div>
-
-        {/* Rate Your P2P Experience at bottom */}
-        <div className="p-8 text-center">
-          <button onClick={onClose} className="text-[#fcd535] font-semibold text-base hover:opacity-80 transition-opacity">
-            Rate Your P2P Experience
-          </button>
         </div>
       </div>
     );
@@ -446,12 +440,24 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 </div>
               )}
 
+              {accountType === 'real' && !isKycVerified && (
+                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-destructive">KYC Not Verified</p>
+                      <p className="text-sm text-muted-foreground mt-1">Complete KYC verification to enable withdrawals.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="p-4 rounded-xl bg-secondary/50">
                 <p className="text-sm text-muted-foreground">Balance ({accountType})</p>
                 <p className="text-2xl font-bold text-foreground">${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
               </div>
 
-              {withdrawMethodState === 'select' && accountType === 'real' && (
+              {withdrawMethodState === 'select' && accountType === 'real' && isKycVerified && (
                 <div className="space-y-6">
                   <h3 className="text-lg font-bold text-foreground">Mobile Money</h3>
                   <MethodCard

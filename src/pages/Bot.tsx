@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
 import { supabase } from '@/integrations/supabase/client';
 import { getCoinIcon } from '@/data/coinIcons';
-import { useTradingSound } from '@/hooks/useTradingSound';
+
 import {
   Bot, Upload, Settings2, Play, Square, Trash2,
   ChevronDown, Plus
@@ -132,9 +132,11 @@ export default function BotPage() {
   const navigate = useNavigate();
   const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
   const { toast } = useToast();
-  const { playProfitSound } = useTradingSound();
+  // Sound removed
 
   const [tradeAmount, setTradeAmount] = useState('10');
+  const [takeProfit, setTakeProfit] = useState('');
+  const [stopLoss, setStopLoss] = useState('');
   const [selectedInterval, setSelectedInterval] = useState(tradeIntervals[1]);
   const [selectedAsset, setSelectedAsset] = useState(tradingAssets[0]);
   const [intervalOpen, setIntervalOpen] = useState(false);
@@ -290,14 +292,35 @@ export default function BotPage() {
       result: isWin ? 'WIN' : 'LOSS', profit: actualProfit, botName: bot.name,
     };
     setTradeLogs(prev => [log, ...prev].slice(0, 100));
-    if (isWin) playProfitSound();
+    // Sound removed
 
-    setMyBots(prev => prev.map(b =>
-      b.id === botId
-        ? { ...b, totalPL: b.totalPL + actualProfit, trades: b.trades + 1, wins: b.wins + (isWin ? 1 : 0) }
-        : b
-    ));
-  }, [stopBot, updateBalance, toast, addBotLog]);
+    setMyBots(prev => {
+      const updated = prev.map(b =>
+        b.id === botId
+          ? { ...b, totalPL: b.totalPL + actualProfit, trades: b.trades + 1, wins: b.wins + (isWin ? 1 : 0) }
+          : b
+      );
+      // Check TP/SL
+      const updatedBot = updated.find(b => b.id === botId);
+      if (updatedBot) {
+        const tp = parseFloat(takeProfit);
+        const sl = parseFloat(stopLoss);
+        if (!isNaN(tp) && tp > 0 && updatedBot.totalPL >= tp) {
+          setTimeout(() => {
+            stopBot(botId);
+            toast({ title: '🎯 Take Profit Reached!', description: `${updatedBot.name} hit TP at +$${updatedBot.totalPL.toFixed(2)}` });
+          }, 100);
+        }
+        if (!isNaN(sl) && sl > 0 && updatedBot.totalPL <= -sl) {
+          setTimeout(() => {
+            stopBot(botId);
+            toast({ title: '🛑 Stop Loss Hit!', description: `${updatedBot.name} hit SL at -$${Math.abs(updatedBot.totalPL).toFixed(2)}`, variant: 'destructive' });
+          }, 100);
+        }
+      }
+      return updated;
+    });
+  }, [stopBot, updateBalance, toast, addBotLog, takeProfit, stopLoss]);
 
   const startBot = useCallback((botId: string) => {
     const bot = myBots.find(b => b.id === botId);
@@ -323,7 +346,7 @@ export default function BotPage() {
 
     let delay = 0;
     scanMessages.forEach((msg, idx) => {
-      delay += 800 + Math.random() * 600;
+      delay += 400 + Math.random() * 300;
       setTimeout(() => {
         addBotLog(msg, idx === 0 || idx === 2 ? 'success' : 'info');
       }, delay);
@@ -338,7 +361,7 @@ export default function BotPage() {
         if (stillRunning?.status === 'running') {
           scheduleNext();
         }
-      }, 3000 + Math.random() * 2000);
+      }, 800 + Math.random() * 700);
       botIntervalsRef.current.set(botId, timeout);
     };
 
@@ -421,6 +444,22 @@ export default function BotPage() {
             <Input type="text" inputMode="decimal" value={tradeAmount}
               onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setTradeAmount(e.target.value); }}
               placeholder="10" className="bg-card border-border" />
+          </div>
+
+          {/* Take Profit & Stop Loss */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">Take Profit ($)</label>
+              <Input type="text" inputMode="decimal" value={takeProfit}
+                onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setTakeProfit(e.target.value); }}
+                placeholder="e.g. 50" className="bg-card border-border" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">Stop Loss ($)</label>
+              <Input type="text" inputMode="decimal" value={stopLoss}
+                onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setStopLoss(e.target.value); }}
+                placeholder="e.g. 20" className="bg-card border-border" />
+            </div>
           </div>
 
           <div className="space-y-1">

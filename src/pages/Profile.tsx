@@ -7,8 +7,24 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { 
   User, Settings, Shield, CreditCard, HelpCircle, LogOut, 
-  ChevronRight, Bell, Lock, History, RefreshCw, ScanFace
+  ChevronRight, Bell, Lock, History, RefreshCw, ScanFace,
+  Star, UserPlus, Coins, ArrowDownToLine, Edit
 } from 'lucide-react';
+
+const shortcuts = [
+  { icon: Star, label: 'Rewards Hub', path: '/dashboard' },
+  { icon: UserPlus, label: 'Referral', path: '/dashboard' },
+  { icon: Coins, label: 'Earn', path: '/dashboard' },
+  { icon: ArrowDownToLine, label: 'Deposit', path: '/dashboard' },
+  { icon: Edit, label: 'Edit', path: '/settings' },
+];
+
+const recommendItems = [
+  { icon: Coins, label: 'Earn', path: '/dashboard' },
+  { icon: UserPlus, label: 'Referral', path: '/dashboard' },
+  { icon: Star, label: 'Rewards', path: '/dashboard' },
+  { icon: RefreshCw, label: 'Convert', path: '/trade' },
+];
 
 const menuItems = [
   { icon: History, label: 'Transaction History', path: '/history' },
@@ -34,6 +50,8 @@ export default function Profile() {
     accountType,
     resetDemo,
   } = useAccount();
+
+  const isVerified = userEmail === 'whitneyatieno86@gmail.com';
 
   const handleLogout = async () => {
     await logout();
@@ -75,52 +93,97 @@ export default function Profile() {
       <Header />
       
       <main className="px-4 py-4 space-y-6">
-        {/* Profile Header */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/50">
+        {/* Profile Header - Binance style */}
+        <div className="flex items-center gap-4 py-4">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-primary-foreground font-bold text-2xl">
             {userName?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div className="flex-1">
             <h2 className="text-lg font-bold text-foreground">{userName || 'User'}</h2>
-            <p className="text-sm text-muted-foreground">{userEmail}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className={cn(
-                "text-xs px-2 py-0.5 rounded-full",
-                accountType === 'demo' ? "bg-primary/20 text-primary" : "bg-success/20 text-success"
-              )}>
-                {accountType === 'demo' ? 'Demo Account' : 'Real Account'}
+              <span className="text-xs px-2 py-0.5 rounded border border-primary/30 text-primary font-medium">
+                Regular
               </span>
+              {isVerified && (
+                <span className="text-xs px-2 py-0.5 rounded border border-success/30 text-success font-medium">
+                  Verified
+                </span>
+              )}
             </div>
           </div>
-          <Button variant="ghost" size="icon">
-            <Settings className="h-5 w-5" />
-          </Button>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </div>
 
-        {/* Balances */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-4 rounded-xl bg-card border border-border/50">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs text-muted-foreground">Demo Balance</p>
-              <button 
-                onClick={handleResetDemo}
-                className="text-primary hover:text-primary/80"
-                title="Reset Demo Balance"
-              >
-                <RefreshCw className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="text-lg font-bold text-foreground">
-              ${demoBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </p>
+        <div className="h-px bg-border" />
+
+        {/* Shortcut Section */}
+        <div>
+          <h3 className="text-base font-semibold text-foreground mb-4">Shortcut</h3>
+          <div className="grid grid-cols-4 gap-4">
+            {shortcuts.slice(0, 4).map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => navigate(item.path)}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+                    <Icon className="h-5 w-5 text-foreground" />
+                  </div>
+                  <span className="text-xs text-foreground font-medium">{item.label}</span>
+                </button>
+              );
+            })}
           </div>
-          <div className="p-4 rounded-xl bg-card border border-border/50">
-            <p className="text-xs text-muted-foreground mb-1">Real Balance</p>
-            <p className="text-lg font-bold text-foreground">
-              ${realBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </p>
+          <div className="grid grid-cols-4 gap-4 mt-4">
+            {shortcuts.slice(4).map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => navigate(item.path)}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+                    <Icon className="h-5 w-5 text-foreground" />
+                  </div>
+                  <span className="text-xs text-foreground font-medium">{item.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
+
+        {/* Recommend Section */}
+        <div>
+          <h3 className="text-base font-semibold text-foreground mb-4">Recommend</h3>
+          <div className="grid grid-cols-4 gap-4">
+            {recommendItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => navigate(item.path)}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+                    <Icon className="h-5 w-5 text-foreground" />
+                  </div>
+                  <span className="text-xs text-foreground font-medium">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* More Services */}
+        <button
+          onClick={() => {}}
+          className="w-full py-3 rounded-full bg-secondary text-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+        >
+          More Services
+        </button>
 
         {/* Menu Items */}
         <div className="space-y-2">
