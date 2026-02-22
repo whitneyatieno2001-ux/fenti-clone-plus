@@ -457,7 +457,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 <p className="text-2xl font-bold text-foreground">${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
               </div>
 
-              {withdrawMethodState === 'select' && accountType === 'real' && (
+              {withdrawMethodState === 'select' && accountType === 'real' && isKycVerified && (
                 <div className="space-y-6">
                   <h3 className="text-lg font-bold text-foreground">Mobile Money</h3>
                   <MethodCard
