@@ -446,6 +446,22 @@ export default function BotPage() {
               placeholder="10" className="bg-card border-border" />
           </div>
 
+          {/* Take Profit & Stop Loss */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">Take Profit ($)</label>
+              <Input type="text" inputMode="decimal" value={takeProfit}
+                onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setTakeProfit(e.target.value); }}
+                placeholder="e.g. 50" className="bg-card border-border" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">Stop Loss ($)</label>
+              <Input type="text" inputMode="decimal" value={stopLoss}
+                onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setStopLoss(e.target.value); }}
+                placeholder="e.g. 20" className="bg-card border-border" />
+            </div>
+          </div>
+
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">Trade Interval</label>
             <div className="relative">
