@@ -202,11 +202,6 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
           )}
         </div>
 
-        {/* Rate Your P2P Experience at bottom */}
-        <div className="p-8 text-center">
-          <button onClick={onClose} className="text-[#fcd535] font-semibold text-base hover:opacity-80 transition-opacity">
-            Rate Your P2P Experience
-          </button>
         </div>
       </div>
     );

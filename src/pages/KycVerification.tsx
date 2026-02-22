@@ -54,9 +54,11 @@ const ID_TYPES = ['Passport', "Driver's License", 'National ID Card'];
 export default function KycVerification() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { userEmail } = useAccount();
+  const isVerifiedEmail = userEmail === 'whitneyatieno86@gmail.com';
   const [currentStep, setCurrentStep] = useState(0);
-  // KYC is pre-approved/verified — show success immediately
-  const [submitted, setSubmitted] = useState(true);
+  // Only whitneyatieno86@gmail.com is pre-verified
+  const [submitted, setSubmitted] = useState(isVerifiedEmail);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
