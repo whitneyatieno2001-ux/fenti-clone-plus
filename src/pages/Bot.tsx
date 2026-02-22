@@ -325,7 +325,7 @@ export default function BotPage() {
 
     let delay = 0;
     scanMessages.forEach((msg, idx) => {
-      delay += 800 + Math.random() * 600;
+      delay += 400 + Math.random() * 300;
       setTimeout(() => {
         addBotLog(msg, idx === 0 || idx === 2 ? 'success' : 'info');
       }, delay);
