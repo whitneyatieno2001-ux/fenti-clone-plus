@@ -285,7 +285,7 @@ const marketsCSS = `
   font-size: 14px; font-weight: 500;
 }
 .eczex-top-card-row:last-child { margin-bottom: 0; }
-.eczex-top-card-row:hover .eczex-tc-name { color: hsl(var(--primary)); }
+
 .eczex-tc-name { font-weight: 600; color: hsl(var(--foreground)); transition: color 0.2s; }
 .eczex-tc-price { font-weight: 500; color: hsl(var(--foreground)); }
 .eczex-tc-change { font-weight: 500; text-align: right; min-width: 60px; }
