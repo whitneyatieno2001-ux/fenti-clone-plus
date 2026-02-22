@@ -37,8 +37,9 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [flowStatus, setFlowStatus] = useState<FlowStatus>('form');
   const [lastAmount, setLastAmount] = useState('');
   const [lastMethod, setLastMethod] = useState('');
-  const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit } = useAccount();
+  const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit, userEmail } = useAccount();
   const { toast } = useToast();
+  const isKycVerified = userEmail === 'whitneyatieno86@gmail.com';
 
   useEffect(() => {
     if (!isOpen) {
