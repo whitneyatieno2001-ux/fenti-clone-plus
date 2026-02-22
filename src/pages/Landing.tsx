@@ -28,12 +28,6 @@ export default function Landing() {
     return () => observer.disconnect();
   }, []);
 
-  // Preload badge image to avoid loading delay
-  useEffect(() => {
-    const img = new Image();
-    img.src = cryptoWaveBadge;
-  }, []);
-
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden font-sans">
       {/* Navbar */}
