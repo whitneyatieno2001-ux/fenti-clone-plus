@@ -349,7 +349,7 @@ const marketsCSS = `
   font-size: 14px; color: hsl(var(--foreground)); vertical-align: middle;
 }
 .eczex-market-table td:first-child { text-align: left; }
-.eczex-market-table tr:hover td { background: hsl(var(--muted)); }
+
 
 .eczex-coin-cell { display: flex; align-items: center; gap: 12px; }
 .eczex-coin-icon-img {
