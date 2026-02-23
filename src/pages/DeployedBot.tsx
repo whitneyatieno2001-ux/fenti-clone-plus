@@ -215,12 +215,6 @@ export default function DeployedBot() {
             <span className="text-xs text-muted-foreground">• Bot ID: 1•••</span>
           </div>
           <div className="flex gap-1">
-            <button className="w-7 h-7 rounded bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground">
-              <BarChart3 className="h-3.5 w-3.5" />
-            </button>
-            <button className="w-7 h-7 rounded bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground">
-              <TrendingUp className="h-3.5 w-3.5" />
-            </button>
           </div>
         </div>
 
