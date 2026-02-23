@@ -124,9 +124,10 @@ export default function TransactionHistory() {
                       "font-bold",
                       transaction.type === 'deposit' ? "text-success" : 
                       transaction.type === 'withdrawal' ? "text-destructive" :
-                      transaction.type === 'bot_trade' ? ((transaction as any).profit_loss !== undefined ? ((transaction as any).profit_loss >= 0 ? "text-success" : "text-destructive") : "text-foreground") : "text-foreground"
+                      (transaction.type === 'bot_trade' || transaction.type === 'trade') && transaction.description?.includes('WIN') ? "text-success" :
+                      (transaction.type === 'bot_trade' || transaction.type === 'trade') && transaction.description?.includes('LOSS') ? "text-destructive" : "text-foreground"
                     )}>
-                      {transaction.type === 'deposit' ? '+' : transaction.type === 'bot_trade' ? ((transaction as any).profit_loss >= 0 ? '+' : '-') : '-'}${transaction.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {transaction.type === 'deposit' || ((transaction.type === 'bot_trade' || transaction.type === 'trade') && transaction.description?.includes('WIN')) ? '+' : '-'}${transaction.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </p>
                     <p className={cn(
                       "text-xs",
