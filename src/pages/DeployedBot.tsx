@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAccount } from '@/contexts/AccountContext';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Play, Square, Settings2, BarChart3, TrendingUp, Clock } from 'lucide-react';
+import { ArrowLeft, Play, Square, Settings2, Clock } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { getCoinIcon } from '@/data/coinIcons';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
