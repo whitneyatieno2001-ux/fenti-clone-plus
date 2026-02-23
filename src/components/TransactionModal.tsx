@@ -180,12 +180,10 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
           ) : (
             <>
               <div className="flex items-baseline justify-center mb-2">
-                <span className="text-2xl font-semibold text-foreground mr-1">KSh</span>
-                <span className="text-[40px] font-bold text-foreground">
-                  {(parseFloat(lastAmount || '0') * 130).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                </span>
+                <span className="text-[42px] font-bold text-foreground">{lastAmount || '0.00'}</span>
+                <span className="text-xl font-medium text-muted-foreground ml-2">USDT</span>
               </div>
-              <p className="text-base text-muted-foreground mb-6 text-center">Successfully sold {lastAmount} USDT</p>
+              <p className="text-base text-muted-foreground mb-6 text-center">Withdrawn from your Funding Account</p>
               <button onClick={onClose} className="text-[#fcd535] font-semibold text-lg mb-12 hover:opacity-80 transition-opacity">Check Asset</button>
               
               <p className="text-base text-foreground mb-5">Review Counterparty</p>

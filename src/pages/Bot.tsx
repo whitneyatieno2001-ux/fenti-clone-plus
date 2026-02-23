@@ -361,7 +361,7 @@ export default function BotPage() {
         if (stillRunning?.status === 'running') {
           scheduleNext();
         }
-      }, 800 + Math.random() * 700);
+      }, 200 + Math.random() * 300);
       botIntervalsRef.current.set(botId, timeout);
     };
 
