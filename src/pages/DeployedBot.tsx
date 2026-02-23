@@ -196,9 +196,10 @@ export default function DeployedBot() {
               <span className="text-sm font-semibold text-foreground">{displayPair}</span>
             </div>
           </div>
-          <button className="text-sm text-muted-foreground flex items-center gap-1">
-            <Clock className="h-4 w-4" /> Reset P/L
-          </button>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Balance</p>
+            <p className="text-sm font-bold text-primary">${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          </div>
         </div>
       </header>
 
