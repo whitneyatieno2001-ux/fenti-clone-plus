@@ -12,18 +12,17 @@ import {
 } from 'lucide-react';
 
 const shortcuts = [
-  { icon: Star, label: 'Rewards Hub', path: '/dashboard' },
-  { icon: UserPlus, label: 'Referral', path: '/dashboard' },
-  { icon: Coins, label: 'Earn', path: '/dashboard' },
-  { icon: ArrowDownToLine, label: 'Deposit', path: '/dashboard' },
-  { icon: Edit, label: 'Edit', path: '/settings' },
+  { icon: History, label: 'History', path: '/history' },
+  { icon: CreditCard, label: 'Payments', path: '/payments' },
+  { icon: Shield, label: 'Security', path: '/security' },
+  { icon: Edit, label: 'Settings', path: '/settings' },
 ];
 
 const recommendItems = [
-  { icon: Coins, label: 'Earn', path: '/dashboard' },
-  { icon: UserPlus, label: 'Referral', path: '/dashboard' },
-  { icon: Star, label: 'Rewards', path: '/dashboard' },
-  { icon: RefreshCw, label: 'Convert', path: '/trade' },
+  { icon: ScanFace, label: 'KYC', path: '/kyc' },
+  { icon: Bell, label: 'Alerts', path: '/notifications' },
+  { icon: Lock, label: 'Privacy', path: '/privacy' },
+  { icon: HelpCircle, label: 'Support', path: '/support' },
 ];
 
 const menuItems = [
