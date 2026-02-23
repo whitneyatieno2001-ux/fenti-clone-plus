@@ -68,43 +68,43 @@
   .light {
     --background: 0 0% 100%;
     --foreground: 0 0% 12%;
-    --card: 0 0% 100%;
+    --card: 0 0% 98%;
     --card-foreground: 0 0% 12%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 12%;
-    --primary: 43 96% 56%;
+    --primary: 36 100% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 6% 96%;
+    --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 12%;
-    --muted: 220 6% 96%;
-    --muted-foreground: 0 0% 50%;
-    --accent: 43 96% 56%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 36 100% 50%;
     --accent-foreground: 0 0% 12%;
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --success: 152 69% 41%;
+    --success: 145 63% 42%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 36 100% 50%;
     --warning-foreground: 0 0% 100%;
-    --border: 220 6% 90%;
-    --input: 220 6% 96%;
-    --ring: 43 96% 56%;
+    --border: 0 0% 91%;
+    --input: 0 0% 96%;
+    --ring: 36 100% 50%;
 
-    --crypto-positive: 152 69% 41%;
-    --crypto-negative: 0 72% 51%;
-    --crypto-card-green: 152 69% 95%;
-    --crypto-card-red: 0 72% 95%;
-    --crypto-card-green-border: 152 69% 50%;
-    --crypto-card-red-border: 0 72% 50%;
+    --crypto-positive: 145 63% 42%;
+    --crypto-negative: 0 84% 55%;
+    --crypto-card-green: 145 63% 95%;
+    --crypto-card-red: 0 84% 95%;
+    --crypto-card-green-border: 145 63% 50%;
+    --crypto-card-red-border: 0 84% 50%;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 0 0% 12%;
-    --sidebar-primary: 43 96% 56%;
+    --sidebar-primary: 36 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 6% 96%;
+    --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 12%;
-    --sidebar-border: 220 6% 90%;
-    --sidebar-ring: 43 96% 56%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-ring: 36 100% 50%;
   }
 
   .dark {
