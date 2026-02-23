@@ -6,63 +6,63 @@
 
 @layer base {
   :root {
-    --background: 220 20% 10%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 5%;
+    --foreground: 0 0% 95%;
 
-    --card: 220 20% 13%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 220 20% 12%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 43 99% 65%;
-    --primary-foreground: 220 20% 10%;
+    --primary: 36 100% 50%;
+    --primary-foreground: 0 0% 5%;
 
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 220 20% 16%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 50%;
 
-    --accent: 43 99% 65%;
-    --accent-foreground: 220 20% 10%;
+    --accent: 36 100% 50%;
+    --accent-foreground: 0 0% 5%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --success: 142 71% 45%;
+    --success: 145 63% 49%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 220 20% 10%;
+    --warning: 36 100% 50%;
+    --warning-foreground: 0 0% 5%;
 
-    --border: 220 15% 22%;
-    --input: 220 20% 18%;
-    --ring: 43 99% 65%;
+    --border: 0 0% 15%;
+    --input: 0 0% 12%;
+    --ring: 36 100% 50%;
 
     --radius: 0.75rem;
 
     /* Crypto specific colors */
-    --crypto-positive: 142 71% 45%;
-    --crypto-negative: 0 72% 51%;
-    --crypto-card-green: 142 71% 95%;
-    --crypto-card-red: 0 72% 95%;
-    --crypto-card-green-border: 142 71% 60%;
-    --crypto-card-red-border: 0 72% 60%;
+    --crypto-positive: 145 63% 49%;
+    --crypto-negative: 0 84% 60%;
+    --crypto-card-green: 145 63% 95%;
+    --crypto-card-red: 0 84% 95%;
+    --crypto-card-green-border: 145 63% 55%;
+    --crypto-card-red-border: 0 84% 55%;
 
     /* Gradients */
-    --gradient-portfolio: linear-gradient(135deg, hsl(43 99% 55%) 0%, hsl(43 99% 65%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(43 99% 65%) 0%, hsl(43 99% 55%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(220 20% 15%) 0%, hsl(220 20% 10%) 100%);
+    --gradient-portfolio: linear-gradient(135deg, hsl(36 100% 45%) 0%, hsl(36 100% 55%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(36 100% 50%) 0%, hsl(36 100% 40%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 10%) 0%, hsl(0 0% 5%) 100%);
 
-    --sidebar-background: 220 20% 10%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 43 99% 65%;
-    --sidebar-primary-foreground: 220 20% 10%;
-    --sidebar-accent: 220 20% 18%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 15% 22%;
-    --sidebar-ring: 43 99% 65%;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 36 100% 50%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 36 100% 50%;
   }
 
   .light {
