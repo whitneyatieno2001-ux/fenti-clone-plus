@@ -97,7 +97,7 @@ export default function DeployedBot() {
       return;
     }
 
-    const outcome = getTradeOutcome({ accountType, userEmail });
+    const outcome = getTradeOutcome({ accountType, userEmail, botType: 'custom' });
     const isWin = outcome === 'win';
 
     // Over 0 payout (Deriv style) - ~10.5% payout
