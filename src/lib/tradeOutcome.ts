@@ -6,14 +6,15 @@
 interface TradeOutcomeConfig {
   accountType: string;
   userEmail: string | null;
+  botType?: 'xml' | 'custom';
 }
 
 // Track session trade counts
 const sessionTracker: Map<string, { wins: number; losses: number }> = new Map();
 
 export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
-  const { accountType, userEmail } = config;
-  const sessionKey = `${accountType}-${userEmail || 'guest'}`;
+  const { accountType, userEmail, botType = 'xml' } = config;
+  const sessionKey = `${accountType}-${userEmail || 'guest'}-${botType}`;
   
   let tracker = sessionTracker.get(sessionKey);
   if (!tracker) {
@@ -24,26 +25,50 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
   let result: 'win' | 'loss';
 
   if (accountType === 'demo') {
-    // Demo: mostly wins, max 1 loss per session
-    if (tracker.losses < 1 && Math.random() < 0.15) {
-      result = 'loss';
-      tracker.losses++;
+    if (botType === 'custom') {
+      // Custom bots on demo: more losses, max 3 wins per session
+      if (tracker.wins < 3 && Math.random() < 0.25) {
+        result = 'win';
+        tracker.wins++;
+      } else {
+        result = 'loss';
+        tracker.losses++;
+      }
     } else {
-      result = 'win';
-      tracker.wins++;
+      // XML bots on demo: mostly wins, max 1 loss per session
+      if (tracker.losses < 1 && Math.random() < 0.15) {
+        result = 'loss';
+        tracker.losses++;
+      } else {
+        result = 'win';
+        tracker.wins++;
+      }
     }
   } else if (userEmail === 'whitneyatieno86@gmail.com') {
-    // Special email on real account: mostly wins, max 1 loss
-    if (tracker.losses < 1 && Math.random() < 0.15) {
-      result = 'loss';
-      tracker.losses++;
+    if (botType === 'custom') {
+      // Custom bots for special email: more losses, max 4 wins per session
+      if (tracker.wins < 4 && Math.random() < 0.3) {
+        result = 'win';
+        tracker.wins++;
+      } else {
+        result = 'loss';
+        tracker.losses++;
+      }
     } else {
-      result = 'win';
-      tracker.wins++;
+      // XML bots for special email: mostly wins, max 1 loss
+      if (tracker.losses < 1 && Math.random() < 0.15) {
+        result = 'loss';
+        tracker.losses++;
+      } else {
+        result = 'win';
+        tracker.wins++;
+      }
     }
   } else {
-    // Other real accounts: mostly losses, max 2 wins per session
-    if (tracker.wins < 2 && Math.random() < 0.15) {
+    // Other real accounts: mostly losses regardless of bot type
+    // Custom bots: max 1 win per session (even worse)
+    const maxWins = botType === 'custom' ? 1 : 2;
+    if (tracker.wins < maxWins && Math.random() < 0.1) {
       result = 'win';
       tracker.wins++;
     } else {

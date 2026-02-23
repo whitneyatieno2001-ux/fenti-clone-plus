@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAccount } from '@/contexts/AccountContext';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, Play, Square, Settings2, BarChart3, TrendingUp, Clock } from 'lucide-react';
+import { ArrowLeft, Play, Square, Settings2, Clock } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { getCoinIcon } from '@/data/coinIcons';
 import { getTradeOutcome } from '@/lib/tradeOutcome';
@@ -97,7 +97,7 @@ export default function DeployedBot() {
       return;
     }
 
-    const outcome = getTradeOutcome({ accountType, userEmail });
+    const outcome = getTradeOutcome({ accountType, userEmail, botType: 'custom' });
     const isWin = outcome === 'win';
 
     // Over 0 payout (Deriv style) - ~10.5% payout
@@ -196,9 +196,10 @@ export default function DeployedBot() {
               <span className="text-sm font-semibold text-foreground">{displayPair}</span>
             </div>
           </div>
-          <button className="text-sm text-muted-foreground flex items-center gap-1">
-            <Clock className="h-4 w-4" /> Reset P/L
-          </button>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Balance</p>
+            <p className="text-sm font-bold text-primary">${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+          </div>
         </div>
       </header>
 
@@ -214,12 +215,6 @@ export default function DeployedBot() {
             <span className="text-xs text-muted-foreground">• Bot ID: 1•••</span>
           </div>
           <div className="flex gap-1">
-            <button className="w-7 h-7 rounded bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground">
-              <BarChart3 className="h-3.5 w-3.5" />
-            </button>
-            <button className="w-7 h-7 rounded bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground">
-              <TrendingUp className="h-3.5 w-3.5" />
-            </button>
           </div>
         </div>
 
