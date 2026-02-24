@@ -41,8 +41,8 @@ interface BotConfig {
 
 const botConfigs: Record<string, BotConfig> = {
   '1': { id: '1', name: 'Arbitrage Hunter', strategy: 'arbitrage', winRate: 60, price: 100, crypto: 'BTC' },
-  '2': { id: '2', name: 'Speed Scalper', strategy: 'scalping', winRate: 80, price: 150, crypto: 'ETH' },
-  '3': { id: '3', name: 'Signal Master', strategy: 'signal', winRate: 40, price: 0, crypto: 'SOL' },
+  '2': { id: '2', name: 'Speed Scalper', strategy: 'trend', winRate: 80, price: 150, crypto: 'ETH' },
+  '3': { id: '3', name: 'Signal Master', strategy: 'grid', winRate: 40, price: 0, crypto: 'SOL' },
   '4': { id: '4', name: 'Trend Follower', strategy: 'trend', winRate: 45, price: 0, crypto: 'BNB' },
   '5': { id: '5', name: 'Grid Trader', strategy: 'grid', winRate: 50, price: 0, crypto: 'XRP' },
 };
