@@ -81,9 +81,10 @@ export default function Auth() {
       if (result.success) {
         if (mode === 'signup') {
           toast({
-            title: "Verification Email Sent!",
-            description: "Please check your email for a verification code to complete your registration.",
+            title: "Account Created!",
+            description: "Welcome to CryptoWave. You are now logged in.",
           });
+          navigate('/dashboard');
         } else {
           toast({
             title: "Welcome Back!",
