@@ -195,7 +195,7 @@ export default function BotPage() {
       const newBot: MyBot = {
         id: Date.now().toString(),
         name: parsed.name,
-        strategy: parsed.strategy.toLowerCase().includes('scalp') ? 'scalping' : 'trend',
+        strategy: parsed.strategy.toLowerCase().includes('scalp') ? 'trend' : 'trend',
         asset: matchAsset,
         tradeAmount: parseFloat(tradeAmount) || 10,
         interval: selectedInterval.value,

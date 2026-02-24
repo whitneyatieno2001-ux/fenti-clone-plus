@@ -26,8 +26,8 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
 
   if (accountType === 'demo') {
     if (botType === 'custom') {
-      // Custom bots on demo: more losses, max 3 wins per session
-      if (tracker.wins < 3 && Math.random() < 0.25) {
+      // Custom bots on demo: realistic ~55% win rate
+      if (Math.random() < 0.55) {
         result = 'win';
         tracker.wins++;
       } else {
@@ -46,8 +46,8 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
     }
   } else if (userEmail === 'whitneyatieno86@gmail.com') {
     if (botType === 'custom') {
-      // Custom bots for special email: more losses, max 4 wins per session
-      if (tracker.wins < 4 && Math.random() < 0.3) {
+      // Custom bots for special email: realistic ~58% win rate
+      if (Math.random() < 0.58) {
         result = 'win';
         tracker.wins++;
       } else {
@@ -66,9 +66,8 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
     }
   } else {
     // Other real accounts: mostly losses regardless of bot type
-    // Custom bots: max 1 win per session (even worse)
-    const maxWins = botType === 'custom' ? 1 : 2;
-    if (tracker.wins < maxWins && Math.random() < 0.1) {
+    const maxWins = botType === 'custom' ? 2 : 2;
+    if (tracker.wins < maxWins && Math.random() < 0.15) {
       result = 'win';
       tracker.wins++;
     } else {

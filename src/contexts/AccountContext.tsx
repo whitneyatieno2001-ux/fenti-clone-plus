@@ -91,7 +91,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const loadTransactions = async () => {
     if (!user) return;
     try {
-      const { data, error } = await supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50);
+      const { data, error } = await supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(500);
       if (error) throw error;
       if (data) {
         setTransactions(data.map(t => ({
