@@ -51,8 +51,9 @@ export default function KycVerification() {
   const { userEmail } = useAccount();
   const isVerifiedEmail = userEmail === 'whitneyatieno86@gmail.com';
   const [currentStep, setCurrentStep] = useState(0);
-  // Only whitneyatieno86@gmail.com is pre-verified
-  const [submitted, setSubmitted] = useState(isVerifiedEmail);
+  // Only whitneyatieno86@gmail.com is fully verified
+  const [submitted, setSubmitted] = useState(false);
+  const [kycPending, setKycPending] = useState(false);
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -160,7 +161,11 @@ export default function KycVerification() {
 
   const handleSubmit = () => {
     if (!validateStep(3)) return;
-    setSubmitted(true);
+    if (isVerifiedEmail) {
+      setSubmitted(true);
+    } else {
+      setKycPending(true);
+    }
     toast({ title: 'KYC Submitted', description: 'Your verification is under review' });
   };
 
@@ -175,7 +180,35 @@ export default function KycVerification() {
     }
   };
 
-  if (submitted) {
+  // KYC Pending screen (non-verified emails)
+  if (kycPending && !isVerifiedEmail) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <Header />
+        <main className="px-4 py-8 flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <div className="bg-card border border-border/50 rounded-2xl p-8 max-w-md w-full space-y-6">
+            <div className="w-20 h-20 rounded-full bg-success/20 border-4 border-success flex items-center justify-center mx-auto">
+              <Check className="h-10 w-10 text-success" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground">Verification Submitted!</h1>
+            <p className="text-muted-foreground">
+              Your KYC verification has been submitted successfully
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Our team will review your documents within 24-72 hours. You'll receive an email notification once the review is complete.
+            </p>
+            <Button onClick={() => navigate('/dashboard')} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+              Back to Dashboard
+            </Button>
+          </div>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // Verified screen (only for verified email)
+  if (isVerifiedEmail && (submitted || true)) {
     return (
       <div className="min-h-screen bg-background pb-20">
         <Header />

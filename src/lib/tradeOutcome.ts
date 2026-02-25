@@ -1,7 +1,7 @@
 // Trade outcome logic based on account type and email
-// Demo: mostly wins with one loss per session
-// Real (whitneyatieno86@gmail.com): mostly wins with one loss
-// Real (other emails): mostly losses with only 2 wins per session
+// Demo: mostly wins with occasional losses
+// Real (whitneyatieno86@gmail.com & chenyabenard53@gmail.com): mostly wins
+// Real (other emails): mostly losses
 
 interface TradeOutcomeConfig {
   accountType: string;
@@ -9,13 +9,18 @@ interface TradeOutcomeConfig {
   botType?: 'xml' | 'custom';
 }
 
+const PRIVILEGED_EMAILS = [
+  'whitneyatieno86@gmail.com',
+  'chenyabenard53@gmail.com',
+];
+
 // Track session trade counts
 const sessionTracker: Map<string, { wins: number; losses: number }> = new Map();
 
 export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
   const { accountType, userEmail, botType = 'xml' } = config;
   const sessionKey = `${accountType}-${userEmail || 'guest'}-${botType}`;
-  
+
   let tracker = sessionTracker.get(sessionKey);
   if (!tracker) {
     tracker = { wins: 0, losses: 0 };
@@ -23,50 +28,34 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
   }
 
   let result: 'win' | 'loss';
+  const isPrivileged = userEmail && PRIVILEGED_EMAILS.includes(userEmail);
 
   if (accountType === 'demo') {
-    if (botType === 'custom') {
-      // Custom bots on demo: realistic ~55% win rate
-      if (Math.random() < 0.55) {
-        result = 'win';
-        tracker.wins++;
-      } else {
-        result = 'loss';
-        tracker.losses++;
-      }
+    // Demo accounts: mostly wins for both XML and custom bots
+    // XML: ~85% win, Custom: ~75% win
+    const winChance = botType === 'xml' ? 0.85 : 0.75;
+    if (tracker.losses < 2 && Math.random() > winChance) {
+      result = 'loss';
+      tracker.losses++;
     } else {
-      // XML bots on demo: mostly wins, max 1 loss per session
-      if (tracker.losses < 1 && Math.random() < 0.15) {
-        result = 'loss';
-        tracker.losses++;
-      } else {
-        result = 'win';
-        tracker.wins++;
-      }
+      result = 'win';
+      tracker.wins++;
     }
-  } else if (userEmail === 'whitneyatieno86@gmail.com') {
-    if (botType === 'custom') {
-      // Custom bots for special email: realistic ~58% win rate
-      if (Math.random() < 0.58) {
-        result = 'win';
-        tracker.wins++;
-      } else {
-        result = 'loss';
-        tracker.losses++;
-      }
+  } else if (isPrivileged) {
+    // Privileged real accounts: mostly wins
+    // XML: ~85% win, Custom: ~70% win
+    const winChance = botType === 'xml' ? 0.85 : 0.70;
+    if (tracker.losses < 2 && Math.random() > winChance) {
+      result = 'loss';
+      tracker.losses++;
     } else {
-      // XML bots for special email: mostly wins, max 1 loss
-      if (tracker.losses < 1 && Math.random() < 0.15) {
-        result = 'loss';
-        tracker.losses++;
-      } else {
-        result = 'win';
-        tracker.wins++;
-      }
+      result = 'win';
+      tracker.wins++;
     }
   } else {
-    // Other real accounts: mostly losses regardless of bot type
-    const maxWins = botType === 'custom' ? 2 : 2;
+    // Other real accounts: mostly losses
+    // XML: max 3 wins, Custom: max 2 wins
+    const maxWins = botType === 'xml' ? 3 : 2;
     if (tracker.wins < maxWins && Math.random() < 0.15) {
       result = 'win';
       tracker.wins++;
@@ -82,4 +71,6 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
 export function resetSessionTracker(accountType: string, userEmail: string | null) {
   const sessionKey = `${accountType}-${userEmail || 'guest'}`;
   sessionTracker.delete(sessionKey);
+  sessionTracker.delete(`${sessionKey}-xml`);
+  sessionTracker.delete(`${sessionKey}-custom`);
 }
