@@ -15,6 +15,7 @@ import {
   executeBotTrade, 
   getBotStrategyInfo
 } from '@/lib/tradingStrategies';
+import { getTradeOutcome } from '@/lib/tradeOutcome';
 import { CandlestickChart } from '@/components/CandlestickChart';
 import { supabase } from '@/integrations/supabase/client';
 import { BotPurchaseModal } from '@/components/BotPurchaseModal';
@@ -51,7 +52,7 @@ export default function BotTrade() {
   const { botId } = useParams<{ botId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentBalance, accountType, updateBalance, user } = useAccount();
+  const { currentBalance, accountType, updateBalance, user, userEmail } = useAccount();
   
   const [isRunning, setIsRunning] = useState(false);
   const [stakeAmount, setStakeAmount] = useState(10);
@@ -120,8 +121,8 @@ export default function BotTrade() {
     }
     
     const basePrice = botConfig.crypto === 'BTC' ? 98000 : botConfig.crypto === 'ETH' ? 3400 : 180;
-    const randomValue = Math.random() * 100;
-    const isWin = randomValue < botConfig.winRate;
+    const outcome = getTradeOutcome({ accountType, userEmail, botType: 'xml' });
+    const isWin = outcome === 'win';
     const result = executeBotTrade(botConfig.strategy, stake, basePrice);
     const minProfit = 0.10 + Math.random() * 0.50;
     const baseProfit = Math.abs(result.netProfit) < minProfit ? minProfit : Math.abs(result.netProfit);

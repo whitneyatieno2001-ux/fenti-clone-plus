@@ -21,9 +21,7 @@ export default function PaymentMethods() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
-    { id: '1', type: 'mobile', name: 'M-Pesa', details: '+254 *** *** 890', isDefault: true },
-  ]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   const handleAddMethod = () => {
     toast({
