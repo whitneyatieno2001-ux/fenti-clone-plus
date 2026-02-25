@@ -253,16 +253,42 @@ export default function DeployedBot() {
                 </div>
               </div>
 
-              {/* Mini wave chart */}
-              <div className="h-16 flex items-end gap-[2px]">
-                {Array.from({ length: 30 }).map((_, i) => {
-                  const h = 10 + Math.sin(i * 0.5) * 20 + Math.random() * 15;
-                  const isGreen = Math.sin(i * 0.3) > -0.2;
-                  return (
-                    <div key={i} className={cn("flex-1 rounded-t-[1px]", isGreen ? "bg-success/70" : "bg-primary/70")}
-                      style={{ height: `${h}%` }} />
-                  );
-                })}
+              {/* Mini wave line chart */}
+              <div className="h-16 relative overflow-hidden">
+                <svg viewBox="0 0 300 60" className="w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="lineGrad1" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity="0.8" />
+                      <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
+                      <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity="0.8" />
+                    </linearGradient>
+                    <linearGradient id="lineGrad2" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
+                      <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity="0.6" />
+                    </linearGradient>
+                  </defs>
+                  <polyline
+                    fill="none"
+                    stroke="url(#lineGrad1)"
+                    strokeWidth="2"
+                    points={Array.from({ length: 30 }, (_, i) => {
+                      const x = (i / 29) * 300;
+                      const y = 30 + Math.sin(i * 0.4) * 15 + Math.sin(i * 0.8) * 8;
+                      return `${x},${y}`;
+                    }).join(' ')}
+                  />
+                  <polyline
+                    fill="none"
+                    stroke="url(#lineGrad2)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 2"
+                    points={Array.from({ length: 30 }, (_, i) => {
+                      const x = (i / 29) * 300;
+                      const y = 35 + Math.cos(i * 0.3) * 12 + Math.sin(i * 0.6) * 6;
+                      return `${x},${y}`;
+                    }).join(' ')}
+                  />
+                </svg>
               </div>
 
               {/* Performance mini */}

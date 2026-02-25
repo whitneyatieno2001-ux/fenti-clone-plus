@@ -49,7 +49,7 @@ export default function KycVerification() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { userEmail } = useAccount();
-  const isVerifiedEmail = userEmail === 'whitneyatieno86@gmail.com';
+  const isVerifiedEmail = userEmail === 'whitneyatieno86@gmail.com' || userEmail === 'chenyabenard53@gmail.com';
   const [currentStep, setCurrentStep] = useState(0);
   // Only whitneyatieno86@gmail.com is fully verified
   const [submitted, setSubmitted] = useState(false);
