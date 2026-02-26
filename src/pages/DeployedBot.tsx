@@ -253,44 +253,6 @@ export default function DeployedBot() {
                 </div>
               </div>
 
-              {/* Mini wave line chart */}
-              <div className="h-16 relative overflow-hidden">
-                <svg viewBox="0 0 300 60" className="w-full h-full" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="lineGrad1" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity="0.8" />
-                      <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.8" />
-                      <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity="0.8" />
-                    </linearGradient>
-                    <linearGradient id="lineGrad2" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-                      <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity="0.6" />
-                    </linearGradient>
-                  </defs>
-                  <polyline
-                    fill="none"
-                    stroke="url(#lineGrad1)"
-                    strokeWidth="2"
-                    points={Array.from({ length: 30 }, (_, i) => {
-                      const x = (i / 29) * 300;
-                      const y = 30 + Math.sin(i * 0.4) * 15 + Math.sin(i * 0.8) * 8;
-                      return `${x},${y}`;
-                    }).join(' ')}
-                  />
-                  <polyline
-                    fill="none"
-                    stroke="url(#lineGrad2)"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 2"
-                    points={Array.from({ length: 30 }, (_, i) => {
-                      const x = (i / 29) * 300;
-                      const y = 35 + Math.cos(i * 0.3) * 12 + Math.sin(i * 0.6) * 6;
-                      return `${x},${y}`;
-                    }).join(' ')}
-                  />
-                </svg>
-              </div>
-
               {/* Performance mini */}
               <div className="space-y-1.5">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Performance</p>
@@ -320,19 +282,19 @@ export default function DeployedBot() {
               </p>
 
               <div className="flex items-center gap-2">
-                <span className="text-primary">📊</span>
+                <span className="w-2 h-2 rounded-full bg-primary" />
                 <span className="text-xs text-muted-foreground">Volatility:</span>
               </div>
               <p className="text-base font-bold text-foreground">{volatility}</p>
 
               <div className="flex items-center gap-2">
-                <span className="text-primary">⚡</span>
+                <span className="w-2 h-2 rounded-full bg-primary" />
                 <span className="text-xs text-muted-foreground">Momentum:</span>
               </div>
               <p className={cn("text-base font-bold", momentum === 'Strong' ? "text-success" : momentum === 'Weak' ? "text-destructive" : "text-primary")}>{momentum}</p>
 
               <div className="flex items-center gap-2">
-                <span className="text-success">↗</span>
+                <span className="w-2 h-2 rounded-full bg-success" />
                 <span className="text-xs text-muted-foreground">Trend Direction:</span>
               </div>
               <p className={cn("text-base font-bold",
