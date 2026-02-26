@@ -282,7 +282,7 @@ export default function DeployedBot() {
               </p>
 
               <div className="flex items-center gap-2">
-                <span className="text-primary">📊</span>
+                <span className="w-2 h-2 rounded-full bg-primary" />
                 <span className="text-xs text-muted-foreground">Volatility:</span>
               </div>
               <p className="text-base font-bold text-foreground">{volatility}</p>
