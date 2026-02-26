@@ -15,7 +15,8 @@ interface MpesaRequest {
 
 // PayHero API configuration
 const PAYHERO_API_URL = "https://backend.payhero.co.ke/api/v2/payments";
-const PAYHERO_API_KEY = Deno.env.get("PAYHERO_API_KEY");
+const PAYHERO_API_USERNAME = Deno.env.get("PAYHERO_API_USERNAME");
+const PAYHERO_API_PASSWORD = Deno.env.get("PAYHERO_API_PASSWORD");
 const PAYHERO_CHANNEL_ID = Deno.env.get("PAYHERO_CHANNEL_ID");
 
 function formatPhoneNumber(phone: string): string {
