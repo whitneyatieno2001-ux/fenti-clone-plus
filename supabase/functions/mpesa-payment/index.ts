@@ -15,7 +15,8 @@ interface MpesaRequest {
 
 // PayHero API configuration
 const PAYHERO_API_URL = "https://backend.payhero.co.ke/api/v2/payments";
-const PAYHERO_API_KEY = Deno.env.get("PAYHERO_API_KEY");
+const PAYHERO_API_USERNAME = Deno.env.get("PAYHERO_API_USERNAME");
+const PAYHERO_API_PASSWORD = Deno.env.get("PAYHERO_API_PASSWORD");
 const PAYHERO_CHANNEL_ID = Deno.env.get("PAYHERO_CHANNEL_ID");
 
 function formatPhoneNumber(phone: string): string {
@@ -62,10 +63,10 @@ async function initiatePayHeroSTKPush(amount: number, phoneNumber: string, userI
   console.log("PayHero request body:", JSON.stringify(requestBody, null, 2));
   console.log("Using callback URL:", callbackUrl);
 
-  const authTokenRaw = (PAYHERO_API_KEY || "").trim();
-  const authorizationHeader = authTokenRaw.toLowerCase().startsWith("basic ")
-    ? authTokenRaw
-    : `Basic ${authTokenRaw}`;
+  // Build Basic Auth from username:password
+  const credentials = `${PAYHERO_API_USERNAME}:${PAYHERO_API_PASSWORD}`;
+  const encodedCredentials = btoa(credentials);
+  const authorizationHeader = `Basic ${encodedCredentials}`;
 
   const response = await fetch(PAYHERO_API_URL, {
     method: "POST",
@@ -114,13 +115,15 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     // Log environment variable status (not values for security)
     console.log("Environment check:");
-    console.log("- PAYHERO_API_KEY set:", !!PAYHERO_API_KEY);
+    console.log("- PAYHERO_API_USERNAME set:", !!PAYHERO_API_USERNAME);
+    console.log("- PAYHERO_API_PASSWORD set:", !!PAYHERO_API_PASSWORD);
     console.log("- PAYHERO_CHANNEL_ID set:", !!PAYHERO_CHANNEL_ID);
     
     // Validate environment variables
-    if (!PAYHERO_API_KEY || !PAYHERO_CHANNEL_ID) {
+    if (!PAYHERO_API_USERNAME || !PAYHERO_API_PASSWORD || !PAYHERO_CHANNEL_ID) {
       const missing = [];
-      if (!PAYHERO_API_KEY) missing.push("PAYHERO_API_KEY");
+      if (!PAYHERO_API_USERNAME) missing.push("PAYHERO_API_USERNAME");
+      if (!PAYHERO_API_PASSWORD) missing.push("PAYHERO_API_PASSWORD");
       if (!PAYHERO_CHANNEL_ID) missing.push("PAYHERO_CHANNEL_ID");
       throw new Error(`Missing PayHero credentials: ${missing.join(", ")}`);
     }
