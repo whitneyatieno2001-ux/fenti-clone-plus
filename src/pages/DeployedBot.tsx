@@ -235,7 +235,7 @@ export default function DeployedBot() {
 
           {/* SELL bar + Market Info row */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-3">
+            <div className="flex flex-col justify-between h-full">
               {/* SELL bar */}
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ export default function DeployedBot() {
               </div>
 
               {/* Performance mini */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 mt-auto">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Performance</p>
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Total Profit</span>
