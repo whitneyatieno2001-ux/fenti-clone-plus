@@ -288,7 +288,7 @@ export default function DeployedBot() {
               <p className="text-base font-bold text-foreground">{volatility}</p>
 
               <div className="flex items-center gap-2">
-                <span className="text-primary">⚡</span>
+                <span className="w-2 h-2 rounded-full bg-primary" />
                 <span className="text-xs text-muted-foreground">Momentum:</span>
               </div>
               <p className={cn("text-base font-bold", momentum === 'Strong' ? "text-success" : momentum === 'Weak' ? "text-destructive" : "text-primary")}>{momentum}</p>
