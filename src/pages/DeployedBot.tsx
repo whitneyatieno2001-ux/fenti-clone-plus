@@ -294,7 +294,7 @@ export default function DeployedBot() {
               <p className={cn("text-base font-bold", momentum === 'Strong' ? "text-success" : momentum === 'Weak' ? "text-destructive" : "text-primary")}>{momentum}</p>
 
               <div className="flex items-center gap-2">
-                <span className="text-success">↗</span>
+                <span className="w-2 h-2 rounded-full bg-success" />
                 <span className="text-xs text-muted-foreground">Trend Direction:</span>
               </div>
               <p className={cn("text-base font-bold",
