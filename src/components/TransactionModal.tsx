@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, Bitcoin, ChevronLeft, CheckCircle2, Copy, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionModalProps {
@@ -97,11 +98,24 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     if (!mpesaPhone || mpesaPhone.length < 9) { toast({ title: "Invalid Phone", variant: "destructive" }); return; }
     setMpesaStatus('processing');
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setMpesaStatus('waiting');
-      setPaymentId('MOCK-' + Math.floor(1000000000 + Math.random() * 9000000000).toString());
-      toast({ title: "STK Push Sent!", description: "Check your phone and enter your M-Pesa PIN" });
+      const { data, error } = await supabase.functions.invoke('mpesa-payment', {
+        body: {
+          action: 'deposit',
+          amount: numAmount,
+          phoneNumber: mpesaPhone,
+          userId: user?.id,
+        },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        setMpesaStatus('waiting');
+        setPaymentId(data.checkoutRequestId || data.externalReference || '');
+        toast({ title: "STK Push Sent!", description: "Check your phone and enter your M-Pesa PIN" });
+      } else {
+        throw new Error(data?.error || 'STK Push failed');
+      }
     } catch (error: any) {
+      console.error('M-Pesa deposit error:', error);
       setMpesaStatus('failed');
       toast({ title: "Payment Failed", description: error.message, variant: "destructive" });
     }
