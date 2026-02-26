@@ -115,13 +115,15 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     // Log environment variable status (not values for security)
     console.log("Environment check:");
-    console.log("- PAYHERO_API_KEY set:", !!PAYHERO_API_KEY);
+    console.log("- PAYHERO_API_USERNAME set:", !!PAYHERO_API_USERNAME);
+    console.log("- PAYHERO_API_PASSWORD set:", !!PAYHERO_API_PASSWORD);
     console.log("- PAYHERO_CHANNEL_ID set:", !!PAYHERO_CHANNEL_ID);
     
     // Validate environment variables
-    if (!PAYHERO_API_KEY || !PAYHERO_CHANNEL_ID) {
+    if (!PAYHERO_API_USERNAME || !PAYHERO_API_PASSWORD || !PAYHERO_CHANNEL_ID) {
       const missing = [];
-      if (!PAYHERO_API_KEY) missing.push("PAYHERO_API_KEY");
+      if (!PAYHERO_API_USERNAME) missing.push("PAYHERO_API_USERNAME");
+      if (!PAYHERO_API_PASSWORD) missing.push("PAYHERO_API_PASSWORD");
       if (!PAYHERO_CHANNEL_ID) missing.push("PAYHERO_CHANNEL_ID");
       throw new Error(`Missing PayHero credentials: ${missing.join(", ")}`);
     }
