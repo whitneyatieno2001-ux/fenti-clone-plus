@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, Bitcoin, ChevronLeft, CheckCircle2, Copy, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionModalProps {
