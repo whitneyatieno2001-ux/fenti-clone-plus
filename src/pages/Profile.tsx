@@ -13,7 +13,6 @@ import {
 
 const shortcuts = [
   { icon: History, label: 'History', path: '/history' },
-  { icon: CreditCard, label: 'Payments', path: '/payments' },
   { icon: Shield, label: 'Security', path: '/security' },
   { icon: Edit, label: 'Settings', path: '/settings' },
 ];
