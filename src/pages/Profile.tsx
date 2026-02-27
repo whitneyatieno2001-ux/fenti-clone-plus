@@ -72,7 +72,7 @@ export default function Profile() {
           <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-4">
             <User className="h-10 w-10 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Welcome to Crypto Wave</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">Welcome to CryptWave</h2>
           <p className="text-muted-foreground text-center mb-6">Sign in to access your account and start trading</p>
           <Button 
             onClick={() => navigate('/auth')}
