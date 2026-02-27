@@ -229,75 +229,58 @@ export default function DeployedBot() {
               />
             </div>
             <div className="flex justify-end">
-              <span className="text-[10px] text-muted-foreground tracking-wider">BUVLL</span>
+              <span className="text-[10px] text-muted-foreground tracking-wider">BULL</span>
             </div>
           </div>
 
-          {/* SELL bar + Market Info row */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col justify-between h-full">
-              {/* SELL bar */}
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-foreground">SELL</span>
-                  <div className="flex-1 h-2.5 bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{
-                        width: `${sellSignal}%`,
-                        background: 'linear-gradient(90deg, hsl(var(--destructive)) 0%, hsl(var(--primary)) 100%)'
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm font-bold text-destructive">{sellSignal}%</span>
-                </div>
+          {/* SELL bar */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-foreground">SELL</span>
+              <div className="flex-1 h-2.5 bg-secondary rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${sellSignal}%`,
+                    background: 'linear-gradient(90deg, hsl(var(--destructive)) 0%, hsl(var(--primary)) 100%)'
+                  }}
+                />
               </div>
-
-              {/* Performance mini */}
-              <div className="space-y-1.5 mt-auto">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Performance</p>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Total Profit</span>
-                  <span className={cn("font-bold", totalPL >= 0 ? "text-success" : "text-destructive")}>${Math.abs(totalPL).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">ROI %</span>
-                  <span className="font-bold text-foreground">{roi}%</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Win Rate</span>
-                  <span className="font-bold text-foreground">{winRate}%</span>
-                </div>
-              </div>
+              <span className="text-sm font-bold text-destructive">{sellSignal}%</span>
             </div>
+          </div>
 
-            {/* Market indicators */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
+          {/* Market indicators grid */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 pt-2">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
                 <span className="w-2 h-2 rounded-full bg-success" />
                 <span className="text-xs text-muted-foreground">Market Pressure:</span>
               </div>
               <p className={cn("text-lg font-bold", marketPressure > 50 ? "text-success" : "text-destructive")}>
                 {marketPressure}% {marketPressure > 50 ? 'Bullish' : 'Bearish'}
               </p>
-
-              <div className="flex items-center gap-2">
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
                 <span className="w-2 h-2 rounded-full bg-primary" />
                 <span className="text-xs text-muted-foreground">Volatility:</span>
               </div>
-              <p className="text-base font-bold text-foreground">{volatility}</p>
-
-              <div className="flex items-center gap-2">
+              <p className="text-lg font-bold text-foreground">{volatility}</p>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
                 <span className="w-2 h-2 rounded-full bg-primary" />
                 <span className="text-xs text-muted-foreground">Momentum:</span>
               </div>
-              <p className={cn("text-base font-bold", momentum === 'Strong' ? "text-success" : momentum === 'Weak' ? "text-destructive" : "text-primary")}>{momentum}</p>
-
-              <div className="flex items-center gap-2">
+              <p className={cn("text-lg font-bold", momentum === 'Strong' ? "text-success" : momentum === 'Weak' ? "text-destructive" : "text-primary")}>{momentum}</p>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
                 <span className="w-2 h-2 rounded-full bg-success" />
                 <span className="text-xs text-muted-foreground">Trend Direction:</span>
               </div>
-              <p className={cn("text-base font-bold",
+              <p className={cn("text-lg font-bold",
                 trendDirection === 'Uptrend' ? "text-success" : trendDirection === 'Downtrend' ? "text-destructive" : "text-primary"
               )}>{trendDirection}</p>
             </div>
