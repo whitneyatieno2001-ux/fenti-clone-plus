@@ -26,7 +26,6 @@ const recommendItems = [
 
 const menuItems = [
   { icon: History, label: 'Transaction History', path: '/history' },
-  { icon: CreditCard, label: 'Payment Methods', path: '/payments' },
   { icon: ScanFace, label: 'KYC Verification', path: '/kyc' },
   { icon: Shield, label: 'Security', path: '/security' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },
