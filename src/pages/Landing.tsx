@@ -33,7 +33,7 @@ export default function Landing() {
       {/* Navbar */}
       <header className="h-[72px] border-b border-border sticky top-0 bg-background/90 backdrop-blur-xl z-50">
         <div className="max-w-[1200px] mx-auto px-6 md:px-10 h-full flex items-center justify-between">
-          <span className="text-xl font-bold text-foreground tracking-tight">Crypto Wave</span>
+          <span className="text-xl font-bold text-foreground tracking-tight">CryptWave</span>
 
           <nav className="hidden md:flex gap-8">
             {['Buy Crypto', 'Markets', 'Trade', 'Futures', 'Earn', 'Web3 Wallet'].map((item, i) => (
@@ -72,7 +72,7 @@ export default function Landing() {
         <div className="max-w-full md:max-w-[50%] text-center md:text-left z-10">
           {/* Big inbuilt badge text */}
           <div className="flex justify-center md:justify-start mb-6">
-            <span className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">Crypto Wave</span>
+            <span className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">CryptWave</span>
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-8 text-gradient">
             Secure.<br />Your World of Web3.
@@ -149,7 +149,7 @@ export default function Landing() {
       <section className="max-w-[1200px] mx-auto px-6 md:px-10 py-20">
         <div className="reveal flex flex-col md:flex-row items-center gap-16 mb-24">
           <div className="flex-1 text-center md:text-left">
-            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">CryptoWave Wallet Web</span>
+            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">CryptWave Wallet Web</span>
             <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">A Reimagined On-Chain Trading Experience</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
               Built for a new generation of traders. It combines bank-level security with high-speed performance to deliver a faster, smarter, and more flexible trading experience—all in one place.
@@ -325,10 +325,10 @@ export default function Landing() {
       <section className="max-w-[1200px] mx-auto px-6 md:px-10 pb-24">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
         {[
-          'What is CryptoWave Wallet?',
-          'What are the benefits of using CryptoWave Wallet?',
-          'How do I use my CryptoWave Wallet to send and receive tokens?',
-          'Is CryptoWave Wallet a self-custody wallet? Who has control over my funds?',
+          'What is CryptWave Wallet?',
+          'What are the benefits of using CryptWave Wallet?',
+          'How do I use my CryptWave Wallet to send and receive tokens?',
+          'Is CryptWave Wallet a self-custody wallet? Who has control over my funds?',
         ].map((q, i) => (
           <div key={i} className="border-b border-border py-6 hover:bg-foreground/[0.02] transition-colors">
             <div
@@ -354,7 +354,7 @@ export default function Landing() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-10">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-10 text-center md:text-left">
             <div>
-              <span className="text-primary font-bold text-lg">CryptoWave</span>
+              <span className="text-primary font-bold text-lg">CryptWave</span>
             </div>
             {[
               { title: 'About Us', links: ['About', 'Careers', 'Business Contacts', 'Community'] },
@@ -375,7 +375,7 @@ export default function Landing() {
             ))}
           </div>
           <div className="text-center text-muted-foreground text-sm mt-12 pt-8 border-t border-border">
-            CryptoWave © {new Date().getFullYear()}
+            CryptWave © {new Date().getFullYear()}
           </div>
         </div>
       </footer>

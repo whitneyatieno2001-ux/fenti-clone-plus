@@ -13,7 +13,6 @@ import {
 
 const shortcuts = [
   { icon: History, label: 'History', path: '/history' },
-  { icon: CreditCard, label: 'Payments', path: '/payments' },
   { icon: Shield, label: 'Security', path: '/security' },
   { icon: Edit, label: 'Settings', path: '/settings' },
 ];
@@ -27,7 +26,6 @@ const recommendItems = [
 
 const menuItems = [
   { icon: History, label: 'Transaction History', path: '/history' },
-  { icon: CreditCard, label: 'Payment Methods', path: '/payments' },
   { icon: ScanFace, label: 'KYC Verification', path: '/kyc' },
   { icon: Shield, label: 'Security', path: '/security' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },
@@ -50,7 +48,8 @@ export default function Profile() {
     resetDemo,
   } = useAccount();
 
-  const isVerified = userEmail === 'whitneyatieno86@gmail.com';
+  const isVerified = userEmail === 'whitneyatieno86@gmail.com' || userEmail === 'chenyabenard53@gmail.com';
+  const hasSubmittedKyc = isLoggedIn && !isVerified;
 
   const handleLogout = async () => {
     await logout();
@@ -73,7 +72,7 @@ export default function Profile() {
           <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-4">
             <User className="h-10 w-10 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Welcome to Crypto Wave</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">Welcome to CryptWave</h2>
           <p className="text-muted-foreground text-center mb-6">Sign in to access your account and start trading</p>
           <Button 
             onClick={() => navigate('/auth')}
@@ -103,9 +102,13 @@ export default function Profile() {
               <span className="text-xs px-2 py-0.5 rounded border border-primary/30 text-primary font-medium">
                 Regular
               </span>
-              {isVerified && (
+              {isVerified ? (
                 <span className="text-xs px-2 py-0.5 rounded border border-success/30 text-success font-medium">
                   Verified
+                </span>
+              ) : hasSubmittedKyc && (
+                <span className="text-xs px-2 py-0.5 rounded bg-primary/10 border border-primary/30 text-primary font-medium">
+                  ○ pending
                 </span>
               )}
             </div>

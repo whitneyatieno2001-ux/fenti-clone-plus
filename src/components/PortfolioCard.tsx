@@ -54,7 +54,7 @@ export function PortfolioCard({ onDeposit, onWithdraw }: PortfolioCardProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-1 text-success mb-6">
+        <div className="flex items-center gap-1 text-success mb-3">
           <TrendingUp className="h-4 w-4" />
           <span className="text-sm font-medium">↑ 0.35%</span>
         </div>
