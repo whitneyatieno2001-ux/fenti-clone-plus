@@ -242,7 +242,7 @@ export default function DeployedBot() {
                   className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${sellSignal}%`,
-                    background: 'linear-gradient(90deg, hsl(var(--destructive)) 0%, hsl(var(--primary)) 100%)'
+                    background: 'hsl(var(--destructive))'
                   }}
                 />
               </div>

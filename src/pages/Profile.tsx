@@ -102,9 +102,13 @@ export default function Profile() {
               <span className="text-xs px-2 py-0.5 rounded border border-primary/30 text-primary font-medium">
                 Regular
               </span>
-              {isVerified && (
+              {isVerified ? (
                 <span className="text-xs px-2 py-0.5 rounded border border-success/30 text-success font-medium">
                   Verified
+                </span>
+              ) : hasSubmittedKyc && (
+                <span className="text-xs px-2 py-0.5 rounded bg-primary/10 border border-primary/30 text-primary font-medium">
+                  ○ pending
                 </span>
               )}
             </div>
