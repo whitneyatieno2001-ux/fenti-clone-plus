@@ -31,26 +31,24 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
   const isPrivileged = userEmail && PRIVILEGED_EMAILS.includes(userEmail);
 
   if (accountType === 'demo') {
-    // Demo accounts: mostly wins for both XML and custom bots
-    // XML: ~85% win, Custom: ~75% win
-    const winChance = botType === 'xml' ? 0.85 : 0.75;
-    if (tracker.losses < 2 && Math.random() > winChance) {
-      result = 'loss';
-      tracker.losses++;
-    } else {
+    // Demo accounts: XML ~70% win, Custom ~65% win
+    const winChance = botType === 'xml' ? 0.70 : 0.65;
+    if (Math.random() < winChance) {
       result = 'win';
       tracker.wins++;
+    } else {
+      result = 'loss';
+      tracker.losses++;
     }
   } else if (isPrivileged) {
-    // Privileged real accounts: mostly wins
-    // XML: ~85% win, Custom: ~70% win
-    const winChance = botType === 'xml' ? 0.85 : 0.70;
-    if (tracker.losses < 2 && Math.random() > winChance) {
-      result = 'loss';
-      tracker.losses++;
-    } else {
+    // Privileged real accounts: XML ~65% win, Custom ~60% win
+    const winChance = botType === 'xml' ? 0.65 : 0.60;
+    if (Math.random() < winChance) {
       result = 'win';
       tracker.wins++;
+    } else {
+      result = 'loss';
+      tracker.losses++;
     }
   } else {
     // Other real accounts: mostly losses
