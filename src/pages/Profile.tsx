@@ -48,7 +48,8 @@ export default function Profile() {
     resetDemo,
   } = useAccount();
 
-  const isVerified = userEmail === 'whitneyatieno86@gmail.com';
+  const isVerified = userEmail === 'whitneyatieno86@gmail.com' || userEmail === 'chenyabenard53@gmail.com';
+  const hasSubmittedKyc = isLoggedIn && !isVerified;
 
   const handleLogout = async () => {
     await logout();
