@@ -375,7 +375,7 @@ export default function Landing() {
             ))}
           </div>
           <div className="text-center text-muted-foreground text-sm mt-12 pt-8 border-t border-border">
-            CryptoWave © {new Date().getFullYear()}
+            CryptWave © {new Date().getFullYear()}
           </div>
         </div>
       </footer>
