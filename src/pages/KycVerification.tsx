@@ -227,7 +227,7 @@ export default function KycVerification() {
               <p className="text-xs text-muted-foreground">All features unlocked</p>
             </div>
           </div>
-          <Button onClick={() => navigate('/payments')} className="w-full max-w-xs">Return to Payment Methods</Button>
+          <Button onClick={() => navigate('/dashboard')} className="w-full max-w-xs">Back to Dashboard</Button>
         </main>
         <BottomNav />
       </div>
