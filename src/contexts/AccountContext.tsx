@@ -41,7 +41,7 @@ interface AccountContextType {
 
 const AccountContext = createContext<AccountContextType | undefined>(undefined);
 
-const MINIMUM_DEPOSIT = 3;
+const MINIMUM_DEPOSIT = 10;
 
 export function AccountProvider({ children }: { children: ReactNode }) {
   const [accountType, setAccountType] = useState<AccountType>('demo');

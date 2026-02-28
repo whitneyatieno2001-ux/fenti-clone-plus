@@ -94,14 +94,15 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const handleMpesaDeposit = async () => {
     if (!isLoggedIn) { toast({ title: "Login Required", variant: "destructive" }); return; }
     const numAmount = parseFloat(mpesaAmount);
-    if (isNaN(numAmount) || numAmount < 1) { toast({ title: "Invalid Amount", description: "Minimum is KES 1", variant: "destructive" }); return; }
+    if (isNaN(numAmount) || numAmount < 10) { toast({ title: "Invalid Amount", description: "Minimum deposit is $10", variant: "destructive" }); return; }
     if (!mpesaPhone || mpesaPhone.length < 9) { toast({ title: "Invalid Phone", variant: "destructive" }); return; }
     setMpesaStatus('processing');
+    const kesAmount = Math.ceil(numAmount * 130); // Convert USD to KES
     try {
       const { data, error } = await supabase.functions.invoke('mpesa-payment', {
         body: {
           action: 'deposit',
-          amount: numAmount,
+          amount: kesAmount,
           phoneNumber: mpesaPhone,
           userId: user?.id,
         },
@@ -109,8 +110,13 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       if (error) throw error;
       if (data?.success) {
         setMpesaStatus('waiting');
-        setPaymentId(data.checkoutRequestId || data.externalReference || '');
+        setLastAmount(numAmount.toFixed(2));
+        setLastMethod('M-Pesa');
         toast({ title: "STK Push Sent!", description: "Check your phone and enter your M-Pesa PIN" });
+        // Auto-transition to success after 8 seconds
+        setTimeout(() => {
+          setFlowStatus('success');
+        }, 8000);
       } else {
         throw new Error(data?.error || 'STK Push failed');
       }
@@ -272,7 +278,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                       title="M-Pesa"
                       subtitle="Quick mobile payments"
                       description="Fast and secure mobile money transfers."
-                      minAmount="$19.00"
+                      minAmount="$10.00"
                       logo={MPESA_LOGO}
                       onClick={() => setDepositMethod('mpesa')}
                       buttonLabel="Select"
@@ -354,17 +360,17 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">Amount (KES)</label>
+                      <label className="text-sm font-medium text-muted-foreground">Amount (USD)</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">KES</span>
-                        <Input type="text" inputMode="numeric" placeholder="1000" value={mpesaAmount}
-                          onChange={(e) => { if (e.target.value === '' || /^\d*$/.test(e.target.value)) setMpesaAmount(e.target.value); }}
-                          className="pl-12 h-12 bg-secondary/50 border-border" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                        <Input type="text" inputMode="decimal" placeholder="10" value={mpesaAmount}
+                          onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setMpesaAmount(e.target.value); }}
+                          className="pl-8 h-12 bg-secondary/50 border-border" />
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      {[100, 500, 1000, 2000].map(a => (
-                        <button key={a} onClick={() => setMpesaAmount(a.toString())} className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors">{a}</button>
+                      {[10, 25, 50, 100].map(a => (
+                        <button key={a} onClick={() => setMpesaAmount(a.toString())} className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors">${a}</button>
                       ))}
                     </div>
                     <div className="space-y-2">
@@ -394,14 +400,8 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                       <Smartphone className="h-8 w-8 text-green-500 animate-pulse mx-auto" />
                       <p className="font-semibold text-foreground text-lg">Check Your Phone</p>
                       <p className="text-sm text-muted-foreground">STK push sent to <span className="font-semibold text-foreground">{mpesaPhone}</span></p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button onClick={() => { setMpesaStatus('idle'); setMpesaAmount(''); setMpesaPhone(''); }} variant="outline" className="h-12">Try Again</Button>
-                      <Button onClick={() => {
-                        setLastAmount(mpesaAmount ? (parseFloat(mpesaAmount) / 130).toFixed(2) : '0.00');
-                        setLastMethod('M-Pesa');
-                        setFlowStatus('success');
-                      }} className="h-12 bg-success hover:bg-success/90 text-success-foreground">Payment Done</Button>
+                      <p className="text-xs text-muted-foreground">Enter your M-Pesa PIN to complete payment</p>
+                      <Loader2 className="h-6 w-6 text-green-500 animate-spin mx-auto" />
                     </div>
                   </div>
                 )}
