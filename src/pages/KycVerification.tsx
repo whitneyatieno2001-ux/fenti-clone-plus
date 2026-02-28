@@ -238,8 +238,8 @@ export default function KycVerification() {
     <div className="min-h-screen bg-background pb-20">
       <Header />
       <main className="px-4 py-4 space-y-6 max-w-2xl mx-auto">
-        <button onClick={() => navigate('/payments')} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-5 w-5" /><span>Back to Payment Methods</span>
+        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-5 w-5" /><span>Back to Dashboard</span>
         </button>
 
         <div className="space-y-1">
