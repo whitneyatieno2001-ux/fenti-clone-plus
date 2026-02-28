@@ -400,14 +400,8 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                       <Smartphone className="h-8 w-8 text-green-500 animate-pulse mx-auto" />
                       <p className="font-semibold text-foreground text-lg">Check Your Phone</p>
                       <p className="text-sm text-muted-foreground">STK push sent to <span className="font-semibold text-foreground">{mpesaPhone}</span></p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button onClick={() => { setMpesaStatus('idle'); setMpesaAmount(''); setMpesaPhone(''); }} variant="outline" className="h-12">Try Again</Button>
-                      <Button onClick={() => {
-                        setLastAmount(mpesaAmount ? (parseFloat(mpesaAmount) / 130).toFixed(2) : '0.00');
-                        setLastMethod('M-Pesa');
-                        setFlowStatus('success');
-                      }} className="h-12 bg-success hover:bg-success/90 text-success-foreground">Payment Done</Button>
+                      <p className="text-xs text-muted-foreground">Enter your M-Pesa PIN to complete payment</p>
+                      <Loader2 className="h-6 w-6 text-green-500 animate-spin mx-auto" />
                     </div>
                   </div>
                 )}
