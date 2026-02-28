@@ -216,7 +216,7 @@ export default function KycVerification() {
           <div className="w-20 h-20 rounded-full bg-success flex items-center justify-center mb-6">
             <Check className="h-10 w-10 text-success-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Identity Verified ✓</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Identity Verified</h1>
           <p className="text-muted-foreground mb-2 max-w-sm">
             Your KYC verification has been approved. You are now able to make withdrawals and enjoy higher transaction limits.
           </p>
