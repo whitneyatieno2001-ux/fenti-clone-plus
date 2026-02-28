@@ -94,14 +94,15 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const handleMpesaDeposit = async () => {
     if (!isLoggedIn) { toast({ title: "Login Required", variant: "destructive" }); return; }
     const numAmount = parseFloat(mpesaAmount);
-    if (isNaN(numAmount) || numAmount < 1) { toast({ title: "Invalid Amount", description: "Minimum is KES 1", variant: "destructive" }); return; }
+    if (isNaN(numAmount) || numAmount < 10) { toast({ title: "Invalid Amount", description: "Minimum deposit is $10", variant: "destructive" }); return; }
     if (!mpesaPhone || mpesaPhone.length < 9) { toast({ title: "Invalid Phone", variant: "destructive" }); return; }
     setMpesaStatus('processing');
+    const kesAmount = Math.ceil(numAmount * 130); // Convert USD to KES
     try {
       const { data, error } = await supabase.functions.invoke('mpesa-payment', {
         body: {
           action: 'deposit',
-          amount: numAmount,
+          amount: kesAmount,
           phoneNumber: mpesaPhone,
           userId: user?.id,
         },
@@ -109,8 +110,13 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       if (error) throw error;
       if (data?.success) {
         setMpesaStatus('waiting');
-        setPaymentId(data.checkoutRequestId || data.externalReference || '');
+        setLastAmount(numAmount.toFixed(2));
+        setLastMethod('M-Pesa');
         toast({ title: "STK Push Sent!", description: "Check your phone and enter your M-Pesa PIN" });
+        // Auto-transition to success after 8 seconds
+        setTimeout(() => {
+          setFlowStatus('success');
+        }, 8000);
       } else {
         throw new Error(data?.error || 'STK Push failed');
       }
