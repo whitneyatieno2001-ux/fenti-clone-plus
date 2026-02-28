@@ -278,7 +278,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                       title="M-Pesa"
                       subtitle="Quick mobile payments"
                       description="Fast and secure mobile money transfers."
-                      minAmount="$19.00"
+                      minAmount="$10.00"
                       logo={MPESA_LOGO}
                       onClick={() => setDepositMethod('mpesa')}
                       buttonLabel="Select"
