@@ -360,17 +360,17 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">Amount (KES)</label>
+                      <label className="text-sm font-medium text-muted-foreground">Amount (USD)</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">KES</span>
-                        <Input type="text" inputMode="numeric" placeholder="1000" value={mpesaAmount}
-                          onChange={(e) => { if (e.target.value === '' || /^\d*$/.test(e.target.value)) setMpesaAmount(e.target.value); }}
-                          className="pl-12 h-12 bg-secondary/50 border-border" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                        <Input type="text" inputMode="decimal" placeholder="10" value={mpesaAmount}
+                          onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setMpesaAmount(e.target.value); }}
+                          className="pl-8 h-12 bg-secondary/50 border-border" />
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      {[100, 500, 1000, 2000].map(a => (
-                        <button key={a} onClick={() => setMpesaAmount(a.toString())} className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors">{a}</button>
+                      {[10, 25, 50, 100].map(a => (
+                        <button key={a} onClick={() => setMpesaAmount(a.toString())} className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors">${a}</button>
                       ))}
                     </div>
                     <div className="space-y-2">
