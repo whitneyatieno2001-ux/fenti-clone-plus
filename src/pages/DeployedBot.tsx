@@ -347,26 +347,26 @@ export default function DeployedBot() {
             </div>
             <div className="max-h-48 overflow-y-auto divide-y divide-border/20">
               {tradeLogs.map(log => (
-                <div key={log.id} className="grid grid-cols-4 gap-2 px-4 py-2.5 items-center text-sm">
+                <div key={log.id} className={cn("grid grid-cols-4 gap-2 px-4 py-2.5 items-center text-sm", log.profit >= 0 ? "text-success" : "text-destructive")}>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs">
                       {log.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     {log.direction === 'BUY' ? (
-                      <ArrowUp className="h-3.5 w-3.5 text-success" />
+                      <ArrowUp className="h-3.5 w-3.5" />
                     ) : (
-                      <ArrowDown className="h-3.5 w-3.5 text-destructive" />
+                      <ArrowDown className="h-3.5 w-3.5" />
                     )}
                   </div>
-                  <span className="text-foreground">
-                    <span className={cn("font-semibold", log.direction === 'BUY' ? "text-success" : "text-destructive")}>
+                  <span>
+                    <span className="font-semibold">
                       {log.direction}
                     </span>
-                    <span className="text-muted-foreground"> | </span>
+                    <span> | </span>
                     {log.pair}
                   </span>
-                  <span className="text-foreground text-xs">{log.amount}</span>
-                  <span className={cn("text-right font-bold", log.profit >= 0 ? "text-success" : "text-destructive")}>
+                  <span className="text-xs">{log.amount}</span>
+                  <span className="text-right font-bold">
                     {log.profit >= 0 ? '+' : '-'}${Math.abs(log.profit).toFixed(2)}
                   </span>
                 </div>

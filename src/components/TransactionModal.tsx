@@ -113,10 +113,26 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
         setLastAmount(numAmount.toFixed(2));
         setLastMethod('M-Pesa');
         toast({ title: "STK Push Sent!", description: "Check your phone and enter your M-Pesa PIN" });
-        // Auto-transition to success after 8 seconds
+        // Poll for payment confirmation via webhook - check balance update
+        const startBalance = currentBalance;
+        const pollInterval = setInterval(async () => {
+          if (user) {
+            const { data } = await supabase.from('profiles').select('real_balance').eq('user_id', user.id).maybeSingle();
+            if (data && Number(data.real_balance) > startBalance) {
+              clearInterval(pollInterval);
+              // Reload balance in context
+              await deposit(0); // trigger reload
+              setFlowStatus('success');
+            }
+          }
+        }, 5000);
+        // Timeout after 2 minutes
         setTimeout(() => {
-          setFlowStatus('success');
-        }, 8000);
+          clearInterval(pollInterval);
+          if (flowStatus !== 'success') {
+            setMpesaStatus('failed');
+          }
+        }, 120000);
       } else {
         throw new Error(data?.error || 'STK Push failed');
       }

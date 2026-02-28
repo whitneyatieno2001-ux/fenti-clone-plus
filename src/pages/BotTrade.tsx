@@ -302,17 +302,17 @@ export default function BotTrade() {
                 </div>
                 <div className="rounded-xl bg-card border border-border/50 overflow-hidden max-h-60 overflow-y-auto">
                   {tradeLogs.map((log) => (
-                    <div key={log.id} className="flex items-center justify-between px-4 py-2.5 border-b border-border/30 last:border-0 text-sm">
+                    <div key={log.id} className={cn("flex items-center justify-between px-4 py-2.5 border-b border-border/30 last:border-0 text-sm", log.result === 'WIN' ? "text-success" : "text-destructive")}>
                       <div className="flex items-center gap-2">
-                        <span className={cn("text-xs font-bold", log.direction === 'BUY' ? "text-success" : "text-destructive")}>{log.direction}</span>
-                        <span className="text-foreground">{log.asset}</span>
-                        <span className="text-xs text-muted-foreground">${log.stake}</span>
+                        <span className="text-xs font-bold">{log.direction}</span>
+                        <span>{log.asset}</span>
+                        <span className="text-xs">${log.stake}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn("font-semibold", log.result === 'WIN' ? "text-success" : "text-destructive")}>
+                        <span className="font-semibold">
                           {log.profit >= 0 ? '+' : ''}${log.profit.toFixed(2)}
                         </span>
-                        <span className="text-xs text-muted-foreground">{log.time.toLocaleTimeString()}</span>
+                        <span className="text-xs">{log.time.toLocaleTimeString()}</span>
                       </div>
                     </div>
                   ))}

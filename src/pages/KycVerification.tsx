@@ -216,7 +216,7 @@ export default function KycVerification() {
           <div className="w-20 h-20 rounded-full bg-success flex items-center justify-center mb-6">
             <Check className="h-10 w-10 text-success-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Identity Verified ✓</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Identity Verified</h1>
           <p className="text-muted-foreground mb-2 max-w-sm">
             Your KYC verification has been approved. You are now able to make withdrawals and enjoy higher transaction limits.
           </p>
@@ -227,7 +227,7 @@ export default function KycVerification() {
               <p className="text-xs text-muted-foreground">All features unlocked</p>
             </div>
           </div>
-          <Button onClick={() => navigate('/payments')} className="w-full max-w-xs">Return to Payment Methods</Button>
+          <Button onClick={() => navigate('/dashboard')} className="w-full max-w-xs">Back to Dashboard</Button>
         </main>
         <BottomNav />
       </div>
@@ -238,8 +238,8 @@ export default function KycVerification() {
     <div className="min-h-screen bg-background pb-20">
       <Header />
       <main className="px-4 py-4 space-y-6 max-w-2xl mx-auto">
-        <button onClick={() => navigate('/payments')} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-5 w-5" /><span>Back to Payment Methods</span>
+        <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-5 w-5" /><span>Back to Dashboard</span>
         </button>
 
         <div className="space-y-1">
