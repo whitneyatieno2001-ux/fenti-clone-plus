@@ -204,7 +204,7 @@ export default function CreateBot() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Stake Amount (Over 0 payout)</label>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Stake Amount</label>
                     <div className="relative">
                       <Input type="text" inputMode="decimal" value={investmentAmount}
                         onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setInvestmentAmount(e.target.value); }}
