@@ -124,13 +124,13 @@ export default function Auth() {
       {/* Brand Header */}
       <div className="px-6 pt-6 pb-2">
         <span className="text-primary font-bold text-2xl cursor-pointer" onClick={() => navigate('/')}>
-          CryptoWave
+          CryptWave
         </span>
       </div>
 
       <div className="flex-1 flex flex-col px-6 pt-4 pb-12">
         <h1 className="text-3xl font-bold font-display text-foreground mb-8">
-          {mode === 'signup' ? 'Welcome to CryptoWave' : 'Welcome Back'}
+          {mode === 'signup' ? 'Welcome to CryptWave' : 'Welcome Back'}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5 flex-1">
