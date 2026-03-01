@@ -40,7 +40,8 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [lastMethod, setLastMethod] = useState('');
   const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit, userEmail } = useAccount();
   const { toast } = useToast();
-  const isKycVerified = userEmail === 'whitneyatieno86@gmail.com';
+  const VERIFIED_EMAILS = ['whitneyatieno86@gmail.com', 'chenyabenard53@gmail.com'];
+  const isKycVerified = userEmail ? VERIFIED_EMAILS.includes(userEmail) : false;
 
   useEffect(() => {
     if (!isOpen) {
