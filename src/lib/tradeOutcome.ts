@@ -31,8 +31,8 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
   const isPrivileged = userEmail && PRIVILEGED_EMAILS.includes(userEmail);
 
   if (accountType === 'demo') {
-    // Demo accounts: XML ~50% win, Custom ~75% win
-    const winChance = botType === 'xml' ? 0.50 : 0.75;
+    // Demo accounts: XML ~75% win, Custom ~75% win
+    const winChance = botType === 'xml' ? 0.75 : 0.75;
     if (Math.random() < winChance) {
       result = 'win';
       tracker.wins++;
