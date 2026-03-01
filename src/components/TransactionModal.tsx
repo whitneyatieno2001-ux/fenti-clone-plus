@@ -467,17 +467,6 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 </div>
               )}
 
-              {accountType === 'real' && !isKycVerified && (
-                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-destructive">KYC Not Verified</p>
-                      <p className="text-sm text-muted-foreground mt-1">Complete KYC verification to enable withdrawals.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="p-4 rounded-xl bg-secondary/50">
                 <p className="text-sm text-muted-foreground">Balance ({accountType})</p>
