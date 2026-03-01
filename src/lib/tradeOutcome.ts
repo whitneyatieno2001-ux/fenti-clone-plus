@@ -41,8 +41,8 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
       tracker.losses++;
     }
   } else if (isPrivileged) {
-    // Privileged real accounts: XML ~50% win, Custom ~70% win
-    const winChance = botType === 'xml' ? 0.50 : 0.70;
+    // Privileged real accounts: XML ~75% win, Custom ~70% win
+    const winChance = botType === 'xml' ? 0.75 : 0.70;
     if (Math.random() < winChance) {
       result = 'win';
       tracker.wins++;
