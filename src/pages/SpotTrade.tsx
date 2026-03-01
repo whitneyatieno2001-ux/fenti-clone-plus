@@ -48,6 +48,16 @@ type MobileTab = 'chart' | 'orderbook' | 'trades' | 'info';
 type OrderType = 'limit' | 'market';
 type BottomPanelTab = 'open' | 'history' | 'funds';
 
+interface SpotOrder {
+  id: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  price: number;
+  amount: number;
+  total: number;
+  time: Date;
+}
+
 export default function SpotTrade() {
   const navigate = useNavigate();
   const { currentBalance, deposit, withdraw, accountType } = useAccount();
@@ -72,6 +82,7 @@ export default function SpotTrade() {
   const [bids, setBids] = useState<OrderBookEntry[]>([]);
   const [marketTrades, setMarketTrades] = useState<MarketTrade[]>([]);
   const [chartInterval, setChartInterval] = useState('15');
+  const [openOrders, setOpenOrders] = useState<SpotOrder[]>([]);
 
   const selectedCrypto = getCryptoWithPrice(cryptoAssets.find(c => c.id === selectedPairId) || cryptoAssets[0]);
   const pairSymbol = `${selectedCrypto.symbol}/USDT`;
@@ -158,6 +169,16 @@ export default function SpotTrade() {
       return;
     }
     withdraw(total);
+    const newOrder: SpotOrder = {
+      id: Date.now().toString(),
+      symbol: selectedCrypto.symbol,
+      side: 'buy',
+      price,
+      amount,
+      total,
+      time: new Date(),
+    };
+    setOpenOrders(prev => [newOrder, ...prev]);
     toast({ title: "Buy Order Executed", description: `Bought ${amount} ${selectedCrypto.symbol} at ${formatOBPrice(price)}` });
     setBuyAmount('');
   };
@@ -171,8 +192,23 @@ export default function SpotTrade() {
     }
     const total = price * amount;
     deposit(total);
+    const newOrder: SpotOrder = {
+      id: Date.now().toString(),
+      symbol: selectedCrypto.symbol,
+      side: 'sell',
+      price,
+      amount,
+      total,
+      time: new Date(),
+    };
+    setOpenOrders(prev => [newOrder, ...prev]);
     toast({ title: "Sell Order Executed", description: `Sold ${amount} ${selectedCrypto.symbol} at ${formatOBPrice(price)}` });
     setSellAmount('');
+  };
+
+  const handleCancelOrder = (orderId: string) => {
+    setOpenOrders(prev => prev.filter(o => o.id !== orderId));
+    toast({ title: "Order Cancelled" });
   };
 
   const buyTotal = (parseFloat(buyPrice || '0') * parseFloat(buyAmount || '0')).toFixed(2);
@@ -524,7 +560,7 @@ export default function SpotTrade() {
             {/* Bottom Panel */}
             <div className="bg-card border border-border border-t-0">
               <div className="flex gap-6 px-4 pt-3 border-b border-border text-sm font-semibold">
-                {([['open', 'Open Orders(0)'], ['history', 'Order History'], ['funds', 'Funds']] as const).map(([key, label]) => (
+                {([['open', `Open Orders(${openOrders.length})`], ['history', 'Order History'], ['funds', 'Funds']] as const).map(([key, label]) => (
                   <span
                     key={key}
                     onClick={() => setBottomTab(key)}
@@ -535,9 +571,42 @@ export default function SpotTrade() {
                   </span>
                 ))}
               </div>
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <div className="text-sm">No open orders</div>
-              </div>
+              {bottomTab === 'open' && openOrders.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-muted-foreground border-b border-border">
+                        <th className="text-left px-3 py-2 font-normal">Pair</th>
+                        <th className="text-left px-3 py-2 font-normal">Side</th>
+                        <th className="text-right px-3 py-2 font-normal">Price</th>
+                        <th className="text-right px-3 py-2 font-normal">Amount</th>
+                        <th className="text-right px-3 py-2 font-normal">Total</th>
+                        <th className="text-right px-3 py-2 font-normal">Time</th>
+                        <th className="text-right px-3 py-2 font-normal">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {openOrders.map(order => (
+                        <tr key={order.id} className="border-b border-border/30 hover:bg-muted/30">
+                          <td className="px-3 py-2 text-left font-semibold text-foreground">{order.symbol}/USDT</td>
+                          <td className={cn("px-3 py-2 text-left font-medium", order.side === 'buy' ? "text-[#0ecb81]" : "text-[#f6465d]")}>{order.side.toUpperCase()}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{formatOBPrice(order.price)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{order.amount.toFixed(6)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">${order.total.toFixed(2)}</td>
+                          <td className="px-3 py-2 text-right text-muted-foreground">{order.time.toLocaleTimeString()}</td>
+                          <td className="px-3 py-2 text-right">
+                            <button onClick={() => handleCancelOrder(order.id)} className="text-primary hover:underline text-xs font-semibold">Cancel</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <div className="text-sm">{bottomTab === 'open' ? 'No open orders' : 'No data'}</div>
+                </div>
+              )}
             </div>
           </div>
 

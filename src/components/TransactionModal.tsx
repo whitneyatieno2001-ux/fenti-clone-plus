@@ -40,7 +40,8 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [lastMethod, setLastMethod] = useState('');
   const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit, userEmail } = useAccount();
   const { toast } = useToast();
-  const isKycVerified = userEmail === 'whitneyatieno86@gmail.com';
+  const VERIFIED_EMAILS = ['whitneyatieno86@gmail.com', 'chenyabenard53@gmail.com'];
+  const isKycVerified = userEmail ? VERIFIED_EMAILS.includes(userEmail) : false;
 
   useEffect(() => {
     if (!isOpen) {
@@ -143,6 +144,10 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
 
   const handleWithdraw = async () => {
     if (!isLoggedIn) { toast({ title: "Login Required", variant: "destructive" }); return; }
+    if (!isKycVerified) {
+      toast({ title: "KYC Required", description: "Please complete KYC verification to withdraw funds.", variant: "destructive" });
+      return;
+    }
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) { toast({ title: "Invalid amount", variant: "destructive" }); return; }
     if (!phoneNumber || phoneNumber.length < 9) { toast({ title: "Invalid phone", variant: "destructive" }); return; }
@@ -466,24 +471,13 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 </div>
               )}
 
-              {accountType === 'real' && !isKycVerified && (
-                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-destructive">KYC Not Verified</p>
-                      <p className="text-sm text-muted-foreground mt-1">Complete KYC verification to enable withdrawals.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="p-4 rounded-xl bg-secondary/50">
                 <p className="text-sm text-muted-foreground">Balance ({accountType})</p>
                 <p className="text-2xl font-bold text-foreground">${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
               </div>
 
-              {withdrawMethodState === 'select' && accountType === 'real' && isKycVerified && (
+              {withdrawMethodState === 'select' && accountType === 'real' && (
                 <div className="space-y-6">
                   <h3 className="text-lg font-bold text-foreground">Mobile Money</h3>
                   <MethodCard

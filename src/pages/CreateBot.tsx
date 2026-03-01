@@ -204,7 +204,7 @@ export default function CreateBot() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Stake Amount (Over 0 payout)</label>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Stake Amount</label>
                     <div className="relative">
                       <Input type="text" inputMode="decimal" value={investmentAmount}
                         onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setInvestmentAmount(e.target.value); }}
@@ -231,7 +231,7 @@ export default function CreateBot() {
                         { label: 'Strategy', value: strategies.find(s => s.id === selectedStrategy)?.name || '' },
                         { label: 'Risk Level', value: `${risk.label} (${risk.range})` },
                         { label: 'Stake', value: `${investmentAmount || '0'} USDT` },
-                        { label: 'Payout', value: 'Over 0 (Deriv style)' },
+                        { label: 'Payout', value: 'Dynamic' },
                       ].map((item) => (
                         <div key={item.label} className="flex justify-between text-sm">
                           <span className="text-muted-foreground">{item.label}</span>
