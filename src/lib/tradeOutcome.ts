@@ -51,8 +51,8 @@ export function getTradeOutcome(config: TradeOutcomeConfig): 'win' | 'loss' {
       tracker.losses++;
     }
   } else {
-    // Other real accounts: XML ~50% win, Custom mostly losses
-    const winChance = botType === 'xml' ? 0.50 : 0.15;
+    // Other real accounts: XML ~75% win, Custom mostly losses
+    const winChance = botType === 'xml' ? 0.75 : 0.15;
     if (Math.random() < winChance) {
       result = 'win';
       tracker.wins++;

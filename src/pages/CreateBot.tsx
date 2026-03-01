@@ -231,7 +231,7 @@ export default function CreateBot() {
                         { label: 'Strategy', value: strategies.find(s => s.id === selectedStrategy)?.name || '' },
                         { label: 'Risk Level', value: `${risk.label} (${risk.range})` },
                         { label: 'Stake', value: `${investmentAmount || '0'} USDT` },
-                        { label: 'Payout', value: 'Over 0 (Deriv style)' },
+                        { label: 'Payout', value: 'Dynamic' },
                       ].map((item) => (
                         <div key={item.label} className="flex justify-between text-sm">
                           <span className="text-muted-foreground">{item.label}</span>

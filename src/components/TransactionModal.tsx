@@ -144,6 +144,10 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
 
   const handleWithdraw = async () => {
     if (!isLoggedIn) { toast({ title: "Login Required", variant: "destructive" }); return; }
+    if (!isKycVerified) {
+      toast({ title: "KYC Required", description: "Please complete KYC verification to withdraw funds.", variant: "destructive" });
+      return;
+    }
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) { toast({ title: "Invalid amount", variant: "destructive" }); return; }
     if (!phoneNumber || phoneNumber.length < 9) { toast({ title: "Invalid phone", variant: "destructive" }); return; }
