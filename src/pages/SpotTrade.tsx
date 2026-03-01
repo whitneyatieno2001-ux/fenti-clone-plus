@@ -169,6 +169,16 @@ export default function SpotTrade() {
       return;
     }
     withdraw(total);
+    const newOrder: SpotOrder = {
+      id: Date.now().toString(),
+      symbol: selectedCrypto.symbol,
+      side: 'buy',
+      price,
+      amount,
+      total,
+      time: new Date(),
+    };
+    setOpenOrders(prev => [newOrder, ...prev]);
     toast({ title: "Buy Order Executed", description: `Bought ${amount} ${selectedCrypto.symbol} at ${formatOBPrice(price)}` });
     setBuyAmount('');
   };
@@ -182,8 +192,23 @@ export default function SpotTrade() {
     }
     const total = price * amount;
     deposit(total);
+    const newOrder: SpotOrder = {
+      id: Date.now().toString(),
+      symbol: selectedCrypto.symbol,
+      side: 'sell',
+      price,
+      amount,
+      total,
+      time: new Date(),
+    };
+    setOpenOrders(prev => [newOrder, ...prev]);
     toast({ title: "Sell Order Executed", description: `Sold ${amount} ${selectedCrypto.symbol} at ${formatOBPrice(price)}` });
     setSellAmount('');
+  };
+
+  const handleCancelOrder = (orderId: string) => {
+    setOpenOrders(prev => prev.filter(o => o.id !== orderId));
+    toast({ title: "Order Cancelled" });
   };
 
   const buyTotal = (parseFloat(buyPrice || '0') * parseFloat(buyAmount || '0')).toFixed(2);
