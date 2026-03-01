@@ -582,9 +582,36 @@ export default function Futures() {
                     </tbody>
                   </table>
                 </div>
+              ) : bottomTab === 'open' && positions.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-muted-foreground border-b border-border">
+                        <th className="text-left px-3 py-2 font-normal">Symbol</th>
+                        <th className="text-left px-3 py-2 font-normal">Side</th>
+                        <th className="text-right px-3 py-2 font-normal">Size</th>
+                        <th className="text-right px-3 py-2 font-normal">Entry Price</th>
+                        <th className="text-right px-3 py-2 font-normal">Leverage</th>
+                        <th className="text-right px-3 py-2 font-normal">Margin</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {positions.map(pos => (
+                        <tr key={pos.id} className="border-b border-border/30 hover:bg-muted/30">
+                          <td className="px-3 py-2 text-left font-semibold text-foreground">{pos.symbol}USDT</td>
+                          <td className={cn("px-3 py-2 text-left font-medium", pos.side === 'long' ? "text-[#0ecb81]" : "text-[#f6465d]")}>{pos.side.toUpperCase()}</td>
+                          <td className="px-3 py-2 text-right text-foreground">${pos.size.toFixed(2)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{formatOBPrice(pos.entryPrice)}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{pos.leverage}x</td>
+                          <td className="px-3 py-2 text-right text-foreground">${pos.margin.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <div className="text-sm">{bottomTab === 'positions' ? 'No open positions' : 'No data'}</div>
+                  <div className="text-sm">{bottomTab === 'positions' ? 'No open positions' : bottomTab === 'open' ? 'No open orders' : 'No data'}</div>
                 </div>
               )}
             </div>
