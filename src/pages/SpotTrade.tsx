@@ -82,6 +82,7 @@ export default function SpotTrade() {
   const [bids, setBids] = useState<OrderBookEntry[]>([]);
   const [marketTrades, setMarketTrades] = useState<MarketTrade[]>([]);
   const [chartInterval, setChartInterval] = useState('15');
+  const [openOrders, setOpenOrders] = useState<SpotOrder[]>([]);
 
   const selectedCrypto = getCryptoWithPrice(cryptoAssets.find(c => c.id === selectedPairId) || cryptoAssets[0]);
   const pairSymbol = `${selectedCrypto.symbol}/USDT`;
