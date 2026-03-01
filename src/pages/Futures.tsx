@@ -532,7 +532,7 @@ export default function Futures() {
             {/* Positions Panel */}
             <div className="bg-card border border-border border-t-0">
               <div className="flex gap-6 px-4 pt-3 border-b border-border text-sm font-semibold">
-                {([['positions', `Positions(${positions.length})`], ['open', 'Open Orders(0)'], ['history', 'Trade History']] as const).map(([key, label]) => (
+                {([['positions', `Positions(${positions.length})`], ['open', `Open Orders(${positions.length})`], ['history', 'Trade History']] as const).map(([key, label]) => (
                   <span key={key} onClick={() => setBottomTab(key)}
                     className={cn("pb-3 cursor-pointer relative", bottomTab === key ? "text-primary" : "text-muted-foreground")}>
                     {label}
