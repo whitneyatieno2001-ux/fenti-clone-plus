@@ -48,6 +48,16 @@ type MobileTab = 'chart' | 'orderbook' | 'trades' | 'info';
 type OrderType = 'limit' | 'market';
 type BottomPanelTab = 'open' | 'history' | 'funds';
 
+interface SpotOrder {
+  id: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  price: number;
+  amount: number;
+  total: number;
+  time: Date;
+}
+
 export default function SpotTrade() {
   const navigate = useNavigate();
   const { currentBalance, deposit, withdraw, accountType } = useAccount();
