@@ -16,7 +16,7 @@ interface TransactionModalProps {
   type: 'deposit' | 'withdraw';
 }
 
-type DepositMethod = 'select' | 'mpesa' | 'bitcoin';
+type DepositMethod = 'select' | 'mpesa' | 'bitcoin' | 'paypal';
 type WithdrawMethod = 'select' | 'mpesa' | 'bitcoin';
 type MpesaStatus = 'idle' | 'processing' | 'waiting' | 'success' | 'failed';
 type FlowStatus = 'form' | 'success';
