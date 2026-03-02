@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, Coins, ChevronLeft, CheckCircle2, Copy, Clock, ExternalLink } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, Coins, ChevronLeft, CheckCircle2, Copy, Clock, ExternalLink, Wallet } from 'lucide-react';
 import binanceQrPay from '@/assets/binance-qr-pay.png';
+import paypalQr from '@/assets/paypal-qr.png';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -15,7 +16,7 @@ interface TransactionModalProps {
   type: 'deposit' | 'withdraw';
 }
 
-type DepositMethod = 'select' | 'mpesa' | 'bitcoin';
+type DepositMethod = 'select' | 'mpesa' | 'bitcoin' | 'paypal';
 type WithdrawMethod = 'select' | 'mpesa' | 'bitcoin';
 type MpesaStatus = 'idle' | 'processing' | 'waiting' | 'success' | 'failed';
 type FlowStatus = 'form' | 'success';
@@ -314,6 +315,17 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                       onClick={() => setDepositMethod('bitcoin')}
                       buttonLabel="Select"
                     />
+
+                    <h3 className="text-lg font-bold text-foreground">PayPal</h3>
+                    <MethodCard
+                      title="PayPal"
+                      subtitle="Pay with PayPal"
+                      description="Fast and secure PayPal payments."
+                      minAmount="$29.00"
+                      logo="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/1200px-PayPal.svg.png"
+                      onClick={() => setDepositMethod('paypal')}
+                      buttonLabel="Select"
+                    />
                   </div>
                 )}
 
@@ -380,6 +392,40 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                     <Button onClick={() => { setCryptoGenerated(false); setCryptoTimer(900); setPaymentId(''); }} variant="destructive" className="w-full h-14 font-semibold">
                       Cancel Payment
                     </Button>
+                  </div>
+                )}
+
+                {/* PayPal deposit */}
+                {depositMethod === 'paypal' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/1200px-PayPal.svg.png" alt="PayPal" className="h-12 w-auto" />
+                      <div>
+                        <p className="font-semibold text-foreground">PayPal Deposit</p>
+                        <p className="text-xs text-muted-foreground">Scan QR code or use the payment link</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center p-4 rounded-xl bg-white">
+                      <p className="text-sm font-medium text-gray-700 mb-3">Scan to pay with PayPal</p>
+                      <img src={paypalQr} alt="PayPal QR Code" className="w-56 h-56 object-contain" />
+                      <p className="mt-2 text-sm font-semibold text-gray-800">Crypto wave</p>
+                    </div>
+                    <a
+                      href="https://www.paypal.com/ncp/payment/N89C9X6FNJCMY"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-[#0070BA] text-white font-semibold hover:bg-[#005EA6] transition-colors"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Pay with PayPal
+                    </a>
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 border border-border">
+                      <code className="flex-1 text-xs text-foreground break-all font-mono">https://www.paypal.com/ncp/payment/N89C9X6FNJCMY</code>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { navigator.clipboard.writeText('https://www.paypal.com/ncp/payment/N89C9X6FNJCMY'); toast({ title: "Copied!" }); }}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-center text-muted-foreground">Minimum deposit: $29</p>
                   </div>
                 )}
 
