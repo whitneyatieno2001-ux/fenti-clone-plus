@@ -546,16 +546,16 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 </div>
               )}
 
-              {/* Bitcoin Withdraw (Coming Soon) */}
+              {/* Crypto Withdraw (Coming Soon) */}
               {withdrawMethodState === 'bitcoin' && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
-                    <img src={BTC_LOGO} alt="BTC" className="h-12 w-12" />
-                    <div><p className="font-semibold text-foreground">Bitcoin Withdrawal</p><p className="text-xs text-muted-foreground">Coming Soon</p></div>
+                    <img src={CRYPTO_LOGO} alt="Crypto" className="h-12 w-12" />
+                    <div><p className="font-semibold text-foreground">Crypto Withdrawal</p><p className="text-xs text-muted-foreground">Coming Soon</p></div>
                   </div>
                   <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                     <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                    <p className="text-xs text-amber-500">Bitcoin withdrawals coming soon. Use M-Pesa for now.</p>
+                    <p className="text-xs text-amber-500">Crypto withdrawals coming soon. Use M-Pesa for now.</p>
                   </div>
                   <Button disabled className="w-full h-14 bg-orange-500 text-white font-semibold disabled:opacity-50">Coming Soon</Button>
                 </div>
