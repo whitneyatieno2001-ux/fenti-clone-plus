@@ -507,11 +507,11 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
 
                   <h3 className="text-lg font-bold text-foreground">Cryptocurrency</h3>
                   <MethodCard
-                    title="Bitcoin (BTC)"
+                    title="Crypto Payment"
                     subtitle="Withdraw to wallet"
-                    description="Withdraw to your Bitcoin wallet."
+                    description="Withdraw to your crypto wallet."
                     minAmount="$29.00"
-                    logo={BTC_LOGO}
+                    logo={CRYPTO_LOGO}
                     onClick={() => setWithdrawMethodState('bitcoin')}
                     buttonLabel="Select"
                   />
