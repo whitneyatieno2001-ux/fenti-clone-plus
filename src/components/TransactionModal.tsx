@@ -351,14 +351,28 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   <div className="space-y-4">
                     <div className="p-4 rounded-xl bg-secondary/30 border border-border text-center space-y-2">
                       <p className="font-semibold text-foreground text-lg">Payment Created</p>
-                      <p className="text-sm text-muted-foreground">Send <span className="font-bold text-foreground">{(parseFloat(cryptoAmount) / 95000).toFixed(8)} BTC</span></p>
+                      <p className="text-sm text-muted-foreground">Send <span className="font-bold text-foreground">${cryptoAmount} USDT</span></p>
                       <div className="flex items-center justify-center gap-2 text-primary">
                         <Clock className="h-4 w-4" /><span className="font-mono font-bold">{formatTimer(cryptoTimer)}</span>
                       </div>
                     </div>
+                    <div className="flex flex-col items-center p-4 rounded-xl bg-white">
+                      <p className="text-sm font-medium text-gray-700 mb-3">Scan with Binance App to pay</p>
+                      <img src={binanceQrPay} alt="Scan with Binance App to pay" className="w-56 h-56 object-contain" />
+                      <p className="mt-2 text-sm font-semibold text-gray-800">Cryptwave</p>
+                    </div>
+                    <a
+                      href="https://s.binance.com/lF01TlEF"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-[#F0B90B] text-black font-semibold hover:bg-[#F0B90B]/90 transition-colors"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Pay with Binance
+                    </a>
                     <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 border border-border">
-                      <code className="flex-1 text-xs text-foreground break-all font-mono">0x89887304cc8bfb8e8f529740eb4ab08feb246196</code>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { navigator.clipboard.writeText('0x89887304cc8bfb8e8f529740eb4ab08feb246196'); toast({ title: "Copied!" }); }}>
+                      <code className="flex-1 text-xs text-foreground break-all font-mono">https://s.binance.com/lF01TlEF</code>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { navigator.clipboard.writeText('https://s.binance.com/lF01TlEF'); toast({ title: "Copied!" }); }}>
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
