@@ -448,7 +448,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   </div>
                 )}
 
-                <p className="text-xs text-center text-muted-foreground">Minimum deposit: ${MINIMUM_DEPOSIT_AMOUNT}</p>
+                <p className="text-xs text-center text-muted-foreground">Minimum deposit: $29</p>
               </div>
             </>
           )}
