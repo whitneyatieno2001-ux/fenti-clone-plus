@@ -317,13 +317,13 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   </div>
                 )}
 
-                {/* Bitcoin deposit */}
+                {/* Crypto deposit */}
                 {depositMethod === 'bitcoin' && !cryptoGenerated && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
-                      <img src={BTC_LOGO} alt="BTC" className="h-12 w-12" />
+                      <img src={CRYPTO_LOGO} alt="Crypto" className="h-12 w-12" />
                       <div>
-                        <p className="font-semibold text-foreground">Bitcoin Deposit</p>
+                        <p className="font-semibold text-foreground">Crypto Deposit</p>
                         <p className="text-xs text-muted-foreground">Enter amount and generate payment address</p>
                       </div>
                     </div>
