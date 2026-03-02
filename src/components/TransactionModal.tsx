@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAccount, MINIMUM_DEPOSIT_AMOUNT } from '@/contexts/AccountContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, Bitcoin, ChevronLeft, CheckCircle2, Copy, Clock, ExternalLink } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, Coins, ChevronLeft, CheckCircle2, Copy, Clock, ExternalLink } from 'lucide-react';
 import binanceQrPay from '@/assets/binance-qr-pay.png';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,7 +21,7 @@ type MpesaStatus = 'idle' | 'processing' | 'waiting' | 'success' | 'failed';
 type FlowStatus = 'form' | 'success';
 
 const MPESA_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png';
-const BTC_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png';
+const CRYPTO_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png';
 
 export function TransactionModal({ isOpen, onClose, type }: TransactionModalProps) {
   const [depositMethod, setDepositMethod] = useState<DepositMethod>('select');
@@ -160,7 +160,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       if (data.success) {
         await withdraw(numAmount);
         setLastAmount(numAmount.toFixed(2));
-        setLastMethod(withdrawMethodState === 'mpesa' ? 'M-Pesa' : 'Bitcoin');
+        setLastMethod(withdrawMethodState === 'mpesa' ? 'M-Pesa' : 'Crypto');
         setFlowStatus('success');
       } else throw new Error(data.error || 'Failed');
     } catch (error: any) {
@@ -306,24 +306,24 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
 
                     <h3 className="text-lg font-bold text-foreground">Cryptocurrency</h3>
                     <MethodCard
-                      title="Bitcoin (BTC)"
-                      subtitle="Pay with Bitcoin"
-                      description="Deposit using Bitcoin cryptocurrency."
+                      title="Crypto Payment"
+                      subtitle="Pay with Crypto"
+                      description="Deposit using cryptocurrency."
                       minAmount="$29.00"
-                      logo={BTC_LOGO}
+                      logo={CRYPTO_LOGO}
                       onClick={() => setDepositMethod('bitcoin')}
                       buttonLabel="Select"
                     />
                   </div>
                 )}
 
-                {/* Bitcoin deposit */}
+                {/* Crypto deposit */}
                 {depositMethod === 'bitcoin' && !cryptoGenerated && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
-                      <img src={BTC_LOGO} alt="BTC" className="h-12 w-12" />
+                      <img src={CRYPTO_LOGO} alt="Crypto" className="h-12 w-12" />
                       <div>
-                        <p className="font-semibold text-foreground">Bitcoin Deposit</p>
+                        <p className="font-semibold text-foreground">Crypto Deposit</p>
                         <p className="text-xs text-muted-foreground">Enter amount and generate payment address</p>
                       </div>
                     </div>
@@ -448,7 +448,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   </div>
                 )}
 
-                <p className="text-xs text-center text-muted-foreground">Minimum deposit: ${MINIMUM_DEPOSIT_AMOUNT}</p>
+                <p className="text-xs text-center text-muted-foreground">Minimum deposit: $29</p>
               </div>
             </>
           )}
@@ -507,11 +507,11 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
 
                   <h3 className="text-lg font-bold text-foreground">Cryptocurrency</h3>
                   <MethodCard
-                    title="Bitcoin (BTC)"
+                    title="Crypto Payment"
                     subtitle="Withdraw to wallet"
-                    description="Withdraw to your Bitcoin wallet."
+                    description="Withdraw to your crypto wallet."
                     minAmount="$29.00"
-                    logo={BTC_LOGO}
+                    logo={CRYPTO_LOGO}
                     onClick={() => setWithdrawMethodState('bitcoin')}
                     buttonLabel="Select"
                   />
@@ -546,16 +546,16 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 </div>
               )}
 
-              {/* Bitcoin Withdraw (Coming Soon) */}
+              {/* Crypto Withdraw (Coming Soon) */}
               {withdrawMethodState === 'bitcoin' && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
-                    <img src={BTC_LOGO} alt="BTC" className="h-12 w-12" />
-                    <div><p className="font-semibold text-foreground">Bitcoin Withdrawal</p><p className="text-xs text-muted-foreground">Coming Soon</p></div>
+                    <img src={CRYPTO_LOGO} alt="Crypto" className="h-12 w-12" />
+                    <div><p className="font-semibold text-foreground">Crypto Withdrawal</p><p className="text-xs text-muted-foreground">Coming Soon</p></div>
                   </div>
                   <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                     <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                    <p className="text-xs text-amber-500">Bitcoin withdrawals coming soon. Use M-Pesa for now.</p>
+                    <p className="text-xs text-amber-500">Crypto withdrawals coming soon. Use M-Pesa for now.</p>
                   </div>
                   <Button disabled className="w-full h-14 bg-orange-500 text-white font-semibold disabled:opacity-50">Coming Soon</Button>
                 </div>
