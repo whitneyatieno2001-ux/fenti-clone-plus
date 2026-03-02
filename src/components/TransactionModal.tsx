@@ -306,11 +306,11 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
 
                     <h3 className="text-lg font-bold text-foreground">Cryptocurrency</h3>
                     <MethodCard
-                      title="Bitcoin (BTC)"
-                      subtitle="Pay with Bitcoin"
-                      description="Deposit using Bitcoin cryptocurrency."
+                      title="Crypto Payment"
+                      subtitle="Pay with Crypto"
+                      description="Deposit using cryptocurrency."
                       minAmount="$29.00"
-                      logo={BTC_LOGO}
+                      logo={CRYPTO_LOGO}
                       onClick={() => setDepositMethod('bitcoin')}
                       buttonLabel="Select"
                     />
