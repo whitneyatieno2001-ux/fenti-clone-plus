@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Lock, Unlock, ChevronLeft, Bitcoin, Wallet, Smartphone, AlertCircle, ExternalLink, Copy, Clock, QrCode } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAccount } from '@/contexts/AccountContext';
+import binanceQrPay from '@/assets/binance-qr-pay.png';
 
 interface BotPurchaseModalProps {
   isOpen: boolean;
@@ -284,7 +285,7 @@ export function BotPurchaseModal({ isOpen, onClose, bot, onPurchaseSuccess }: Bo
                 <p className="font-semibold text-foreground text-lg">Payment Created</p>
                 <p className="text-sm text-muted-foreground">Status: <span className="text-amber-400">Waiting</span></p>
                 <p className="text-sm text-muted-foreground">
-                  Please send exactly <span className="font-bold text-foreground">{(bot.price / 95000).toFixed(8)} BTC</span>
+                  Please send <span className="font-bold text-foreground">${bot.price} USDT</span>
                 </p>
                 <div className="flex items-center justify-center gap-2 text-primary">
                   <Clock className="h-4 w-4" />
@@ -292,20 +293,35 @@ export function BotPurchaseModal({ isOpen, onClose, bot, onPurchaseSuccess }: Bo
                 </div>
               </div>
 
-              {/* Wallet Address */}
+              <div className="flex flex-col items-center p-4 rounded-xl bg-white">
+                <p className="text-sm font-medium text-gray-700 mb-3">Scan with Binance App to pay</p>
+                <img src={binanceQrPay} alt="Scan with Binance App to pay" className="w-56 h-56 object-contain" />
+                <p className="mt-2 text-sm font-semibold text-gray-800">Cryptwave</p>
+              </div>
+
+              <a
+                href="https://s.binance.com/lF01TlEF"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-[#F0B90B] text-black font-semibold hover:bg-[#F0B90B]/90 transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Pay with Binance
+              </a>
+
               <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 border border-border">
                 <code className="flex-1 text-xs text-foreground break-all font-mono">
-                  0x89887304cc8bfb8e8f529740eb4ab08feb246196
+                  https://s.binance.com/lF01TlEF
                 </code>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 shrink-0"
                   onClick={() => {
-                    navigator.clipboard.writeText('0x89887304cc8bfb8e8f529740eb4ab08feb246196');
+                    navigator.clipboard.writeText('https://s.binance.com/lF01TlEF');
                     toast({
                       title: "Copied!",
-                      description: "Wallet address copied to clipboard",
+                      description: "Payment link copied to clipboard",
                     });
                   }}
                 >
@@ -321,12 +337,8 @@ export function BotPurchaseModal({ isOpen, onClose, bot, onPurchaseSuccess }: Bo
                   <span className="text-foreground">{bot.name}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Amount in USD:</span>
-                  <span className="text-foreground">${bot.price}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Amount in BTC:</span>
-                  <span className="text-foreground">{(bot.price / 95000).toFixed(8)}</span>
+                  <span className="text-muted-foreground">Amount:</span>
+                  <span className="text-foreground">${bot.price} USDT</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Payment ID:</span>
