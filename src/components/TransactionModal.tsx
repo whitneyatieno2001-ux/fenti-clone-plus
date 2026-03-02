@@ -427,6 +427,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                     </div>
                     <p className="text-xs text-center text-muted-foreground">Minimum deposit: $29</p>
                   </div>
+                )}
 
                 {/* M-Pesa deposit */}
                 {depositMethod === 'mpesa' && mpesaStatus === 'idle' && (
