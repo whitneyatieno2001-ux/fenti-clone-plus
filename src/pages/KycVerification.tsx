@@ -217,17 +217,9 @@ export default function KycVerification() {
             <Check className="h-10 w-10 text-success-foreground" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">Identity Verified</h1>
-          <p className="text-muted-foreground mb-2 max-w-sm">
+          <p className="text-muted-foreground mb-6 max-w-sm">
             Your KYC verification has been approved. You are now able to make withdrawals and enjoy higher transaction limits.
           </p>
-          <div className="bg-success/10 border border-success/30 rounded-xl px-6 py-4 mt-4 mb-6 flex items-center gap-3">
-            <CheckCircle2 className="h-6 w-6 text-success shrink-0" />
-            <div className="text-left">
-              <p className="text-sm font-semibold text-foreground">Verification Status: Approved</p>
-              <p className="text-xs text-muted-foreground">All features unlocked</p>
-            </div>
-          </div>
-          <Button onClick={() => navigate('/dashboard')} className="w-full max-w-xs">Back to Dashboard</Button>
         </main>
         <BottomNav />
       </div>
