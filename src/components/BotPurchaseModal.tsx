@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Lock, Unlock, ChevronLeft, Bitcoin, Wallet, Smartphone, AlertCircle, ExternalLink, Copy, Clock, QrCode } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAccount } from '@/contexts/AccountContext';
+import binanceQrPay from '@/assets/binance-qr-pay.png';
 
 interface BotPurchaseModalProps {
   isOpen: boolean;
