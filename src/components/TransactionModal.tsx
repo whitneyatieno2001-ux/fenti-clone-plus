@@ -315,6 +315,17 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                       onClick={() => setDepositMethod('bitcoin')}
                       buttonLabel="Select"
                     />
+
+                    <h3 className="text-lg font-bold text-foreground">PayPal</h3>
+                    <MethodCard
+                      title="PayPal"
+                      subtitle="Pay with PayPal"
+                      description="Fast and secure PayPal payments."
+                      minAmount="$29.00"
+                      logo="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/1200px-PayPal.svg.png"
+                      onClick={() => setDepositMethod('paypal')}
+                      buttonLabel="Select"
+                    />
                   </div>
                 )}
 
