@@ -160,7 +160,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       if (data.success) {
         await withdraw(numAmount);
         setLastAmount(numAmount.toFixed(2));
-        setLastMethod(withdrawMethodState === 'mpesa' ? 'M-Pesa' : 'Bitcoin');
+        setLastMethod(withdrawMethodState === 'mpesa' ? 'M-Pesa' : 'Crypto');
         setFlowStatus('success');
       } else throw new Error(data.error || 'Failed');
     } catch (error: any) {
