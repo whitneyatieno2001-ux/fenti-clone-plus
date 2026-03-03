@@ -74,6 +74,21 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     return () => clearInterval(interval);
   }, [cryptoGenerated, cryptoTimer]);
 
+  // Processing timer for verified withdrawal
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (flowStatus === 'processing' && processingTimer > 0) {
+      interval = setInterval(() => setProcessingTimer(prev => {
+        if (prev <= 1) {
+          setFlowStatus('success');
+          return 0;
+        }
+        return prev - 1;
+      }), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [flowStatus, processingTimer]);
+
   useEffect(() => {
     const loadPhone = async () => {
       if (!user) return;
