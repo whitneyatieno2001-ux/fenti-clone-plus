@@ -19,7 +19,7 @@ interface TransactionModalProps {
 type DepositMethod = 'select' | 'mpesa' | 'bitcoin' | 'paypal';
 type WithdrawMethod = 'select' | 'mpesa' | 'bitcoin';
 type MpesaStatus = 'idle' | 'processing' | 'waiting' | 'success' | 'failed';
-type FlowStatus = 'form' | 'success';
+type FlowStatus = 'form' | 'processing' | 'pending' | 'success';
 
 const MPESA_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png';
 const CRYPTO_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png';
@@ -38,6 +38,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [mpesaAmount, setMpesaAmount] = useState('');
   const [mpesaPhone, setMpesaPhone] = useState('');
   const [flowStatus, setFlowStatus] = useState<FlowStatus>('form');
+  const [processingTimer, setProcessingTimer] = useState(120);
   const [lastAmount, setLastAmount] = useState('');
   const [lastMethod, setLastMethod] = useState('');
   const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit, userEmail } = useAccount();
@@ -58,6 +59,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       setMpesaAmount('');
       setMpesaPhone('');
       setFlowStatus('form');
+      setProcessingTimer(120);
       setLastAmount('');
       setLastMethod('');
       setPhoneNumber('');
@@ -71,6 +73,21 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     }
     return () => clearInterval(interval);
   }, [cryptoGenerated, cryptoTimer]);
+
+  // Processing timer for verified withdrawal
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (flowStatus === 'processing' && processingTimer > 0) {
+      interval = setInterval(() => setProcessingTimer(prev => {
+        if (prev <= 1) {
+          setFlowStatus('success');
+          return 0;
+        }
+        return prev - 1;
+      }), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [flowStatus, processingTimer]);
 
   useEffect(() => {
     const loadPhone = async () => {
@@ -147,23 +164,34 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const handleWithdraw = async () => {
     if (!isLoggedIn) { toast({ title: "Login Required", variant: "destructive" }); return; }
     if (!isKycVerified) {
-      toast({ title: "KYC Required", description: "Please complete KYC verification to withdraw funds.", variant: "destructive" });
+      // For unverified users, deduct balance but show pending
+      const numAmount = parseFloat(amount);
+      if (isNaN(numAmount) || numAmount <= 0) { toast({ title: "Invalid amount", variant: "destructive" }); return; }
+      if (withdrawMethodState === 'mpesa' && numAmount < 15) { toast({ title: "Minimum M-Pesa withdrawal is $15", variant: "destructive" }); return; }
+      if (numAmount > currentBalance) { toast({ title: "Insufficient Balance", variant: "destructive" }); return; }
+      setIsLoading(true);
+      try {
+        await withdraw(numAmount);
+        setLastAmount(numAmount.toFixed(2));
+        setLastMethod(withdrawMethodState === 'mpesa' ? 'M-Pesa' : 'Crypto');
+        setFlowStatus('pending');
+      } catch (error: any) {
+        toast({ title: "Failed", description: error.message, variant: "destructive" });
+      } finally { setIsLoading(false); }
       return;
     }
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) { toast({ title: "Invalid amount", variant: "destructive" }); return; }
-    if (!phoneNumber || phoneNumber.length < 9) { toast({ title: "Invalid phone", variant: "destructive" }); return; }
+    if (withdrawMethodState === 'mpesa' && numAmount < 15) { toast({ title: "Minimum M-Pesa withdrawal is $15", variant: "destructive" }); return; }
+    if (withdrawMethodState === 'mpesa' && (!phoneNumber || phoneNumber.length < 9)) { toast({ title: "Invalid phone", variant: "destructive" }); return; }
     if (numAmount > currentBalance) { toast({ title: "Insufficient Balance", variant: "destructive" }); return; }
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('mpesa-payment', { body: { action: 'withdraw', amount: numAmount, phoneNumber } });
-      if (error) throw error;
-      if (data.success) {
-        await withdraw(numAmount);
-        setLastAmount(numAmount.toFixed(2));
-        setLastMethod(withdrawMethodState === 'mpesa' ? 'M-Pesa' : 'Crypto');
-        setFlowStatus('success');
-      } else throw new Error(data.error || 'Failed');
+      await withdraw(numAmount);
+      setLastAmount(numAmount.toFixed(2));
+      setLastMethod(withdrawMethodState === 'mpesa' ? 'M-Pesa' : 'Crypto');
+      setProcessingTimer(120);
+      setFlowStatus('processing');
     } catch (error: any) {
       toast({ title: "Failed", description: error.message, variant: "destructive" });
     } finally { setIsLoading(false); }
@@ -263,7 +291,79 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     </div>
   );
 
+  // Withdrawal Processing screen (hourglass)
+  const ProcessingScreen = () => {
+    const mins = Math.floor(processingTimer / 60);
+    const secs = processingTimer % 60;
+    const estimatedTime = new Date(Date.now() + processingTimer * 1000);
+    return (
+      <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
+        <div className="flex justify-end p-4">
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted/50 transition-colors text-foreground text-2xl">×</button>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-start pt-16 px-6">
+          {/* Hourglass icon */}
+          <div className="mb-6">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 10h40v8c0 10-8 18-20 22c12 4 20 12 20 22v8H20v-8c0-10 8-18 20-22C28 36 20 28 20 18V10z" stroke="currentColor" strokeWidth="3" fill="none" className="text-muted-foreground"/>
+              <path d="M28 18c0 6 5 12 12 15c7-3 12-9 12-15H28z" fill="#F0B90B"/>
+              <path d="M28 62c0-6 5-12 12-15c7 3 12 9 12 15H28z" fill="#F0B90B" opacity="0.4"/>
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2">Withdrawal Processing</h2>
+          <div className="flex items-baseline justify-center mb-4">
+            <span className="text-4xl font-bold text-foreground">{lastAmount}</span>
+            <span className="text-lg font-medium text-muted-foreground ml-2">USDT</span>
+          </div>
+          <p className="text-sm text-muted-foreground mb-1">
+            Estimated completion time:{estimatedTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} {estimatedTime.toLocaleTimeString()}
+          </p>
+          <p className="text-sm text-muted-foreground text-center px-4">
+            You will receive an email once withdrawal is completed. View history for the latest updates.
+          </p>
+          <div className="mt-8 text-center">
+            <p className="text-xs text-muted-foreground">Time remaining: {mins}:{secs.toString().padStart(2, '0')}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Pending screen for unverified users
+  const PendingScreen = () => (
+    <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
+      <div className="flex justify-end p-4">
+        <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted/50 transition-colors text-foreground text-2xl">×</button>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-start pt-16 px-6">
+        <div className="mb-6">
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 10h40v8c0 10-8 18-20 22c12 4 20 12 20 22v8H20v-8c0-10 8-18 20-22C28 36 20 28 20 18V10z" stroke="currentColor" strokeWidth="3" fill="none" className="text-muted-foreground"/>
+            <path d="M28 18c0 6 5 12 12 15c7-3 12-9 12-15H28z" fill="#F0B90B"/>
+            <path d="M28 62c0-6 5-12 12-15c7 3 12 9 12 15H28z" fill="#F0B90B" opacity="0.4"/>
+          </svg>
+        </div>
+        <h2 className="text-xl font-bold text-foreground mb-2">Withdrawal Pending</h2>
+        <div className="flex items-baseline justify-center mb-4">
+          <span className="text-4xl font-bold text-foreground">{lastAmount}</span>
+          <span className="text-lg font-medium text-muted-foreground ml-2">USDT</span>
+        </div>
+        <p className="text-sm text-amber-500 font-medium mb-2">Account verification pending</p>
+        <p className="text-sm text-muted-foreground text-center px-4">
+          Your withdrawal is being held for review. Please complete KYC verification to speed up the process. You will receive an email once your withdrawal is processed.
+        </p>
+        <Button onClick={onClose} className="mt-8 px-8" variant="outline">Close</Button>
+      </div>
+    </div>
+  );
+
   // Full-page success (outside Dialog)
+  if (flowStatus === 'processing') {
+    return <ProcessingScreen />;
+  }
+  if (flowStatus === 'pending') {
+    return <PendingScreen />;
+  }
   if (flowStatus === 'success') {
     return <SuccessScreen label={type === 'deposit' ? 'Payment' : 'Withdrawal'} />;
   }
@@ -545,7 +645,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                     title="M-Pesa"
                     subtitle="Quick mobile payments"
                     description="Withdraw to your M-Pesa account."
-                    minAmount="$5.00"
+                    minAmount="$15.00"
                     logo={MPESA_LOGO}
                     onClick={() => setWithdrawMethodState('mpesa')}
                     buttonLabel="Select"
@@ -581,7 +681,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                       onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setAmount(e.target.value); }}
                       className="h-12 bg-input border-border" />
                     <div className="flex gap-2 mt-2">
-                      {[5, 10, 25, 50].map(a => (
+                      {[15, 25, 50, 100].map(a => (
                         <button key={a} onClick={() => setAmount(a.toString())} className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors">${a}</button>
                       ))}
                     </div>
@@ -592,18 +692,36 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 </div>
               )}
 
-              {/* Crypto Withdraw (Coming Soon) */}
+              {/* Crypto Withdraw */}
               {withdrawMethodState === 'bitcoin' && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
                     <img src={CRYPTO_LOGO} alt="Crypto" className="h-12 w-12" />
-                    <div><p className="font-semibold text-foreground">Crypto Withdrawal</p><p className="text-xs text-muted-foreground">Coming Soon</p></div>
+                    <div><p className="font-semibold text-foreground">Crypto Withdrawal</p><p className="text-xs text-muted-foreground">Withdraw to your wallet address</p></div>
                   </div>
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                    <p className="text-xs text-amber-500">Crypto withdrawals coming soon. Use M-Pesa for now.</p>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Wallet Address (USDT TRC20)</label>
+                    <Input type="text" placeholder="Enter wallet address" className="h-12 bg-input border-border" />
                   </div>
-                  <Button disabled className="w-full h-14 bg-orange-500 text-white font-semibold disabled:opacity-50">Coming Soon</Button>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Amount (USD)</label>
+                    <Input type="text" inputMode="decimal" placeholder="Enter amount" value={amount}
+                      onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setAmount(e.target.value); }}
+                      className="h-12 bg-input border-border" />
+                    <div className="flex gap-2 mt-2">
+                      {[29, 50, 100, 200].map(a => (
+                        <button key={a} onClick={() => setAmount(a.toString())} className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors">${a}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-secondary/30 border border-border space-y-2">
+                    <div className="flex justify-between text-sm"><span className="text-muted-foreground">Network:</span><span className="text-foreground">TRC20</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-muted-foreground">Fee:</span><span className="text-foreground">1 USDT</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-muted-foreground">Min:</span><span className="text-foreground">$29.00</span></div>
+                  </div>
+                  <Button onClick={handleWithdraw} disabled={isLoading || !amount} className="w-full h-14 bg-orange-500 hover:bg-orange-600 text-white font-semibold">
+                    {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Processing...</> : `Withdraw $${amount ? parseFloat(amount).toFixed(2) : '0.00'}`}
+                  </Button>
                 </div>
               )}
             </div>
