@@ -59,6 +59,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
       setMpesaAmount('');
       setMpesaPhone('');
       setFlowStatus('form');
+      setProcessingTimer(120);
       setLastAmount('');
       setLastMethod('');
       setPhoneNumber('');
