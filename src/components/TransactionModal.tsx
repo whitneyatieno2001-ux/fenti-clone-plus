@@ -645,7 +645,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                     title="M-Pesa"
                     subtitle="Quick mobile payments"
                     description="Withdraw to your M-Pesa account."
-                    minAmount="$5.00"
+                    minAmount="$15.00"
                     logo={MPESA_LOGO}
                     onClick={() => setWithdrawMethodState('mpesa')}
                     buttonLabel="Select"
