@@ -201,7 +201,7 @@ export default function Auth() {
                 className="mt-0.5 h-5 w-5 rounded border-border accent-primary"
               />
               <span className="text-sm text-foreground">
-                By creating an account, I agree to CryptWave's{' '}
+                By creating an account, I agree to ₵₽¥₱₮₩₳∇€'s{' '}
                 <button
                   type="button"
                   onClick={() => navigate('/trading-risk-policy')}
