@@ -692,18 +692,36 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 </div>
               )}
 
-              {/* Crypto Withdraw (Coming Soon) */}
+              {/* Crypto Withdraw */}
               {withdrawMethodState === 'bitcoin' && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
                     <img src={CRYPTO_LOGO} alt="Crypto" className="h-12 w-12" />
-                    <div><p className="font-semibold text-foreground">Crypto Withdrawal</p><p className="text-xs text-muted-foreground">Coming Soon</p></div>
+                    <div><p className="font-semibold text-foreground">Crypto Withdrawal</p><p className="text-xs text-muted-foreground">Withdraw to your wallet address</p></div>
                   </div>
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                    <p className="text-xs text-amber-500">Crypto withdrawals coming soon. Use M-Pesa for now.</p>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Wallet Address (USDT TRC20)</label>
+                    <Input type="text" placeholder="Enter wallet address" className="h-12 bg-input border-border" />
                   </div>
-                  <Button disabled className="w-full h-14 bg-orange-500 text-white font-semibold disabled:opacity-50">Coming Soon</Button>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Amount (USD)</label>
+                    <Input type="text" inputMode="decimal" placeholder="Enter amount" value={amount}
+                      onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setAmount(e.target.value); }}
+                      className="h-12 bg-input border-border" />
+                    <div className="flex gap-2 mt-2">
+                      {[29, 50, 100, 200].map(a => (
+                        <button key={a} onClick={() => setAmount(a.toString())} className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors">${a}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-xl bg-secondary/30 border border-border space-y-2">
+                    <div className="flex justify-between text-sm"><span className="text-muted-foreground">Network:</span><span className="text-foreground">TRC20</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-muted-foreground">Fee:</span><span className="text-foreground">1 USDT</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-muted-foreground">Min:</span><span className="text-foreground">$29.00</span></div>
+                  </div>
+                  <Button onClick={handleWithdraw} disabled={isLoading || !amount} className="w-full h-14 bg-orange-500 hover:bg-orange-600 text-white font-semibold">
+                    {isLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Processing...</> : `Withdraw $${amount ? parseFloat(amount).toFixed(2) : '0.00'}`}
+                  </Button>
                 </div>
               )}
             </div>
