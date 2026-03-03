@@ -19,7 +19,7 @@ interface TransactionModalProps {
 type DepositMethod = 'select' | 'mpesa' | 'bitcoin' | 'paypal';
 type WithdrawMethod = 'select' | 'mpesa' | 'bitcoin';
 type MpesaStatus = 'idle' | 'processing' | 'waiting' | 'success' | 'failed';
-type FlowStatus = 'form' | 'success';
+type FlowStatus = 'form' | 'processing' | 'pending' | 'success';
 
 const MPESA_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png';
 const CRYPTO_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png';
