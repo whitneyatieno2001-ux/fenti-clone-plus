@@ -681,7 +681,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                       onChange={(e) => { if (e.target.value === '' || /^\d*\.?\d*$/.test(e.target.value)) setAmount(e.target.value); }}
                       className="h-12 bg-input border-border" />
                     <div className="flex gap-2 mt-2">
-                      {[5, 10, 25, 50].map(a => (
+                      {[15, 25, 50, 100].map(a => (
                         <button key={a} onClick={() => setAmount(a.toString())} className="flex-1 py-2 text-sm font-medium rounded-lg bg-secondary hover:bg-secondary/80 text-foreground transition-colors">${a}</button>
                       ))}
                     </div>
