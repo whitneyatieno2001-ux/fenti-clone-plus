@@ -325,10 +325,10 @@ export default function Landing() {
       <section className="max-w-[1200px] mx-auto px-6 md:px-10 pb-24">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
         {[
-          'What is CryptWave Wallet?',
-          'What are the benefits of using CryptWave Wallet?',
-          'How do I use my CryptWave Wallet to send and receive tokens?',
-          'Is CryptWave Wallet a self-custody wallet? Who has control over my funds?',
+          'What is ₵₽¥₱₮₩₳∇€ Wallet?',
+          'What are the benefits of using ₵₽¥₱₮₩₳∇€ Wallet?',
+          'How do I use my ₵₽¥₱₮₩₳∇€ Wallet to send and receive tokens?',
+          'Is ₵₽¥₱₮₩₳∇€ Wallet a self-custody wallet? Who has control over my funds?',
         ].map((q, i) => (
           <div key={i} className="border-b border-border py-6 hover:bg-foreground/[0.02] transition-colors">
             <div
