@@ -72,7 +72,7 @@ export default function Landing() {
         <div className="max-w-full md:max-w-[50%] text-center md:text-left z-10">
           {/* Big inbuilt badge text */}
           <div className="flex justify-center md:justify-start mb-6">
-            <span className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">CryptWave</span>
+            <span className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">₵₽¥₱₮₩₳∇€</span>
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-8 text-gradient">
             Secure.<br />Your World of Web3.
