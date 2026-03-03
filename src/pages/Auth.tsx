@@ -130,7 +130,7 @@ export default function Auth() {
 
       <div className="flex-1 flex flex-col px-6 pt-4 pb-12">
         <h1 className="text-3xl font-bold font-display text-foreground mb-8">
-          {mode === 'signup' ? 'Welcome to CryptWave' : 'Welcome Back'}
+          {mode === 'signup' ? 'Welcome to ₵₽¥₱₮₩₳∇€' : 'Welcome Back'}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-5 flex-1">
