@@ -38,6 +38,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const [mpesaAmount, setMpesaAmount] = useState('');
   const [mpesaPhone, setMpesaPhone] = useState('');
   const [flowStatus, setFlowStatus] = useState<FlowStatus>('form');
+  const [processingTimer, setProcessingTimer] = useState(120);
   const [lastAmount, setLastAmount] = useState('');
   const [lastMethod, setLastMethod] = useState('');
   const { withdraw, currentBalance, accountType, isLoggedIn, user, deposit, userEmail } = useAccount();
