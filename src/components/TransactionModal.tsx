@@ -291,7 +291,79 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     </div>
   );
 
+  // Withdrawal Processing screen (hourglass)
+  const ProcessingScreen = () => {
+    const mins = Math.floor(processingTimer / 60);
+    const secs = processingTimer % 60;
+    const estimatedTime = new Date(Date.now() + processingTimer * 1000);
+    return (
+      <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
+        <div className="flex justify-end p-4">
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted/50 transition-colors text-foreground text-2xl">×</button>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-start pt-16 px-6">
+          {/* Hourglass icon */}
+          <div className="mb-6">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 10h40v8c0 10-8 18-20 22c12 4 20 12 20 22v8H20v-8c0-10 8-18 20-22C28 36 20 28 20 18V10z" stroke="currentColor" strokeWidth="3" fill="none" className="text-muted-foreground"/>
+              <path d="M28 18c0 6 5 12 12 15c7-3 12-9 12-15H28z" fill="#F0B90B"/>
+              <path d="M28 62c0-6 5-12 12-15c7 3 12 9 12 15H28z" fill="#F0B90B" opacity="0.4"/>
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2">Withdrawal Processing</h2>
+          <div className="flex items-baseline justify-center mb-4">
+            <span className="text-4xl font-bold text-foreground">{lastAmount}</span>
+            <span className="text-lg font-medium text-muted-foreground ml-2">USDT</span>
+          </div>
+          <p className="text-sm text-muted-foreground mb-1">
+            Estimated completion time:{estimatedTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} {estimatedTime.toLocaleTimeString()}
+          </p>
+          <p className="text-sm text-muted-foreground text-center px-4">
+            You will receive an email once withdrawal is completed. View history for the latest updates.
+          </p>
+          <div className="mt-8 text-center">
+            <p className="text-xs text-muted-foreground">Time remaining: {mins}:{secs.toString().padStart(2, '0')}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Pending screen for unverified users
+  const PendingScreen = () => (
+    <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
+      <div className="flex justify-end p-4">
+        <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted/50 transition-colors text-foreground text-2xl">×</button>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-start pt-16 px-6">
+        <div className="mb-6">
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 10h40v8c0 10-8 18-20 22c12 4 20 12 20 22v8H20v-8c0-10 8-18 20-22C28 36 20 28 20 18V10z" stroke="currentColor" strokeWidth="3" fill="none" className="text-muted-foreground"/>
+            <path d="M28 18c0 6 5 12 12 15c7-3 12-9 12-15H28z" fill="#F0B90B"/>
+            <path d="M28 62c0-6 5-12 12-15c7 3 12 9 12 15H28z" fill="#F0B90B" opacity="0.4"/>
+          </svg>
+        </div>
+        <h2 className="text-xl font-bold text-foreground mb-2">Withdrawal Pending</h2>
+        <div className="flex items-baseline justify-center mb-4">
+          <span className="text-4xl font-bold text-foreground">{lastAmount}</span>
+          <span className="text-lg font-medium text-muted-foreground ml-2">USDT</span>
+        </div>
+        <p className="text-sm text-amber-500 font-medium mb-2">Account verification pending</p>
+        <p className="text-sm text-muted-foreground text-center px-4">
+          Your withdrawal is being held for review. Please complete KYC verification to speed up the process. You will receive an email once your withdrawal is processed.
+        </p>
+        <Button onClick={onClose} className="mt-8 px-8" variant="outline">Close</Button>
+      </div>
+    </div>
+  );
+
   // Full-page success (outside Dialog)
+  if (flowStatus === 'processing') {
+    return <ProcessingScreen />;
+  }
+  if (flowStatus === 'pending') {
+    return <PendingScreen />;
+  }
   if (flowStatus === 'success') {
     return <SuccessScreen label={type === 'deposit' ? 'Payment' : 'Withdrawal'} />;
   }
