@@ -124,7 +124,7 @@ export default function Auth() {
       {/* Brand Header */}
       <div className="px-6 pt-6 pb-2">
         <span className="text-primary font-bold text-2xl cursor-pointer" onClick={() => navigate('/')}>
-          CryptWave
+          ₵₽¥₱₮₩₳∇€
         </span>
       </div>
 
