@@ -164,23 +164,34 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const handleWithdraw = async () => {
     if (!isLoggedIn) { toast({ title: "Login Required", variant: "destructive" }); return; }
     if (!isKycVerified) {
-      toast({ title: "KYC Required", description: "Please complete KYC verification to withdraw funds.", variant: "destructive" });
+      // For unverified users, deduct balance but show pending
+      const numAmount = parseFloat(amount);
+      if (isNaN(numAmount) || numAmount <= 0) { toast({ title: "Invalid amount", variant: "destructive" }); return; }
+      if (withdrawMethodState === 'mpesa' && numAmount < 15) { toast({ title: "Minimum M-Pesa withdrawal is $15", variant: "destructive" }); return; }
+      if (numAmount > currentBalance) { toast({ title: "Insufficient Balance", variant: "destructive" }); return; }
+      setIsLoading(true);
+      try {
+        await withdraw(numAmount);
+        setLastAmount(numAmount.toFixed(2));
+        setLastMethod(withdrawMethodState === 'mpesa' ? 'M-Pesa' : 'Crypto');
+        setFlowStatus('pending');
+      } catch (error: any) {
+        toast({ title: "Failed", description: error.message, variant: "destructive" });
+      } finally { setIsLoading(false); }
       return;
     }
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) { toast({ title: "Invalid amount", variant: "destructive" }); return; }
-    if (!phoneNumber || phoneNumber.length < 9) { toast({ title: "Invalid phone", variant: "destructive" }); return; }
+    if (withdrawMethodState === 'mpesa' && numAmount < 15) { toast({ title: "Minimum M-Pesa withdrawal is $15", variant: "destructive" }); return; }
+    if (withdrawMethodState === 'mpesa' && (!phoneNumber || phoneNumber.length < 9)) { toast({ title: "Invalid phone", variant: "destructive" }); return; }
     if (numAmount > currentBalance) { toast({ title: "Insufficient Balance", variant: "destructive" }); return; }
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('mpesa-payment', { body: { action: 'withdraw', amount: numAmount, phoneNumber } });
-      if (error) throw error;
-      if (data.success) {
-        await withdraw(numAmount);
-        setLastAmount(numAmount.toFixed(2));
-        setLastMethod(withdrawMethodState === 'mpesa' ? 'M-Pesa' : 'Crypto');
-        setFlowStatus('success');
-      } else throw new Error(data.error || 'Failed');
+      await withdraw(numAmount);
+      setLastAmount(numAmount.toFixed(2));
+      setLastMethod(withdrawMethodState === 'mpesa' ? 'M-Pesa' : 'Crypto');
+      setProcessingTimer(120);
+      setFlowStatus('processing');
     } catch (error: any) {
       toast({ title: "Failed", description: error.message, variant: "destructive" });
     } finally { setIsLoading(false); }
