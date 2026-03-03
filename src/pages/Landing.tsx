@@ -354,7 +354,7 @@ export default function Landing() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-10">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-10 text-center md:text-left">
             <div>
-              <span className="text-primary font-bold text-lg">CryptWave</span>
+              <span className="text-primary font-bold text-lg">₵₽¥₱₮₩₳∇€</span>
             </div>
             {[
               { title: 'About Us', links: ['About', 'Careers', 'Business Contacts', 'Community'] },
