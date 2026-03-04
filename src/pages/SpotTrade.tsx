@@ -847,28 +847,91 @@ export default function SpotTrade() {
             </div>
           </div>
 
-          {/* Mobile Buy/Sell Footer */}
-          <div className="fixed bottom-16 left-0 right-0 h-14 bg-card border-t border-border flex gap-3 px-4 py-2 z-50">
-            <button
-              onClick={() => {
-                const amt = parseFloat(buyAmount || '0.001');
-                setBuyAmount(amt.toString());
-                handleBuy();
-              }}
-              className="flex-1 rounded font-semibold text-base text-white bg-[#0ecb81]"
-            >
-              Buy
-            </button>
-            <button
-              onClick={() => {
-                const amt = parseFloat(sellAmount || '0.001');
-                setSellAmount(amt.toString());
-                handleSell();
-              }}
-              className="flex-1 rounded font-semibold text-base text-white bg-[#f6465d]"
-            >
-              Sell
-            </button>
+          {/* Mobile Open Orders */}
+          {openOrders.length > 0 && (
+            <div className="bg-card mx-2 mt-2 rounded border border-border p-3">
+              <div className="text-sm font-semibold mb-2 text-foreground">Open Orders ({openOrders.length})</div>
+              {openOrders.map(order => (
+                <div key={order.id} className="py-2 border-b border-border/30 last:border-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-foreground text-xs">{order.symbol}/USDT</span>
+                      <span className={cn("text-[10px] font-bold px-1 rounded", order.side === 'buy' ? "text-[#0ecb81] bg-[#0ecb81]/10" : "text-[#f6465d] bg-[#f6465d]/10")}>
+                        {order.side.toUpperCase()}
+                      </span>
+                    </div>
+                    <button onClick={() => handleCancelOrder(order.id)} className="text-primary text-xs font-semibold">Cancel</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 text-[11px]">
+                    <span className="text-muted-foreground">Price: {formatOBPrice(order.price)}</span>
+                    <span className="text-right text-muted-foreground">Amount: {order.amount.toFixed(6)}</span>
+                    <span className="text-muted-foreground">Total: ${order.total.toFixed(2)}</span>
+                    <span className="text-right text-muted-foreground">{order.time.toLocaleTimeString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Mobile Buy/Sell Footer with Stake Input */}
+          <div className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-3 py-2 z-50">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex-1 flex items-center border border-border rounded h-9 bg-muted/50">
+                <span className="px-2 text-[11px] text-muted-foreground">USDT</span>
+                <input
+                  type="number"
+                  placeholder="Stake amount"
+                  value={buyAmount ? (parseFloat(buyAmount) * currentPrice).toFixed(2) : ''}
+                  onChange={e => {
+                    const usdtVal = parseFloat(e.target.value || '0');
+                    if (currentPrice > 0) setBuyAmount((usdtVal / currentPrice).toFixed(6));
+                  }}
+                  className="flex-1 border-none outline-none bg-transparent text-right text-xs font-medium px-1 text-foreground"
+                />
+              </div>
+              <div className="flex gap-1">
+                {['25%', '50%', '100%'].map(pct => (
+                  <button key={pct} onClick={() => {
+                    const percent = parseInt(pct) / 100;
+                    const maxUsd = currentBalance * percent;
+                    if (currentPrice > 0) {
+                      setBuyAmount((maxUsd / currentPrice).toFixed(6));
+                      setSellAmount((maxUsd / currentPrice).toFixed(6));
+                    }
+                  }}
+                    className="px-1.5 py-1 text-[10px] font-medium rounded bg-muted text-muted-foreground hover:text-foreground">
+                    {pct}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (!buyAmount || parseFloat(buyAmount) <= 0) {
+                    toast({ title: "Enter stake amount", variant: "destructive" });
+                    return;
+                  }
+                  handleBuy();
+                }}
+                className="flex-1 rounded-lg font-semibold text-sm text-white bg-[#0ecb81] h-10"
+              >
+                Buy {selectedCrypto.symbol}
+              </button>
+              <button
+                onClick={() => {
+                  if (!buyAmount || parseFloat(buyAmount) <= 0) {
+                    toast({ title: "Enter stake amount", variant: "destructive" });
+                    return;
+                  }
+                  setSellAmount(buyAmount);
+                  setTimeout(() => handleSell(), 0);
+                }}
+                className="flex-1 rounded-lg font-semibold text-sm text-white bg-[#f6465d] h-10"
+              >
+                Sell {selectedCrypto.symbol}
+              </button>
+            </div>
           </div>
         </div>
       </div>

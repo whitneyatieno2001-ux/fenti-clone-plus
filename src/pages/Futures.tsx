@@ -832,28 +832,76 @@ export default function Futures() {
             </div>
           </div>
 
-          {/* Mobile Long/Short Footer */}
-          <div className="fixed bottom-16 left-0 right-0 h-14 bg-card border-t border-border flex gap-3 px-4 py-2 z-50">
-            <button
-              onClick={() => {
-                const amt = parseFloat(longAmount || '0.001');
-                setLongAmount(amt.toString());
-                handleOpenPosition('long');
-              }}
-              className="flex-1 rounded font-semibold text-base text-white bg-[#0ecb81]"
-            >
-              Long
-            </button>
-            <button
-              onClick={() => {
-                const amt = parseFloat(shortAmount || '0.001');
-                setShortAmount(amt.toString());
-                handleOpenPosition('short');
-              }}
-              className="flex-1 rounded font-semibold text-base text-white bg-[#f6465d]"
-            >
-              Short
-            </button>
+          {/* Mobile Long/Short Footer with Stake Input */}
+          <div className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-3 py-2 z-50">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex-1 flex items-center border border-border rounded h-9 bg-muted/50">
+                <span className="px-2 text-[11px] text-muted-foreground">USDT</span>
+                <input
+                  type="number"
+                  placeholder="Stake amount"
+                  value={longAmount ? (parseFloat(longAmount) * currentPrice).toFixed(2) : ''}
+                  onChange={e => {
+                    const usdtVal = parseFloat(e.target.value || '0');
+                    if (currentPrice > 0) {
+                      const amt = (usdtVal / currentPrice).toFixed(6);
+                      setLongAmount(amt);
+                      setShortAmount(amt);
+                    }
+                  }}
+                  className="flex-1 border-none outline-none bg-transparent text-right text-xs font-medium px-1 text-foreground"
+                />
+              </div>
+              <div className="flex gap-1">
+                {['25%', '50%', '100%'].map(pct => (
+                  <button key={pct} onClick={() => {
+                    const percent = parseInt(pct) / 100;
+                    const maxUsd = currentBalance * percent * leverage;
+                    if (currentPrice > 0) {
+                      const amt = (maxUsd / currentPrice).toFixed(6);
+                      setLongAmount(amt);
+                      setShortAmount(amt);
+                    }
+                  }}
+                    className="px-1.5 py-1 text-[10px] font-medium rounded bg-muted text-muted-foreground hover:text-foreground">
+                    {pct}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-1 mb-2 text-[10px] text-muted-foreground">
+              <span>Margin: ${longAmount ? ((parseFloat(longAmount) * currentPrice) / leverage).toFixed(2) : '0.00'}</span>
+              <span className="mx-1">•</span>
+              <span>Avbl: ${currentBalance.toFixed(2)}</span>
+              <span className="mx-1">•</span>
+              <span className="text-primary font-medium">{leverage}x</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (!longAmount || parseFloat(longAmount) <= 0) {
+                    toast({ title: "Enter stake amount", variant: "destructive" });
+                    return;
+                  }
+                  handleOpenPosition('long');
+                }}
+                className="flex-1 rounded-lg font-semibold text-sm text-white bg-[#0ecb81] h-10"
+              >
+                Long {selectedCrypto.symbol}
+              </button>
+              <button
+                onClick={() => {
+                  if (!shortAmount || parseFloat(shortAmount) <= 0) {
+                    toast({ title: "Enter stake amount", variant: "destructive" });
+                    return;
+                  }
+                  handleOpenPosition('short');
+                }}
+                className="flex-1 rounded-lg font-semibold text-sm text-white bg-[#f6465d] h-10"
+              >
+                Short {selectedCrypto.symbol}
+              </button>
+            </div>
           </div>
         </div>
       </div>
