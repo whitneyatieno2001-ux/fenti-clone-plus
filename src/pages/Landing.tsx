@@ -235,10 +235,10 @@ export default function Landing() {
         {/* Feature: Earn */}
         <div className="reveal flex flex-col md:flex-row-reverse items-center gap-16 mb-24">
           <div className="flex-1 text-center md:text-left">
-            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Earn</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Grow your portfolio with one click</h2>
+            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Passive Income</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Make your crypto work while you sleep</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              Put your idle crypto to work. Find the best opportunities to earn yield on your assets in seconds.
+              Stop letting your assets sit idle. Stake, lend, and earn yield on your holdings with just one click — let your money multiply.
             </p>
           </div>
           <div className="flex-1 flex justify-center">
