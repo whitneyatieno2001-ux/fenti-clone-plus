@@ -291,39 +291,76 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     </div>
   );
 
-  // Withdrawal Processing screen (hourglass)
+  // Withdrawal Processing screen (hourglass) - matches screenshot exactly
   const ProcessingScreen = () => {
-    const mins = Math.floor(processingTimer / 60);
-    const secs = processingTimer % 60;
     const estimatedTime = new Date(Date.now() + processingTimer * 1000);
     return (
       <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
         <div className="flex justify-end p-4">
           <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted/50 transition-colors text-foreground text-2xl">×</button>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-start pt-16 px-6">
-          {/* Hourglass icon */}
-          <div className="mb-6">
-            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 10h40v8c0 10-8 18-20 22c12 4 20 12 20 22v8H20v-8c0-10 8-18 20-22C28 36 20 28 20 18V10z" stroke="currentColor" strokeWidth="3" fill="none" className="text-muted-foreground"/>
-              <path d="M28 18c0 6 5 12 12 15c7-3 12-9 12-15H28z" fill="#F0B90B"/>
-              <path d="M28 62c0-6 5-12 12-15c7 3 12 9 12 15H28z" fill="#F0B90B" opacity="0.4"/>
+        <div className="flex-1 flex flex-col items-center justify-start pt-20 px-6">
+          {/* Hourglass with pouring sand animation */}
+          <div className="mb-8 relative" style={{ width: 100, height: 120 }}>
+            <svg width="100" height="120" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Top cap */}
+              <rect x="18" y="8" width="64" height="6" rx="2" stroke="currentColor" strokeWidth="2.5" fill="none" className="text-muted-foreground"/>
+              {/* Bottom cap */}
+              <rect x="18" y="106" width="64" height="6" rx="2" stroke="currentColor" strokeWidth="2.5" fill="none" className="text-muted-foreground"/>
+              
+              {/* Left glass wall */}
+              <path d="M22 14 C22 14 22 42 50 60 C22 78 22 106 22 106" stroke="currentColor" strokeWidth="2.5" fill="none" className="text-muted-foreground"/>
+              {/* Right glass wall */}
+              <path d="M78 14 C78 14 78 42 50 60 C78 78 78 106 78 106" stroke="currentColor" strokeWidth="2.5" fill="none" className="text-muted-foreground"/>
+
+              {/* Top sand (yellow, shrinking) */}
+              <path d="M30 20 C30 20 30 38 50 52 C70 38 70 20 70 20 Z" fill="#F0B90B" opacity="0.85">
+                <animate attributeName="d" 
+                  values="M30 20 C30 20 30 38 50 52 C70 38 70 20 70 20 Z;M38 20 C38 20 38 32 50 42 C62 32 62 20 62 20 Z;M44 20 C44 20 44 26 50 32 C56 26 56 20 56 20 Z"
+                  dur="120s" fill="freeze" />
+              </path>
+
+              {/* Pouring sand stream (thin line falling through neck) */}
+              <rect x="48.5" y="48" width="3" height="24" rx="1.5" fill="#F0B90B">
+                <animate attributeName="opacity" values="1;0.6;1" dur="0.8s" repeatCount="indefinite"/>
+                <animate attributeName="height" values="24;20;24" dur="0.8s" repeatCount="indefinite"/>
+              </rect>
+
+              {/* Sand particles falling */}
+              <circle cx="50" cy="68" r="1.5" fill="#F0B90B">
+                <animate attributeName="cy" values="62;72;82" dur="0.6s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="1;0.7;0" dur="0.6s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="48" cy="70" r="1" fill="#F0B90B">
+                <animate attributeName="cy" values="65;75;85" dur="0.7s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.8;0.5;0" dur="0.7s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="52" cy="66" r="1" fill="#F0B90B">
+                <animate attributeName="cy" values="60;70;80" dur="0.5s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.9;0.6;0" dur="0.5s" repeatCount="indefinite"/>
+              </circle>
+
+              {/* Bottom sand pile (growing) */}
+              <path d="M30 106 C30 98 38 88 50 84 C62 88 70 98 70 106 Z" fill="#F0B90B" opacity="0.7">
+                <animate attributeName="d"
+                  values="M38 106 C38 102 44 96 50 94 C56 96 62 102 62 106 Z;M34 106 C34 96 40 88 50 84 C60 88 66 96 66 106 Z;M30 106 C30 92 38 82 50 78 C62 82 70 92 70 106 Z"
+                  dur="120s" fill="freeze"/>
+                <animate attributeName="opacity" values="0.5;0.7;0.9" dur="120s" fill="freeze"/>
+              </path>
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Withdrawal Processing</h2>
-          <div className="flex items-baseline justify-center mb-4">
-            <span className="text-4xl font-bold text-foreground">{lastAmount}</span>
+
+          <h2 className="text-xl font-bold text-foreground mb-3">Withdrawal Processing</h2>
+          <div className="flex items-baseline justify-center mb-5">
+            <span className="text-[40px] font-bold text-foreground">{lastAmount}</span>
             <span className="text-lg font-medium text-muted-foreground ml-2">USDT</span>
           </div>
           <p className="text-sm text-muted-foreground mb-1">
             Estimated completion time:{estimatedTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} {estimatedTime.toLocaleTimeString()}
           </p>
-          <p className="text-sm text-muted-foreground text-center px-4">
-            You will receive an email once withdrawal is completed. View history for the latest updates.
+          <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
+            You will receive an email once withdrawal is completed.View history for the latest updates.
           </p>
-          <div className="mt-8 text-center">
-            <p className="text-xs text-muted-foreground">Time remaining: {mins}:{secs.toString().padStart(2, '0')}</p>
-          </div>
         </div>
       </div>
     );
