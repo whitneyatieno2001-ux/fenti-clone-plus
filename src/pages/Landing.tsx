@@ -75,17 +75,17 @@ export default function Landing() {
             <span className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">₵₽¥₱₮₩₳∇€</span>
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-8 text-gradient">
-            Secure.<br />Your World of Web3.
+            Trade Bold.<br />Own Your Future.
           </h1>
           <p className="text-muted-foreground text-lg mb-8">
-            The simplest and most secure way to explore the decentralized web.
+            Your all-in-one gateway to crypto trading, DeFi, and digital wealth — built for hustlers who move fast.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
             <button
               onClick={() => navigate('/auth')}
               className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-all hover:-translate-y-0.5 hover:shadow-glow active:scale-[0.98]"
             >
-              Get Wallet
+              Create Wallet
             </button>
             <button
               onClick={() => navigate('/auth')}
@@ -149,13 +149,13 @@ export default function Landing() {
       <section className="max-w-[1200px] mx-auto px-6 md:px-10 py-20">
         <div className="reveal flex flex-col md:flex-row items-center gap-16 mb-24">
           <div className="flex-1 text-center md:text-left">
-            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">₵₽¥₱₮₩₳∇€ Wallet Web</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">A Reimagined On-Chain Trading Experience</h2>
+            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">₵₽¥₱₮₩₳∇€ Trading</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Trade Smarter, Not Harder</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              Built for a new generation of traders. It combines bank-level security with high-speed performance to deliver a faster, smarter, and more flexible trading experience—all in one place.
+              Lightning-fast execution meets institutional-grade tools. Whether you're scalping or swing trading, ₵₽¥₱₮₩₳∇€ gives you the edge to dominate any market condition.
             </p>
             <button onClick={() => navigate('/auth')} className="text-primary font-medium inline-flex items-center gap-2 hover:underline hover:gap-3 transition-all">
-              Start Trading →
+              Enter the Markets →
             </button>
           </div>
           <div className="flex-1 flex justify-center w-full">
@@ -186,13 +186,13 @@ export default function Landing() {
         {/* Feature: Swap */}
         <div className="reveal flex flex-col md:flex-row-reverse items-center gap-16 mb-24">
           <div className="flex-1 text-center md:text-left">
-            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Swap</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Swap tokens cross-chain at the best prices</h2>
+            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Instant Swap</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Flip tokens instantly across chains</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              Trade thousands of tokens across various networks. Get the best prices thanks to deep liquidity and low slippage.
+              Swap thousands of tokens across multiple networks with zero hassle. Deep liquidity pools ensure you always get the best rates with minimal slippage.
             </p>
             <button onClick={() => navigate('/auth')} className="text-primary font-medium inline-flex items-center gap-2 hover:underline hover:gap-3 transition-all">
-              Try Swap Now →
+              Swap Now →
             </button>
           </div>
           <div className="flex-1 flex justify-center">
@@ -210,10 +210,10 @@ export default function Landing() {
         {/* Feature: Transfer */}
         <div className="reveal flex flex-col md:flex-row items-center gap-16 mb-24">
           <div className="flex-1 text-center md:text-left">
-            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Transfer</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Bridge between the exchange and Web3</h2>
+            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Move Funds</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">One tap. Anywhere. Anytime.</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              Why juggle multiple apps? Simply do it all in one! Transfer funds quickly and easily. Move across CeFi, DeFi, and Web3 in a single tap.
+              Stop switching between apps. Deposit, withdraw, and transfer funds across CeFi, DeFi, and Web3 — all from one powerful interface.
             </p>
           </div>
           <div className="flex-1 flex justify-center">
@@ -235,10 +235,10 @@ export default function Landing() {
         {/* Feature: Earn */}
         <div className="reveal flex flex-col md:flex-row-reverse items-center gap-16 mb-24">
           <div className="flex-1 text-center md:text-left">
-            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Earn</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Grow your portfolio with one click</h2>
+            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Passive Income</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Make your crypto work while you sleep</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              Put your idle crypto to work. Find the best opportunities to earn yield on your assets in seconds.
+              Stop letting your assets sit idle. Stake, lend, and earn yield on your holdings with just one click — let your money multiply.
             </p>
           </div>
           <div className="flex-1 flex justify-center">
@@ -266,12 +266,12 @@ export default function Landing() {
       <section className="text-center py-24 relative overflow-hidden bg-card">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary blur-[200px] opacity-5 z-0" />
         <div className="reveal relative z-10 max-w-[1200px] mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Explore Web3 with Ease</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Unlock the Full Power of Web3</h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-10">
-            Trade your favorite tokens. Access multiple blockchains. Explore some of the best dApps. All without leaving your wallet.
+            Access top dApps, trade across blockchains, and manage your entire portfolio — all without ever leaving ₵₽¥₱₮₩₳∇€.
           </p>
           <button onClick={() => navigate('/auth')} className="text-primary font-medium inline-flex items-center gap-2 hover:underline hover:gap-3 transition-all text-lg">
-            View Networks and dApps →
+            Explore dApps & Networks →
           </button>
         </div>
       </section>
@@ -279,25 +279,25 @@ export default function Landing() {
       {/* Security Section */}
       <section className="max-w-[1200px] mx-auto px-6 md:px-10 py-24">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
-          Putting you in control.<br />Security at every stage.
+          Your assets. Your keys.<br />Security you can trust.
         </h2>
         <div className="reveal grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             {
               icon: '🔒',
-              title: 'Self-custody wallet',
-              desc: 'Funds in the wallet are exclusively held and managed by the user. You are in complete control over your crypto assets.',
+              title: 'True self-custody',
+              desc: 'Your funds never leave your hands. ₵₽¥₱₮₩₳∇€ gives you full ownership and total control — no middlemen, no compromises.',
             },
             {
               icon: '🛡️',
-              title: 'Powered by MPC',
-              desc: 'Advanced multi-party computation (MPC) technology creates three separately stored "key shares". Enjoy unparalleled security without the need for a seed phrase.',
+              title: 'Military-grade encryption',
+              desc: 'Powered by multi-party computation (MPC) — your private keys are split into encrypted shares stored separately. No seed phrase needed.',
               link: true,
             },
             {
               icon: '⚠️',
-              title: 'Built-in risk controls',
-              desc: 'Get alerts if a token or blockchain carries security risks, including wrong address protection or malicious contract detection.',
+              title: 'Smart risk detection',
+              desc: 'Real-time alerts for suspicious tokens, malicious contracts, and wrong-address transfers. We catch threats before they reach you.',
             },
           ].map((card, i) => (
             <div
@@ -323,12 +323,12 @@ export default function Landing() {
 
       {/* FAQ */}
       <section className="max-w-[1200px] mx-auto px-6 md:px-10 pb-24">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Got Questions? We Got Answers.</h2>
         {[
-          'What is ₵₽¥₱₮₩₳∇€ Wallet?',
-          'What are the benefits of using ₵₽¥₱₮₩₳∇€ Wallet?',
-          'How do I use my ₵₽¥₱₮₩₳∇€ Wallet to send and receive tokens?',
-          'Is ₵₽¥₱₮₩₳∇€ Wallet a self-custody wallet? Who has control over my funds?',
+          'What exactly is ₵₽¥₱₮₩₳∇€?',
+          'Why should I choose ₵₽¥₱₮₩₳∇€ over other wallets?',
+          'How do I send and receive crypto on ₵₽¥₱₮₩₳∇€?',
+          'Who controls my funds — me or ₵₽¥₱₮₩₳∇€?',
         ].map((q, i) => (
           <div key={i} className="border-b border-border py-6 hover:bg-foreground/[0.02] transition-colors">
             <div
