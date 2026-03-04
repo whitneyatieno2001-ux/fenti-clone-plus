@@ -210,10 +210,10 @@ export default function Landing() {
         {/* Feature: Transfer */}
         <div className="reveal flex flex-col md:flex-row items-center gap-16 mb-24">
           <div className="flex-1 text-center md:text-left">
-            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Transfer</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Bridge between the exchange and Web3</h2>
+            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Move Funds</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">One tap. Anywhere. Anytime.</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              Why juggle multiple apps? Simply do it all in one! Transfer funds quickly and easily. Move across CeFi, DeFi, and Web3 in a single tap.
+              Stop switching between apps. Deposit, withdraw, and transfer funds across CeFi, DeFi, and Web3 — all from one powerful interface.
             </p>
           </div>
           <div className="flex-1 flex justify-center">
