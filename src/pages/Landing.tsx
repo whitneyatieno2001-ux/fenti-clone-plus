@@ -323,12 +323,12 @@ export default function Landing() {
 
       {/* FAQ */}
       <section className="max-w-[1200px] mx-auto px-6 md:px-10 pb-24">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Got Questions? We Got Answers.</h2>
         {[
-          'What is ₵₽¥₱₮₩₳∇€ Wallet?',
-          'What are the benefits of using ₵₽¥₱₮₩₳∇€ Wallet?',
-          'How do I use my ₵₽¥₱₮₩₳∇€ Wallet to send and receive tokens?',
-          'Is ₵₽¥₱₮₩₳∇€ Wallet a self-custody wallet? Who has control over my funds?',
+          'What exactly is ₵₽¥₱₮₩₳∇€?',
+          'Why should I choose ₵₽¥₱₮₩₳∇€ over other wallets?',
+          'How do I send and receive crypto on ₵₽¥₱₮₩₳∇€?',
+          'Who controls my funds — me or ₵₽¥₱₮₩₳∇€?',
         ].map((q, i) => (
           <div key={i} className="border-b border-border py-6 hover:bg-foreground/[0.02] transition-colors">
             <div
