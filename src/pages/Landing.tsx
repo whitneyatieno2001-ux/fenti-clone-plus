@@ -266,12 +266,12 @@ export default function Landing() {
       <section className="text-center py-24 relative overflow-hidden bg-card">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary blur-[200px] opacity-5 z-0" />
         <div className="reveal relative z-10 max-w-[1200px] mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Explore Web3 with Ease</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Unlock the Full Power of Web3</h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-10">
-            Trade your favorite tokens. Access multiple blockchains. Explore some of the best dApps. All without leaving your wallet.
+            Access top dApps, trade across blockchains, and manage your entire portfolio — all without ever leaving ₵₽¥₱₮₩₳∇€.
           </p>
           <button onClick={() => navigate('/auth')} className="text-primary font-medium inline-flex items-center gap-2 hover:underline hover:gap-3 transition-all text-lg">
-            View Networks and dApps →
+            Explore dApps & Networks →
           </button>
         </div>
       </section>
