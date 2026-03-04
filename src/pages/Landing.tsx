@@ -75,10 +75,10 @@ export default function Landing() {
             <span className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight">₵₽¥₱₮₩₳∇€</span>
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-8 text-gradient">
-            Secure.<br />Your World of Web3.
+            Trade Bold.<br />Own Your Future.
           </h1>
           <p className="text-muted-foreground text-lg mb-8">
-            The simplest and most secure way to explore the decentralized web.
+            Your all-in-one gateway to crypto trading, DeFi, and digital wealth — built for hustlers who move fast.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
             <button
