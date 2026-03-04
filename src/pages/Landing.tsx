@@ -149,13 +149,13 @@ export default function Landing() {
       <section className="max-w-[1200px] mx-auto px-6 md:px-10 py-20">
         <div className="reveal flex flex-col md:flex-row items-center gap-16 mb-24">
           <div className="flex-1 text-center md:text-left">
-            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">₵₽¥₱₮₩₳∇€ Wallet Web</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">A Reimagined On-Chain Trading Experience</h2>
+            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">₵₽¥₱₮₩₳∇€ Trading</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Trade Smarter, Not Harder</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              Built for a new generation of traders. It combines bank-level security with high-speed performance to deliver a faster, smarter, and more flexible trading experience—all in one place.
+              Lightning-fast execution meets institutional-grade tools. Whether you're scalping or swing trading, ₵₽¥₱₮₩₳∇€ gives you the edge to dominate any market condition.
             </p>
             <button onClick={() => navigate('/auth')} className="text-primary font-medium inline-flex items-center gap-2 hover:underline hover:gap-3 transition-all">
-              Start Trading →
+              Enter the Markets →
             </button>
           </div>
           <div className="flex-1 flex justify-center w-full">
