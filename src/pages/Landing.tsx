@@ -186,13 +186,13 @@ export default function Landing() {
         {/* Feature: Swap */}
         <div className="reveal flex flex-col md:flex-row-reverse items-center gap-16 mb-24">
           <div className="flex-1 text-center md:text-left">
-            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Swap</span>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Swap tokens cross-chain at the best prices</h2>
+            <span className="text-primary font-semibold uppercase tracking-wider text-sm block mb-4">Instant Swap</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">Flip tokens instantly across chains</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              Trade thousands of tokens across various networks. Get the best prices thanks to deep liquidity and low slippage.
+              Swap thousands of tokens across multiple networks with zero hassle. Deep liquidity pools ensure you always get the best rates with minimal slippage.
             </p>
             <button onClick={() => navigate('/auth')} className="text-primary font-medium inline-flex items-center gap-2 hover:underline hover:gap-3 transition-all">
-              Try Swap Now →
+              Swap Now →
             </button>
           </div>
           <div className="flex-1 flex justify-center">
