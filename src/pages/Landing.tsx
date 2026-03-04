@@ -85,7 +85,7 @@ export default function Landing() {
               onClick={() => navigate('/auth')}
               className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-all hover:-translate-y-0.5 hover:shadow-glow active:scale-[0.98]"
             >
-              Get Wallet
+              Create Wallet
             </button>
             <button
               onClick={() => navigate('/auth')}
