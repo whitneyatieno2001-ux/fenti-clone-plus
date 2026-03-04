@@ -279,25 +279,25 @@ export default function Landing() {
       {/* Security Section */}
       <section className="max-w-[1200px] mx-auto px-6 md:px-10 py-24">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
-          Putting you in control.<br />Security at every stage.
+          Your assets. Your keys.<br />Security you can trust.
         </h2>
         <div className="reveal grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             {
               icon: '🔒',
-              title: 'Self-custody wallet',
-              desc: 'Funds in the wallet are exclusively held and managed by the user. You are in complete control over your crypto assets.',
+              title: 'True self-custody',
+              desc: 'Your funds never leave your hands. ₵₽¥₱₮₩₳∇€ gives you full ownership and total control — no middlemen, no compromises.',
             },
             {
               icon: '🛡️',
-              title: 'Powered by MPC',
-              desc: 'Advanced multi-party computation (MPC) technology creates three separately stored "key shares". Enjoy unparalleled security without the need for a seed phrase.',
+              title: 'Military-grade encryption',
+              desc: 'Powered by multi-party computation (MPC) — your private keys are split into encrypted shares stored separately. No seed phrase needed.',
               link: true,
             },
             {
               icon: '⚠️',
-              title: 'Built-in risk controls',
-              desc: 'Get alerts if a token or blockchain carries security risks, including wrong address protection or malicious contract detection.',
+              title: 'Smart risk detection',
+              desc: 'Real-time alerts for suspicious tokens, malicious contracts, and wrong-address transfers. We catch threats before they reach you.',
             },
           ].map((card, i) => (
             <div
