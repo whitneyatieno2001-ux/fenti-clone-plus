@@ -314,7 +314,7 @@ export default function BotPage() {
         if (!isNaN(sl) && sl > 0 && updatedBot.totalPL <= -sl) {
           setTimeout(() => {
             stopBot(botId);
-            toast({ title: '🛑 Stop Loss Hit!', description: `${updatedBot.name} hit SL at -$${Math.abs(updatedBot.totalPL).toFixed(2)}`, variant: 'destructive' });
+            toast({ title: 'Stop Loss Hit', description: `${updatedBot.name} hit SL at -$${Math.abs(updatedBot.totalPL).toFixed(2)}`, variant: 'destructive' });
           }, 100);
         }
       }

@@ -181,13 +181,31 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* More Services */}
-        <button
-          onClick={() => {}}
-          className="w-full py-3 rounded-full bg-secondary text-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
-        >
-          More Services
-        </button>
+        {/* Theme Selection */}
+        <div>
+          <h3 className="text-base font-semibold text-foreground mb-4">THEME</h3>
+          <div className="space-y-3">
+            {[
+              { key: 'dark', label: 'Dark', icon: Moon },
+              { key: 'light', label: 'Light', icon: Sun },
+              { key: 'system', label: 'System', icon: Monitor },
+            ].map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setTheme(key)}
+                className={cn(
+                  "w-full flex flex-col items-center gap-2 py-6 rounded-xl border-2 transition-all",
+                  theme === key
+                    ? "border-primary bg-primary/5"
+                    : "border-border/50 bg-card hover:bg-secondary"
+                )}
+              >
+                <Icon className="h-7 w-7 text-foreground" />
+                <span className="text-sm font-medium text-foreground">{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Menu Items */}
         <div className="space-y-2">

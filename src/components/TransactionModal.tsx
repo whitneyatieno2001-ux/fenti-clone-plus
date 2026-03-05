@@ -89,14 +89,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     return () => clearInterval(interval);
   }, [flowStatus, processingTimer]);
 
-  useEffect(() => {
-    const loadPhone = async () => {
-      if (!user) return;
-      const { data } = await supabase.from('profiles').select('phone_number').eq('user_id', user.id).maybeSingle();
-      if (data?.phone_number) { setPhoneNumber(data.phone_number); setMpesaPhone(data.phone_number); }
-    };
-    if (isOpen) loadPhone();
-  }, [user, isOpen]);
+  // Don't pre-fill phone number - user must enter it each time
 
   const formatTimer = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
