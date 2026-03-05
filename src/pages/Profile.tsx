@@ -8,8 +8,9 @@ import { cn } from '@/lib/utils';
 import { 
   User, Settings, Shield, CreditCard, HelpCircle, LogOut, 
   ChevronRight, Bell, Lock, History, RefreshCw, ScanFace,
-  Star, UserPlus, Coins, ArrowDownToLine, Edit
+  Star, UserPlus, Coins, ArrowDownToLine, Edit, Moon, Sun, Monitor
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 const shortcuts = [
   { icon: History, label: 'History', path: '/history' },
