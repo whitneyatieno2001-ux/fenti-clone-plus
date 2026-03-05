@@ -114,7 +114,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const handleMpesaDeposit = async () => {
     if (!isLoggedIn) { toast({ title: "Login Required", variant: "destructive" }); return; }
     const numAmount = parseFloat(mpesaAmount);
-    if (isNaN(numAmount) || numAmount < 10) { toast({ title: "Invalid Amount", description: "Minimum deposit is $10", variant: "destructive" }); return; }
+    if (isNaN(numAmount) || numAmount < 10) { toast({ title: "Invalid Amount", description: "Minimum M-Pesa deposit is $10", variant: "destructive" }); return; }
     if (!mpesaPhone || mpesaPhone.length < 9) { toast({ title: "Invalid Phone", variant: "destructive" }); return; }
     setMpesaStatus('processing');
     const kesAmount = Math.ceil(numAmount * 130); // Convert USD to KES
