@@ -64,6 +64,7 @@ const App = () => (
               <Route path="/settings" element={<Settings />} />
               <Route path="/kyc" element={<KycVerification />} />
               <Route path="/trading-risk-policy" element={<TradingRiskPolicy />} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
