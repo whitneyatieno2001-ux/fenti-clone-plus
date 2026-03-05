@@ -308,7 +308,7 @@ export default function BotPage() {
         if (!isNaN(tp) && tp > 0 && updatedBot.totalPL >= tp) {
           setTimeout(() => {
             stopBot(botId);
-            toast({ title: '🎯 Take Profit Reached!', description: `${updatedBot.name} hit TP at +$${updatedBot.totalPL.toFixed(2)}` });
+            toast({ title: 'Take Profit Reached', description: `${updatedBot.name} hit TP at +$${updatedBot.totalPL.toFixed(2)}` });
           }, 100);
         }
         if (!isNaN(sl) && sl > 0 && updatedBot.totalPL <= -sl) {
