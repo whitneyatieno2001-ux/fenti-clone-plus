@@ -49,6 +49,7 @@ export default function Profile() {
     resetDemo,
   } = useAccount();
 
+  const { theme, setTheme } = useTheme();
   const isVerified = userEmail === 'whitneyatieno86@gmail.com' || userEmail === 'chenyabenard53@gmail.com';
   const hasSubmittedKyc = isLoggedIn && !isVerified;
 
