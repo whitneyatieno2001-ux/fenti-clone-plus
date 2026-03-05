@@ -117,8 +117,8 @@ function BotLogsPanel({ logs, balance }: { logs: BotLogEntry[]; balance: number 
               "text-muted-foreground"
             )}>
               <span className="text-muted-foreground">{formatLogTime(log.time)}</span>{' '}
-              {log.type === 'trade' && '✅ '}
-              {log.type === 'warning' && '🔴 '}
+              {log.type === 'trade' && '[WIN] '}
+              {log.type === 'warning' && '[STOP] '}
               {log.message}
             </p>
           ))
