@@ -117,8 +117,8 @@ function BotLogsPanel({ logs, balance }: { logs: BotLogEntry[]; balance: number 
               "text-muted-foreground"
             )}>
               <span className="text-muted-foreground">{formatLogTime(log.time)}</span>{' '}
-              {log.type === 'trade' && '✅ '}
-              {log.type === 'warning' && '🔴 '}
+              {log.type === 'trade' && '[WIN] '}
+              {log.type === 'warning' && '[STOP] '}
               {log.message}
             </p>
           ))
@@ -308,13 +308,13 @@ export default function BotPage() {
         if (!isNaN(tp) && tp > 0 && updatedBot.totalPL >= tp) {
           setTimeout(() => {
             stopBot(botId);
-            toast({ title: '🎯 Take Profit Reached!', description: `${updatedBot.name} hit TP at +$${updatedBot.totalPL.toFixed(2)}` });
+            toast({ title: 'Take Profit Reached', description: `${updatedBot.name} hit TP at +$${updatedBot.totalPL.toFixed(2)}` });
           }, 100);
         }
         if (!isNaN(sl) && sl > 0 && updatedBot.totalPL <= -sl) {
           setTimeout(() => {
             stopBot(botId);
-            toast({ title: '🛑 Stop Loss Hit!', description: `${updatedBot.name} hit SL at -$${Math.abs(updatedBot.totalPL).toFixed(2)}`, variant: 'destructive' });
+            toast({ title: 'Stop Loss Hit', description: `${updatedBot.name} hit SL at -$${Math.abs(updatedBot.totalPL).toFixed(2)}`, variant: 'destructive' });
           }, 100);
         }
       }

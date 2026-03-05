@@ -89,14 +89,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
     return () => clearInterval(interval);
   }, [flowStatus, processingTimer]);
 
-  useEffect(() => {
-    const loadPhone = async () => {
-      if (!user) return;
-      const { data } = await supabase.from('profiles').select('phone_number').eq('user_id', user.id).maybeSingle();
-      if (data?.phone_number) { setPhoneNumber(data.phone_number); setMpesaPhone(data.phone_number); }
-    };
-    if (isOpen) loadPhone();
-  }, [user, isOpen]);
+  // Don't pre-fill phone number - user must enter it each time
 
   const formatTimer = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
@@ -114,7 +107,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
   const handleMpesaDeposit = async () => {
     if (!isLoggedIn) { toast({ title: "Login Required", variant: "destructive" }); return; }
     const numAmount = parseFloat(mpesaAmount);
-    if (isNaN(numAmount) || numAmount < 10) { toast({ title: "Invalid Amount", description: "Minimum deposit is $10", variant: "destructive" }); return; }
+    if (isNaN(numAmount) || numAmount < 10) { toast({ title: "Invalid Amount", description: "Minimum M-Pesa deposit is $10", variant: "destructive" }); return; }
     if (!mpesaPhone || mpesaPhone.length < 9) { toast({ title: "Invalid Phone", variant: "destructive" }); return; }
     setMpesaStatus('processing');
     const kesAmount = Math.ceil(numAmount * 130); // Convert USD to KES
