@@ -28,6 +28,7 @@ import HelpSupport from "./pages/HelpSupport";
 import Settings from "./pages/Settings";
 import KycVerification from "./pages/KycVerification";
 import TradingRiskPolicy from "./pages/TradingRiskPolicy";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
