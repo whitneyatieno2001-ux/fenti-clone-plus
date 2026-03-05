@@ -5,7 +5,6 @@ import { User } from 'lucide-react';
 import usFlag from '@/assets/us-flag.png';
 import keFlag from '@/assets/ke-flag.png';
 import zaFlag from '@/assets/za-flag.png';
-import { ThemeToggle } from '@/components/ThemeToggle';
 
 // Country phone prefixes to flag mapping
 const getCountryFlagFromPhone = (phoneNumber: string | null): string => {
