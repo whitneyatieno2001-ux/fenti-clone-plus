@@ -53,11 +53,12 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [profileName, setProfileName] = useState<string | null>(null);
 
   const currentBalance = accountType === 'demo' ? demoBalance : accountType === 'real' ? realBalance : binanceBalance;
   const isLoggedIn = !!user;
   const userEmail = user?.email || null;
-  const userName = user?.user_metadata?.name || (userEmail ? userEmail.split('@')[0] : null);
+  const userName = profileName || user?.user_metadata?.name || (userEmail ? userEmail.split('@')[0] : null);
 
   const loadProfile = async (userId: string) => {
     try {
@@ -66,6 +67,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       if (data) {
         setDemoBalance(Number(data.demo_balance) || 10000);
         setRealBalance(Number(data.real_balance) || 0);
+        setProfileName(data.name || null);
       }
     } catch (err) { console.error('Error loading profile:', err); }
   };
@@ -109,6 +111,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        setProfileName(session.user.user_metadata?.name || null);
         setTimeout(() => {
           loadProfile(session.user.id);
           loadBinanceConnection(session.user.id);
@@ -116,7 +119,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         }, 0);
       } else {
         setDemoBalance(10000); setRealBalance(0); setBinanceBalance(0);
-        setIsBinanceConnected(false); setTransactions([]);
+        setIsBinanceConnected(false); setTransactions([]); setProfileName(null);
       }
     });
 
@@ -124,6 +127,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        setProfileName(session.user.user_metadata?.name || null);
         loadProfile(session.user.id);
         loadBinanceConnection(session.user.id);
       }
@@ -206,7 +210,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null); setSession(null); setDemoBalance(10000); setRealBalance(0);
-    setBinanceBalance(0); setIsBinanceConnected(false); setTransactions([]);
+    setBinanceBalance(0); setIsBinanceConnected(false); setTransactions([]); setProfileName(null);
   };
 
   return (
