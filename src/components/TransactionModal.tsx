@@ -22,7 +22,7 @@ type MpesaStatus = 'idle' | 'processing' | 'waiting' | 'success' | 'failed';
 type FlowStatus = 'form' | 'processing' | 'pending' | 'success';
 
 const MPESA_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png';
-const CRYPTO_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/800px-Bitcoin.svg.png';
+const CRYPTO_LOGO = 'https://cryptologos.cc/logos/tether-usdt-logo.png';
 
 export function TransactionModal({ isOpen, onClose, type }: TransactionModalProps) {
   const [depositMethod, setDepositMethod] = useState<DepositMethod>('select');
