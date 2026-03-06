@@ -348,11 +348,8 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
             <span className="text-[40px] font-bold text-foreground">{lastAmount}</span>
             <span className="text-lg font-medium text-muted-foreground ml-2">USDT</span>
           </div>
-          <p className="text-sm text-muted-foreground mb-1">
-            Estimated completion time:{estimatedTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} {estimatedTime.toLocaleTimeString()}
-          </p>
           <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-            You will receive an email once withdrawal is completed.View history for the latest updates.
+            You will receive an email once withdrawal is completed.
           </p>
         </div>
       </div>
