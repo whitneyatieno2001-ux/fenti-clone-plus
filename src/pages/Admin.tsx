@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Shield, DollarSign, Users, ArrowLeft, RefreshCw, Search } from 'lucide-react';
+import { Shield, DollarSign, Users, RefreshCw, Search, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Deposit {
