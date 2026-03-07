@@ -49,6 +49,8 @@ const MethodCard = ({ title, subtitle, description, minAmount, logo, onClick, bu
 
 const MPESA_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png';
 const CRYPTO_LOGO = usdtLogo;
+
+export function TransactionModal({ isOpen, onClose, type }: TransactionModalProps) {
   const [depositMethod, setDepositMethod] = useState<DepositMethod>('select');
   const [withdrawMethodState, setWithdrawMethodState] = useState<WithdrawMethod>('select');
   const [amount, setAmount] = useState('');
