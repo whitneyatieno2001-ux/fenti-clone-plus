@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useAccount } from '@/contexts/AccountContext';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Shield, DollarSign, Users, ArrowLeft, RefreshCw, Search } from 'lucide-react';
+import { Shield, DollarSign, Users, RefreshCw, Search, Lock, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Deposit {
@@ -37,9 +37,8 @@ interface UserProfile {
 
 export default function Admin() {
   const navigate = useNavigate();
-  const { isLoggedIn, isLoading: authLoading } = useAccount();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [activeTab, setActiveTab] = useState<'deposits' | 'users'>('deposits');
@@ -48,22 +47,32 @@ export default function Admin() {
   const [crediting, setCrediting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isLoggedIn) { navigate('/auth'); return; }
-    checkAdmin();
-  }, [isLoggedIn, authLoading]);
+  // Admin login state
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
-  const checkAdmin = async () => {
+  const handleAdminLogin = async () => {
+    setLoginLoading(true);
+    setLoginError('');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate('/'); return; }
-      const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
-      if (!data) { navigate('/'); toast({ title: 'Access Denied', description: 'You do not have admin privileges.', variant: 'destructive' }); return; }
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: adminEmail,
+        password: adminPassword,
+      });
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Login failed');
+      const { data: roleData } = await supabase.rpc('has_role', { _user_id: authData.user.id, _role: 'admin' });
+      if (!roleData) {
+        await supabase.auth.signOut();
+        throw new Error('Access denied. Admin privileges required.');
+      }
       setIsAdmin(true);
       loadData();
-    } catch { navigate('/'); }
-    finally { setLoading(false); }
+    } catch (err: any) {
+      setLoginError(err.message || 'Login failed');
+    } finally { setLoginLoading(false); }
   };
 
   const loadData = async () => {
@@ -111,11 +120,46 @@ export default function Admin() {
     u.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading || authLoading) {
+  if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><RefreshCw className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  if (!isAdmin) return null;
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Lock className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-lg">Admin Access</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loginError && (
+              <div className="text-sm text-destructive text-center bg-destructive/10 p-2 rounded-lg">{loginError}</div>
+            )}
+            <Input
+              type="email"
+              placeholder="Admin email"
+              value={adminEmail}
+              onChange={e => setAdminEmail(e.target.value)}
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={adminPassword}
+              onChange={e => setAdminPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAdminLogin()}
+            />
+            <Button className="w-full" disabled={loginLoading || !adminEmail || !adminPassword} onClick={handleAdminLogin}>
+              {loginLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Shield className="h-4 w-4 mr-2" />}
+              Sign In
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -123,9 +167,6 @@ export default function Admin() {
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <Shield className="h-6 w-6 text-primary" />
             <h1 className="text-lg font-bold">Admin Panel</h1>
           </div>
