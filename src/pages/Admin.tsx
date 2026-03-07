@@ -120,11 +120,46 @@ export default function Admin() {
     u.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading || authLoading) {
+  if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background"><RefreshCw className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  if (!isAdmin) return null;
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Lock className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-lg">Admin Access</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loginError && (
+              <div className="text-sm text-destructive text-center bg-destructive/10 p-2 rounded-lg">{loginError}</div>
+            )}
+            <Input
+              type="email"
+              placeholder="Admin email"
+              value={adminEmail}
+              onChange={e => setAdminEmail(e.target.value)}
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={adminPassword}
+              onChange={e => setAdminPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAdminLogin()}
+            />
+            <Button className="w-full" disabled={loginLoading || !adminEmail || !adminPassword} onClick={handleAdminLogin}>
+              {loginLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Shield className="h-4 w-4 mr-2" />}
+              Sign In
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
