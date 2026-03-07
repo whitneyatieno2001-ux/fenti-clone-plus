@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowDownToLine, ArrowUpFromLine, Smartphone, AlertCircle, Loader2, Coins, ChevronLeft, CheckCircle2, Copy, Clock, ExternalLink, Wallet } from 'lucide-react';
 import binanceQrPay from '@/assets/binance-qr-pay.png';
 import paypalQr from '@/assets/paypal-qr.png';
+import usdtLogo from '@/assets/usdt-logo.png';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
