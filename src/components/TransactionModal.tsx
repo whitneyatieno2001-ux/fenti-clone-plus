@@ -290,24 +290,6 @@ const CRYPTO_LOGO = usdtLogo;
     );
   };
 
-  // Method card matching screenshot style
-  const MethodCard = ({ title, subtitle, description, minAmount, logo, onClick, buttonLabel }: {
-    title: string; subtitle: string; description: string; minAmount: string; logo: string; onClick: () => void; buttonLabel: string;
-  }) => (
-    <div className="rounded-xl border border-border bg-card p-6 space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold text-foreground">{title}</h3>
-        <img src={logo} alt={title} className="h-10 w-auto object-contain" />
-      </div>
-      <p className="text-sm text-muted-foreground">{subtitle}</p>
-      <p className="text-sm text-foreground">{description}</p>
-      <p className="text-sm font-medium text-primary">Min: {minAmount}</p>
-      <Button onClick={onClick} variant="outline" className="w-full h-12 text-base font-semibold border-border hover:bg-secondary">
-        {buttonLabel}
-      </Button>
-    </div>
-  );
-
   // Withdrawal Processing screen (hourglass) - matches screenshot exactly
   const ProcessingScreen = () => {
     const estimatedTime = new Date(Date.now() + processingTimer * 1000);
