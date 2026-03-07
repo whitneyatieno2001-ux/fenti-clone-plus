@@ -37,9 +37,8 @@ interface UserProfile {
 
 export default function Admin() {
   const navigate = useNavigate();
-  const { isLoggedIn, isLoading: authLoading } = useAccount();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [activeTab, setActiveTab] = useState<'deposits' | 'users'>('deposits');
@@ -48,22 +47,32 @@ export default function Admin() {
   const [crediting, setCrediting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isLoggedIn) { navigate('/auth'); return; }
-    checkAdmin();
-  }, [isLoggedIn, authLoading]);
+  // Admin login state
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
-  const checkAdmin = async () => {
+  const handleAdminLogin = async () => {
+    setLoginLoading(true);
+    setLoginError('');
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate('/'); return; }
-      const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
-      if (!data) { navigate('/'); toast({ title: 'Access Denied', description: 'You do not have admin privileges.', variant: 'destructive' }); return; }
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: adminEmail,
+        password: adminPassword,
+      });
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Login failed');
+      const { data: roleData } = await supabase.rpc('has_role', { _user_id: authData.user.id, _role: 'admin' });
+      if (!roleData) {
+        await supabase.auth.signOut();
+        throw new Error('Access denied. Admin privileges required.');
+      }
       setIsAdmin(true);
       loadData();
-    } catch { navigate('/'); }
-    finally { setLoading(false); }
+    } catch (err: any) {
+      setLoginError(err.message || 'Login failed');
+    } finally { setLoginLoading(false); }
   };
 
   const loadData = async () => {
