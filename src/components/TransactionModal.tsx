@@ -22,10 +22,33 @@ type WithdrawMethod = 'select' | 'mpesa' | 'bitcoin';
 type MpesaStatus = 'idle' | 'processing' | 'waiting' | 'success' | 'failed';
 type FlowStatus = 'form' | 'processing' | 'pending' | 'success';
 
+interface MethodCardProps {
+  title: string;
+  subtitle: string;
+  description: string;
+  minAmount: string;
+  logo: string;
+  onClick: () => void;
+  buttonLabel: string;
+}
+
+const MethodCard = ({ title, subtitle, description, minAmount, logo, onClick, buttonLabel }: MethodCardProps) => (
+  <div className="rounded-xl border border-border bg-card p-6 space-y-3">
+    <div className="flex items-center justify-between">
+      <h3 className="text-xl font-bold text-foreground">{title}</h3>
+      <img src={logo} alt={title} className="h-10 w-10 object-contain shrink-0" loading="lazy" decoding="async" />
+    </div>
+    <p className="text-sm text-muted-foreground">{subtitle}</p>
+    <p className="text-sm text-foreground">{description}</p>
+    <p className="text-sm font-medium text-primary">Min: {minAmount}</p>
+    <Button onClick={onClick} variant="outline" className="w-full h-12 text-base font-semibold border-border hover:bg-secondary">
+      {buttonLabel}
+    </Button>
+  </div>
+);
+
 const MPESA_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png';
 const CRYPTO_LOGO = usdtLogo;
-
-export function TransactionModal({ isOpen, onClose, type }: TransactionModalProps) {
   const [depositMethod, setDepositMethod] = useState<DepositMethod>('select');
   const [withdrawMethodState, setWithdrawMethodState] = useState<WithdrawMethod>('select');
   const [amount, setAmount] = useState('');
