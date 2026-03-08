@@ -172,35 +172,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="card rounded-xl p-5 bg-card border border-border animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-semibold font-display text-foreground">
-              <Clock className="h-4 w-4 inline mr-1 text-primary" /> Recent Activity
-            </h3>
-            <Link to="/history" className="text-sm text-primary font-medium hover:underline">
-              View All
-            </Link>
-          </div>
-          <div className="space-y-0">
-            {recentActivity.map((item, i) => (
-              <div key={i} className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm",
-                  item.type === 'success' ? "bg-success/10 text-success" : "bg-primary/10 text-primary"
-                )}>
-                  {item.icon}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">{item.info}</p>
-                </div>
-                <span className="text-xs text-muted-foreground">{item.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Recent Trades */}
         <div className="card rounded-xl p-5 bg-card border border-border animate-slide-up" style={{ animationDelay: '0.25s' }}>
           <div className="flex items-center justify-between mb-3">
