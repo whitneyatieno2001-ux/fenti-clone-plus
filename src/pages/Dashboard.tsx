@@ -31,12 +31,27 @@ export default function Dashboard() {
 
   const recentTrades = transactions.filter(t => t.type === 'trade' || t.type === 'bot_trade').slice(0, 4);
 
-  // Mock recent activity
-  const recentActivity = [
-    { icon: '↓', title: 'Deposit Successful', info: 'USD via M-Pesa', time: '5 mins ago', type: 'success' },
-    { icon: '↑', title: 'Withdrawal Processed', info: '50.00 USD', time: '2 hours ago', type: 'warning' },
-    { icon: 'B', title: 'Bot Trade Executed', info: 'BTC/USDT +0.5%', time: '4 hours ago', type: 'success' },
-  ];
+  // Real recent activity from transactions
+  const recentActivity = transactions.slice(0, 5).map(t => {
+    const now = new Date();
+    const diff = now.getTime() - t.date.getTime();
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    const time = days > 0 ? `${days}d ago` : hours > 0 ? `${hours}h ago` : `${mins}m ago`;
+
+    let icon = '↓', title = '', info = '', type = 'success';
+    if (t.type === 'deposit') {
+      icon = '↓'; title = 'Deposit Successful'; info = `$${t.amount.toFixed(2)} USD`; type = 'success';
+    } else if (t.type === 'withdrawal') {
+      icon = '↑'; title = 'Withdrawal Processed'; info = `$${t.amount.toFixed(2)} USD`; type = 'warning';
+    } else if (t.type === 'bot_trade') {
+      icon = 'B'; title = 'Bot Trade Executed'; info = t.description || `$${t.amount.toFixed(2)}`; type = 'success';
+    } else if (t.type === 'trade') {
+      icon = 'T'; title = 'Trade Executed'; info = t.description || `$${t.amount.toFixed(2)}`; type = 'success';
+    }
+    return { icon, title, info, time, type };
+  });
 
   return (
     <div className="min-h-screen bg-background pb-20">
