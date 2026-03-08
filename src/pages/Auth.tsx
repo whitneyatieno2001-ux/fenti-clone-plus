@@ -198,6 +198,19 @@ export default function Auth() {
             </div>
           )}
 
+          {/* Phone - both login and signup */}
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">M-Pesa Phone Number</label>
+            <Input
+              type="tel"
+              placeholder="e.g. 0712345678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className={cn("h-12 bg-background border-border focus:border-primary", errors.phone && "border-destructive")}
+            />
+            {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone}</p>}
+          </div>
+
           {/* Privacy checkbox - signup */}
           {mode === 'signup' && (
             <label className="flex items-start gap-3 cursor-pointer">

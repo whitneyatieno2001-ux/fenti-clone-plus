@@ -385,7 +385,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
         </div>
         <p className="text-sm text-amber-500 font-medium mb-2">Account verification pending</p>
         <p className="text-sm text-muted-foreground text-center px-4">
-          Your withdrawal is being held for review. Please complete KYC verification to speed up the process. You will receive an email once your withdrawal is processed.
+          Your withdrawal is being held for review. Please complete KYC verification to speed up the process.
         </p>
         <Button onClick={onClose} className="mt-8 px-8" variant="outline">Close</Button>
       </div>

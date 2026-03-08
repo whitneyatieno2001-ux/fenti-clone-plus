@@ -193,15 +193,21 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     } catch { return { success: false, error: 'An unexpected error occurred' }; }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, phone?: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email, password,
-        options: { data: { name }, emailRedirectTo: `${window.location.origin}/` },
+        options: { data: { name, phone }, emailRedirectTo: `${window.location.origin}/` },
       });
       if (error) {
         if (error.message.includes('already registered')) return { success: false, error: 'This email is already registered.' };
         return { success: false, error: error.message };
+      }
+      // Save phone number to profile
+      if (signUpData?.user && phone) {
+        setTimeout(async () => {
+          await supabase.from('profiles').update({ phone_number: phone }).eq('user_id', signUpData.user!.id);
+        }, 1000);
       }
       return { success: true };
     } catch { return { success: false, error: 'An unexpected error occurred' }; }
