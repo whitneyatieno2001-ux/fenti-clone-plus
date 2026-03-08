@@ -12,6 +12,7 @@ import { lovable } from '@/integrations/lovable/index';
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const nameSchema = z.string().min(2, 'Name must be at least 2 characters');
+const phoneSchema = z.string().min(9, 'Please enter a valid phone number');
 
 export default function Auth() {
   const [mode, setMode] = useState<'login' | 'signup'>('signup');
