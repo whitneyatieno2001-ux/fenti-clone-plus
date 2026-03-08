@@ -9,7 +9,7 @@ import { getCoinIcon } from '@/data/coinIcons';
 import { cn } from '@/lib/utils';
 import { 
   Eye, EyeOff, ArrowDownToLine, ArrowUpFromLine, 
-  ChevronRight, Clock,
+  ChevronRight,
   TrendingUp, Star
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
