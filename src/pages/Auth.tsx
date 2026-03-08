@@ -82,7 +82,7 @@ export default function Auth() {
       if (mode === 'login') {
         result = await login(email, password);
       } else {
-        result = await signup(email, password, name);
+        result = await signup(email, password, name, phone);
       }
 
       if (result.success) {
