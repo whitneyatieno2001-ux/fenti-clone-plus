@@ -164,6 +164,10 @@ export default function BotTrade() {
 
   const toggleBot = () => {
     if (!isRunning) {
+      if (stakeAmount < 1) {
+        toast({ title: "Minimum Stake Required", description: "Minimum stake is $1", variant: "destructive" });
+        return;
+      }
       if (currentBalance < stakeAmount) {
         toast({ title: "Insufficient Balance", description: `You need at least $${stakeAmount}`, variant: "destructive" });
         return;
