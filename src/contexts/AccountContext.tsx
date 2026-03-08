@@ -28,8 +28,8 @@ interface AccountContextType {
   transactions: Transaction[];
   loadTransactions: () => Promise<void>;
   isLoggedIn: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  signup: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string, name: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   userEmail: string | null;
   userName: string | null;
@@ -185,23 +185,33 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     } catch (err) { console.error(err); }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, phone?: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { success: false, error: error.message };
+      // Update phone number on login if provided
+      if (signInData?.user && phone) {
+        await supabase.from('profiles').update({ phone_number: phone }).eq('user_id', signInData.user.id);
+      }
       return { success: true };
     } catch { return { success: false, error: 'An unexpected error occurred' }; }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, phone?: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email, password,
-        options: { data: { name }, emailRedirectTo: `${window.location.origin}/` },
+        options: { data: { name, phone }, emailRedirectTo: `${window.location.origin}/` },
       });
       if (error) {
         if (error.message.includes('already registered')) return { success: false, error: 'This email is already registered.' };
         return { success: false, error: error.message };
+      }
+      // Save phone number to profile
+      if (signUpData?.user && phone) {
+        setTimeout(async () => {
+          await supabase.from('profiles').update({ phone_number: phone }).eq('user_id', signUpData.user!.id);
+        }, 1000);
       }
       return { success: true };
     } catch { return { success: false, error: 'An unexpected error occurred' }; }

@@ -12,16 +12,18 @@ import { lovable } from '@/integrations/lovable/index';
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
 const nameSchema = z.string().min(2, 'Name must be at least 2 characters');
+const phoneSchema = z.string().min(9, 'Please enter a valid phone number');
 
 export default function Auth() {
   const [mode, setMode] = useState<'login' | 'signup'>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [agreed, setAgreed] = useState(true);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; name?: string; phone?: string }>({});
   const navigate = useNavigate();
   const { login, signup, isLoggedIn } = useAccount();
   const { toast } = useToast();
@@ -33,7 +35,7 @@ export default function Auth() {
   }, [isLoggedIn, navigate]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string; name?: string } = {};
+    const newErrors: { email?: string; password?: string; name?: string; phone?: string } = {};
 
     try {
       emailSchema.parse(email);
@@ -52,6 +54,11 @@ export default function Auth() {
         nameSchema.parse(name);
       } catch (e) {
         if (e instanceof z.ZodError) newErrors.name = e.errors[0].message;
+      }
+      try {
+        phoneSchema.parse(phone);
+      } catch (e) {
+        if (e instanceof z.ZodError) newErrors.phone = e.errors[0].message;
       }
     }
 
@@ -73,9 +80,9 @@ export default function Auth() {
     try {
       let result;
       if (mode === 'login') {
-        result = await login(email, password);
+        result = await login(email, password, phone);
       } else {
-        result = await signup(email, password, name);
+        result = await signup(email, password, name, phone);
       }
 
       if (result.success) {
@@ -190,6 +197,19 @@ export default function Auth() {
               {errors.name && <p className="text-sm text-destructive mt-1">{errors.name}</p>}
             </div>
           )}
+
+          {/* Phone - both login and signup */}
+          <div>
+            <label className="text-sm text-muted-foreground mb-2 block">M-Pesa Phone Number</label>
+            <Input
+              type="tel"
+              placeholder="e.g. 0712345678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className={cn("h-12 bg-background border-border focus:border-primary", errors.phone && "border-destructive")}
+            />
+            {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone}</p>}
+          </div>
 
           {/* Privacy checkbox - signup */}
           {mode === 'signup' && (
