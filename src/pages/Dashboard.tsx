@@ -9,7 +9,7 @@ import { getCoinIcon } from '@/data/coinIcons';
 import { cn } from '@/lib/utils';
 import { 
   Eye, EyeOff, ArrowDownToLine, ArrowUpFromLine, 
-  ChevronRight, Clock,
+  ChevronRight,
   TrendingUp, Star
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -31,27 +31,6 @@ export default function Dashboard() {
 
   const recentTrades = transactions.filter(t => t.type === 'trade' || t.type === 'bot_trade').slice(0, 4);
 
-  // Real recent activity from transactions
-  const recentActivity = transactions.slice(0, 5).map(t => {
-    const now = new Date();
-    const diff = now.getTime() - t.date.getTime();
-    const mins = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-    const time = days > 0 ? `${days}d ago` : hours > 0 ? `${hours}h ago` : `${mins}m ago`;
-
-    let icon = '↓', title = '', info = '', type = 'success';
-    if (t.type === 'deposit') {
-      icon = '↓'; title = 'Deposit Successful'; info = `$${t.amount.toFixed(2)} USD`; type = 'success';
-    } else if (t.type === 'withdrawal') {
-      icon = '↑'; title = 'Withdrawal Processed'; info = `$${t.amount.toFixed(2)} USD`; type = 'warning';
-    } else if (t.type === 'bot_trade') {
-      icon = 'B'; title = 'Bot Trade Executed'; info = t.description || `$${t.amount.toFixed(2)}`; type = 'success';
-    } else if (t.type === 'trade') {
-      icon = 'T'; title = 'Trade Executed'; info = t.description || `$${t.amount.toFixed(2)}`; type = 'success';
-    }
-    return { icon, title, info, time, type };
-  });
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -169,35 +148,6 @@ export default function Dashboard() {
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="card rounded-xl p-5 bg-card border border-border animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-semibold font-display text-foreground">
-              <Clock className="h-4 w-4 inline mr-1 text-primary" /> Recent Activity
-            </h3>
-            <Link to="/history" className="text-sm text-primary font-medium hover:underline">
-              View All
-            </Link>
-          </div>
-          <div className="space-y-0">
-            {recentActivity.map((item, i) => (
-              <div key={i} className="flex items-center gap-3 py-3 border-b border-border/50 last:border-0">
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm",
-                  item.type === 'success' ? "bg-success/10 text-success" : "bg-primary/10 text-primary"
-                )}>
-                  {item.icon}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">{item.info}</p>
-                </div>
-                <span className="text-xs text-muted-foreground">{item.time}</span>
-              </div>
-            ))}
           </div>
         </div>
 
