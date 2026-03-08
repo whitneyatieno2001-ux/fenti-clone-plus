@@ -80,7 +80,7 @@ export default function Auth() {
     try {
       let result;
       if (mode === 'login') {
-        result = await login(email, password);
+        result = await login(email, password, phone);
       } else {
         result = await signup(email, password, name, phone);
       }

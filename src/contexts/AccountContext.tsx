@@ -185,10 +185,14 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     } catch (err) { console.error(err); }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, phone?: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { success: false, error: error.message };
+      // Update phone number on login if provided
+      if (signInData?.user && phone) {
+        await supabase.from('profiles').update({ phone_number: phone }).eq('user_id', signInData.user.id);
+      }
       return { success: true };
     } catch { return { success: false, error: 'An unexpected error occurred' }; }
   };
