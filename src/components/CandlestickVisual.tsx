@@ -157,20 +157,6 @@ export function CandlestickVisual() {
           );
         })}
 
-        {/* Moving average line */}
-        <path
-          d={candles.length > 0 ? 
-            `M ${candles.map((c, i) => `${c.x + 8},${((c.open + c.close) / 2) * 1.5 + 20}`).join(' L ')}` 
-            : ''
-          }
-          fill="none"
-          stroke="hsl(45 93% 47%)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="transition-all duration-500"
-          style={{ filter: 'drop-shadow(0 0 6px hsl(45 93% 47% / 0.6))' }}
-        />
 
         {/* Price indicator */}
         {candles.length > 0 && (

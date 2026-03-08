@@ -560,7 +560,6 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
-                    <p className="text-xs text-center text-muted-foreground">Minimum deposit: $29</p>
                   </div>
                 )}
 
