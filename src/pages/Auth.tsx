@@ -200,7 +200,7 @@ export default function Auth() {
 
           {/* Phone - both login and signup */}
           <div>
-            <label className="text-sm text-muted-foreground mb-2 block">M-Pesa Phone Number</label>
+            <label className="text-sm text-muted-foreground mb-2 block">Phone Number</label>
             <Input
               type="tel"
               placeholder="e.g. 0712345678"
