@@ -28,7 +28,7 @@ interface AccountContextType {
   transactions: Transaction[];
   loadTransactions: () => Promise<void>;
   isLoggedIn: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, name: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   userEmail: string | null;
