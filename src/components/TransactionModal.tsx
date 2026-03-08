@@ -357,7 +357,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
             <span className="text-lg font-medium text-muted-foreground ml-2">USDT</span>
           </div>
           <p className="text-sm text-muted-foreground text-center px-4 leading-relaxed">
-            You will receive an email once withdrawal is completed.
+            Your withdrawal is being processed. Funds will be sent to your account shortly.
           </p>
         </div>
       </div>
