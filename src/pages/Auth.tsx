@@ -35,7 +35,7 @@ export default function Auth() {
   }, [isLoggedIn, navigate]);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string; name?: string } = {};
+    const newErrors: { email?: string; password?: string; name?: string; phone?: string } = {};
 
     try {
       emailSchema.parse(email);
@@ -54,6 +54,11 @@ export default function Auth() {
         nameSchema.parse(name);
       } catch (e) {
         if (e instanceof z.ZodError) newErrors.name = e.errors[0].message;
+      }
+      try {
+        phoneSchema.parse(phone);
+      } catch (e) {
+        if (e instanceof z.ZodError) newErrors.phone = e.errors[0].message;
       }
     }
 
