@@ -161,6 +161,10 @@ export default function DeployedBot() {
   const toggleBot = () => {
     if (!isRunning) {
       const stake = parseFloat(investmentAmount) || 10;
+      if (stake < 1) {
+        toast({ title: 'Minimum Stake Required', description: 'Minimum stake is $1', variant: 'destructive' });
+        return;
+      }
       if (currentBalance < stake) {
         toast({ title: 'Insufficient Balance', variant: 'destructive' });
         return;
