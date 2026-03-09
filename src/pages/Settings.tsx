@@ -63,31 +63,23 @@ export default function Settings() {
     }
 
     setConnecting(true);
-    const masked = apiKey.substring(0, 6) + '****' + apiKey.substring(apiKey.length - 4);
 
     try {
-      // Delete old connection if exists
-      await supabase.from('binance_connections').delete().eq('user_id', user.id);
-
-      const { error } = await supabase.from('binance_connections').insert({
-        user_id: user.id,
-        api_key_masked: masked,
-        is_connected: true,
-        permissions: ['read'],
-        api_key_encrypted: apiKey,
-        api_secret_encrypted: apiSecret,
-      } as any);
+      const { data, error } = await supabase.functions.invoke('binance-connect', {
+        body: { apiKey, apiSecret },
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       setIsConnected(true);
-      setMaskedKey(masked);
+      setMaskedKey(data.maskedKey || apiKey.substring(0, 6) + '****' + apiKey.substring(apiKey.length - 4));
       setApiKey('');
       setApiSecret('');
       toast({ title: 'Connected!', description: 'Binance account connected successfully' });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast({ title: 'Connection Failed', description: 'Please check your API keys', variant: 'destructive' });
+      toast({ title: 'Connection Failed', description: err.message || 'Please check your API keys', variant: 'destructive' });
     }
     setConnecting(false);
   };

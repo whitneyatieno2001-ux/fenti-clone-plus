@@ -113,6 +113,31 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Authenticate the request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user: authUser }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !authUser) {
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Authenticated user:", authUser.id);
+
     // Log environment variable status (not values for security)
     console.log("Environment check:");
     console.log("- PAYHERO_API_USERNAME set:", !!PAYHERO_API_USERNAME);
@@ -129,9 +154,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const body = await req.json();
-    console.log("Request body:", JSON.stringify(body, null, 2));
+    console.log("Request body (action/amount only):", { action: body.action, amount: body.amount });
     
-    const { action, amount, phoneNumber, userId }: MpesaRequest = body;
+    const { action, amount, phoneNumber }: MpesaRequest = body;
+    const userId = authUser.id;
 
     if (!action || !amount || !phoneNumber) {
       throw new Error("Missing required fields: action, amount, phoneNumber");

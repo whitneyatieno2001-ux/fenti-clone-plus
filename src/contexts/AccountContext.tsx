@@ -179,7 +179,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const resetDemo = async () => {
     if (!user) return;
     try {
-      const { error } = await supabase.from('profiles').update({ demo_balance: 10000 }).eq('user_id', user.id);
+      const { error } = await supabase.rpc('reset_demo_balance');
       if (error) throw error;
       setDemoBalance(10000);
     } catch (err) { console.error(err); }

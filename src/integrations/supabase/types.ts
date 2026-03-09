@@ -264,6 +264,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      reset_demo_balance: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

@@ -7,6 +7,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const ENCRYPTION_KEY = Deno.env.get("BINANCE_ENCRYPTION_KEY");
+
+async function getAesKey(keyStr: string): Promise<CryptoKey> {
+  const raw = new TextEncoder().encode(keyStr.padEnd(32, "0").slice(0, 32));
+  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+
+async function decrypt(cipherB64: string, keyStr: string): Promise<string> {
+  const key = await getAesKey(keyStr);
+  const combined = Uint8Array.from(atob(cipherB64), c => c.charCodeAt(0));
+  const iv = combined.slice(0, 12);
+  const ciphertext = combined.slice(12);
+  const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+  return new TextDecoder().decode(plainBuf);
+}
+
 async function createHmacSignature(secret: string, message: string): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -48,9 +64,15 @@ serve(async (req) => {
       });
     }
 
+    if (!ENCRYPTION_KEY) {
+      return new Response(JSON.stringify({ error: "Encryption not configured", balance: 0 }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const userId = authUser.id;
 
-    // Get stored API keys
     const { data: conn, error: connError } = await supabase
       .from("binance_connections")
       .select("api_key_encrypted, api_secret_encrypted")
@@ -64,10 +86,10 @@ serve(async (req) => {
       });
     }
 
-    const apiKey = conn.api_key_encrypted;
-    const apiSecret = conn.api_secret_encrypted;
+    // Decrypt the keys
+    const apiKey = await decrypt(conn.api_key_encrypted, ENCRYPTION_KEY);
+    const apiSecret = await decrypt(conn.api_secret_encrypted, ENCRYPTION_KEY);
 
-    // Call Binance account API
     const timestamp = Date.now();
     const queryString = `timestamp=${timestamp}`;
     const signature = await createHmacSignature(apiSecret, queryString);
@@ -88,7 +110,6 @@ serve(async (req) => {
 
     const accountData = await response.json();
     
-    // Calculate total USDT equivalent balance
     let totalUsdBalance = 0;
     for (const asset of accountData.balances || []) {
       const free = parseFloat(asset.free) || 0;
@@ -99,7 +120,7 @@ serve(async (req) => {
       if (asset.asset === "USDT" || asset.asset === "BUSD" || asset.asset === "USD") {
         totalUsdBalance += total;
       } else if (asset.asset === "BTC") {
-        totalUsdBalance += total * 98000; // approximate
+        totalUsdBalance += total * 98000;
       } else if (asset.asset === "ETH") {
         totalUsdBalance += total * 3400;
       } else if (asset.asset === "BNB") {
