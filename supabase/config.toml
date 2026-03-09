@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.binance-balance]
 verify_jwt = false
+
+[functions.binance-connect]
+verify_jwt = false
