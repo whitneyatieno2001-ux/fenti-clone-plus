@@ -321,11 +321,6 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                   dur="120s" fill="freeze" />
               </path>
 
-              {/* Pouring sand stream (thin line falling through neck) */}
-              <rect x="48.5" y="48" width="3" height="24" rx="1.5" fill="#F0B90B">
-                <animate attributeName="opacity" values="1;0.6;1" dur="0.8s" repeatCount="indefinite"/>
-                <animate attributeName="height" values="24;20;24" dur="0.8s" repeatCount="indefinite"/>
-              </rect>
 
               {/* Sand particles falling */}
               <circle cx="50" cy="68" r="1.5" fill="#F0B90B">
