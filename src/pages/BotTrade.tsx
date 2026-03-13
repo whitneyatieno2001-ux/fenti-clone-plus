@@ -66,7 +66,7 @@ export default function BotTrade() {
   const [isUnlocked, setIsUnlocked] = useState<boolean | null>(null);
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const balanceRef = useRef(currentBalance);
   const currentStakeRef = useRef(currentStake);
 

@@ -102,7 +102,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
 
   // Processing timer for verified withdrawal
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (flowStatus === 'processing' && processingTimer > 0) {
       interval = setInterval(() => setProcessingTimer(prev => {
         if (prev <= 1) {

@@ -137,7 +137,7 @@ export function useCandlestickData(symbol: string, currentPrice: number, timefra
   const [candles, setCandles] = useState<Candle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const lastPriceRef = useRef(currentPrice);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   // Initialize with historical data
   useEffect(() => {

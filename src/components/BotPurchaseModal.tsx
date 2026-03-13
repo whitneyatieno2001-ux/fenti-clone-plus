@@ -51,7 +51,7 @@ export function BotPurchaseModal({ isOpen, onClose, bot, onPurchaseSuccess }: Bo
 
   // Crypto payment timer countdown
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (cryptoGenerated && cryptoTimer > 0) {
       interval = setInterval(() => {
         setCryptoTimer(prev => prev - 1);
