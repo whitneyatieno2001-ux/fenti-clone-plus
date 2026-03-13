@@ -59,7 +59,7 @@ export default function DeployedBot() {
   const [momentum, setMomentum] = useState<'Weak' | 'Moderate' | 'Strong'>('Strong');
   const [trendDirection, setTrendDirection] = useState<'Uptrend' | 'Downtrend' | 'Sideways'>('Uptrend');
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const balanceRef = useRef(currentBalance);
   const isRunningRef = useRef(false);
   const totalPLRef = useRef(0);

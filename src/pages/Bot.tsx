@@ -144,7 +144,7 @@ export default function BotPage() {
   const [myBots, setMyBots] = useState<MyBot[]>([]);
   const [tradeLogs, setTradeLogs] = useState<TradeLog[]>([]);
   const [botLogs, setBotLogs] = useState<BotLogEntry[]>([]);
-  const botIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const botIntervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const myBotsRef = useRef<MyBot[]>([]);
